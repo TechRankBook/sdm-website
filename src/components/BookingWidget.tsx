@@ -177,7 +177,7 @@ export const BookingWidget = () => {
         }}
       >
         <Zap className="w-5 h-5 mr-2" />
-        Search Car
+        Book SDM Ride
       </Button>
 
       {/* Payment Info */}

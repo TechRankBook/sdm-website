@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { EnhancedBookingForm } from "@/components/booking/EnhancedBookingForm";
-import { VehicleSelection } from "@/components/booking/VehicleSelection";
 import { PaymentPage } from "@/components/booking/PaymentPage";
 import { ThankYouPage } from "@/components/booking/ThankYouPage";
 import { ArrowBigLeft, HomeIcon } from "lucide-react";
@@ -92,27 +91,13 @@ const Booking = () => {
     switch (currentStep) {
       case 1:
         return (
-          <div className="grid lg:grid-cols-2 gap-6 w-full max-w-7xl mx-auto">
-            <EnhancedBookingForm
-              bookingData={bookingData}
-              updateBookingData={updateBookingData}
-              onNext={nextStep}
-            />
-          </div>
+          <EnhancedBookingForm
+            bookingData={bookingData}
+            updateBookingData={updateBookingData}
+            onNext={nextStep}
+          />
         );
       case 2:
-        return (
-          <div className="grid lg:grid-cols-2 gap-6 w-full max-w-7xl mx-auto">
-            <VehicleSelection
-              bookingData={bookingData}
-              updateBookingData={updateBookingData}
-              onNext={nextStep}
-              onBack={prevStep}
-              routeData={null}
-            />
-          </div>
-        );
-      case 3:
         return (
           <PaymentPage
             bookingData={bookingData}
@@ -120,7 +105,7 @@ const Booking = () => {
             onBack={prevStep}
           />
         );
-      case 4:
+      case 3:
         return <ThankYouPage />;
       default:
         return null;
@@ -133,15 +118,13 @@ const Booking = () => {
         {/* Header with Step Indication */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
-            {currentStep === 1 ? "Book Your Ride" : 
-             currentStep === 2 ? "Choose Your Vehicle" : 
-             currentStep === 3 ? "Secure Payment" : 
+            {currentStep === 1 ? "Choose Your Ride" : 
+             currentStep === 2 ? "Secure Payment" : 
              "Booking Confirmed"}
           </h1>
           <p className="text-muted-foreground">
             {currentStep === 1 ? "Enter your trip details and see available options" : 
-             currentStep === 2 ? "Select the perfect vehicle for your journey" :
-             currentStep === 3 ? "Complete your payment to confirm your booking" : 
+             currentStep === 2 ? "Complete your payment to confirm your booking" : 
              "Thank you for choosing SDM E-Mobility"}
           </p>
         </div>
