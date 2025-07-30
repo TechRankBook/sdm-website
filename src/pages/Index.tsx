@@ -5,7 +5,6 @@ import { DriverDashboard } from "@/components/DriverDashboard";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {BookingForm} from "@/components/booking/BookingForm"
 import { 
   Zap, 
   Leaf, 
@@ -125,7 +124,6 @@ const Index = () => {
 
             {/* Booking Interface - Rider Only */}
             <div className="fade-in" style={{ animationDelay: "0.3s" }}>
-              <BookingForm/>
             </div>
           </div>
         </div>
