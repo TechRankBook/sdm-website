@@ -92,7 +92,7 @@ const Booking = () => {
     switch (currentStep) {
       case 1:
         return (
-          <div className="grid lg:grid-cols-2 gap-6 w-full max-w-7xl mx-auto">
+          <div className="w-full max-w-lg mx-auto">
             <EnhancedBookingForm
               bookingData={bookingData}
               updateBookingData={updateBookingData}
@@ -102,7 +102,7 @@ const Booking = () => {
         );
       case 2:
         return (
-          <div className="grid lg:grid-cols-2 gap-6 w-full max-w-7xl mx-auto">
+          <div className="w-full max-w-lg mx-auto">
             <VehicleSelection
               bookingData={bookingData}
               updateBookingData={updateBookingData}

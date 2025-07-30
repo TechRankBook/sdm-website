@@ -157,16 +157,6 @@ export const VehicleSelection = ({
         </Button>
       </div>
       </Card>
-
-      {/* Map on the right for large screens */}
-      <div className="space-y-6 lg:block hidden">
-        <Card className="glass rounded-2xl p-6">
-          <h3 className="text-lg font-semibold text-foreground mb-4">Route Preview</h3>
-          <div className="h-[400px] bg-glass-subtle rounded-lg flex items-center justify-center">
-            <p className="text-muted-foreground">Map integration available in production</p>
-          </div>
-        </Card>
-      </div>
     </>
   );
 };

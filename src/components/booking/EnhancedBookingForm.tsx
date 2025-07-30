@@ -378,41 +378,6 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
           )}
         </Card>
 
-      {/* Map & Route Display */}
-      <div className="space-y-6 lg:block hidden">
-        {(pickupCoords || dropoffCoords) && (
-          <Card className="glass rounded-2xl p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Route Preview</h3>
-            <GoogleMaps
-              pickup={pickupCoords ? {
-                lat: pickupCoords.lat,
-                lng: pickupCoords.lng,
-                address: pickupCoords.address
-              } : undefined}
-              dropoff={dropoffCoords ? {
-                lat: dropoffCoords.lat,
-                lng: dropoffCoords.lng,
-                address: dropoffCoords.address
-              } : undefined}
-              height="350px"
-              onRouteUpdate={handleRouteUpdate}
-            />
-            {routeData && (
-              <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-                <div className="p-3 glass rounded-lg text-center">
-                  <p className="text-2xl font-bold text-primary">{routeData.distance}</p>
-                  <p className="text-muted-foreground">Distance</p>
-                </div>
-                <div className="p-3 glass rounded-lg text-center">
-                  <p className="text-2xl font-bold text-accent">{routeData.duration}</p>
-                  <p className="text-muted-foreground">Duration</p>
-                </div>
-              </div>
-            )}
-          </Card>
-        )}
-      </div>
-
       {/* Modals */}
       <Dialog open={showGuestModal} onOpenChange={setShowGuestModal}>
         <DialogContent className="glass rounded-2xl border-glass-border">
