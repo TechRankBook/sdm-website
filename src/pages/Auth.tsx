@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { Phone, Shield, Chrome } from 'lucide-react';
 
+
 const Auth = () => {
   const [step, setStep] = useState<'phone' | 'otp' | 'phone-verify'>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -108,9 +109,13 @@ const Auth = () => {
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
-              <Phone className="w-6 h-6 text-primary" />
+              <img 
+              src="/logo1.png" 
+              alt="SDM E-Mobility" 
+              className="h-10 w-auto cursor-pointer"
+            />
             </div>
-            <CardTitle>Welcome to FleetCab</CardTitle>
+            <CardTitle>Welcome to SDM E-Mobility</CardTitle>
             <CardDescription>
               Enter your phone number to get started. We'll send you a verification code.
             </CardDescription>
