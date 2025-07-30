@@ -5,7 +5,7 @@ import { DriverDashboard } from "@/components/DriverDashboard";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import {BookingForm} from "@/components/booking/BookingFrom"
+import {BookingForm} from "@/components/booking/BookingForm"
 import { 
   Zap, 
   Leaf, 
