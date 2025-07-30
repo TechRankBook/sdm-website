@@ -158,10 +158,9 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
   const canAddStops = serviceType !== "car_rental";
 
   return (
-    <div className="w-full max-w-7xl mx-auto">
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Booking Form */}
-        <Card className="glass rounded-2xl p-6">
+    <>
+      {/* Booking Form */}
+      <Card className="glass rounded-2xl p-6">
           <div className="mb-6">
             <h2 className="text-lg font-semibold text-foreground mb-4">Book Your Ride</h2>
             <div className="flex gap-2 p-1 glass rounded-lg overflow-x-auto scrollbar-hide">
@@ -366,101 +365,52 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
+          {/* Search Car Button */}
+          {pickupLocation && (serviceType === "car_rental" ? hours : dropoffLocation) && (
+            <div className="mt-6">
+              <Button 
+                onClick={onNext}
+                className="w-full h-12 bg-gradient-primary text-lg font-semibold"
+              >
+                Search Car
+              </Button>
+            </div>
+          )}
         </Card>
 
-        {/* Map & Route Display */}
-        <div className="space-y-6">
-          {(pickupCoords || dropoffCoords) && (
-            <Card className="glass rounded-2xl p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">Route Preview</h3>
-              <GoogleMaps
-                pickup={pickupCoords ? {
-                  lat: pickupCoords.lat,
-                  lng: pickupCoords.lng,
-                  address: pickupCoords.address
-                } : undefined}
-                dropoff={dropoffCoords ? {
-                  lat: dropoffCoords.lat,
-                  lng: dropoffCoords.lng,
-                  address: dropoffCoords.address
-                } : undefined}
-                height="350px"
-                onRouteUpdate={handleRouteUpdate}
-              />
-              {routeData && (
-                <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
-                  <div className="p-3 glass rounded-lg text-center">
-                    <p className="text-2xl font-bold text-primary">{routeData.distance}</p>
-                    <p className="text-muted-foreground">Distance</p>
-                  </div>
-                  <div className="p-3 glass rounded-lg text-center">
-                    <p className="text-2xl font-bold text-accent">{routeData.duration}</p>
-                    <p className="text-muted-foreground">Duration</p>
-                  </div>
+      {/* Map & Route Display */}
+      <div className="space-y-6 lg:block hidden">
+        {(pickupCoords || dropoffCoords) && (
+          <Card className="glass rounded-2xl p-6">
+            <h3 className="text-lg font-semibold text-foreground mb-4">Route Preview</h3>
+            <GoogleMaps
+              pickup={pickupCoords ? {
+                lat: pickupCoords.lat,
+                lng: pickupCoords.lng,
+                address: pickupCoords.address
+              } : undefined}
+              dropoff={dropoffCoords ? {
+                lat: dropoffCoords.lat,
+                lng: dropoffCoords.lng,
+                address: dropoffCoords.address
+              } : undefined}
+              height="350px"
+              onRouteUpdate={handleRouteUpdate}
+            />
+            {routeData && (
+              <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+                <div className="p-3 glass rounded-lg text-center">
+                  <p className="text-2xl font-bold text-primary">{routeData.distance}</p>
+                  <p className="text-muted-foreground">Distance</p>
                 </div>
-              )}
-            </Card>
-          )}
-
-          {/* Vehicle Selection with Fare Display */}
-          {pickupLocation && (serviceType === "car_rental" ? hours : dropoffLocation) && (
-            <Card className="glass rounded-2xl p-6">
-              <h2 className="text-lg font-semibold text-foreground mb-4">Choose Your Vehicle</h2>
-              
-              <div className="space-y-4">
-                {vehicleTypes.map((vehicle) => {
-                  const fareCalculation = vehicle.type === "Sedan" ? sedanFare : 
-                                       vehicle.type === "SUV" ? suvFare : premiumFare;
-                  
-                  return (
-                    <Card
-                      key={vehicle.type}
-                      className="glass-hover p-4 cursor-pointer transition-all duration-300 hover:scale-[1.01]"
-                      onClick={() => handleVehicleSelection(vehicle.type, fareCalculation.fareData)}
-                    >
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3 flex-1">
-                          <div className="p-3 rounded-lg bg-gradient-primary">
-                            <Car className="w-6 h-6 text-white" />
-                          </div>
-                          <div className="space-y-1">
-                            <h3 className="text-lg font-semibold text-foreground">{vehicle.type}</h3>
-                            <p className="text-sm text-muted-foreground">{vehicle.capacity}</p>
-                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                              <span>{vehicle.estimatedTime} arrival</span>
-                              {fareCalculation.fareData && (
-                                <span>• {fareCalculation.fareData.distance}</span>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="text-right">
-                          {fareCalculation.isLoading ? (
-                            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-                          ) : fareCalculation.fareData ? (
-                            <>
-                              <div className="text-2xl font-bold text-primary">
-                                ₹{fareCalculation.fareData.totalFare}
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                {fareCalculation.fareData.estimatedTime}
-                              </div>
-                            </>
-                          ) : (
-                            <div className="text-sm text-muted-foreground">
-                              Calculating...
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </Card>
-                  );
-                })}
+                <div className="p-3 glass rounded-lg text-center">
+                  <p className="text-2xl font-bold text-accent">{routeData.duration}</p>
+                  <p className="text-muted-foreground">Duration</p>
+                </div>
               </div>
-            </Card>
-          )}
-        </div>
+            )}
+          </Card>
+        )}
       </div>
 
       {/* Modals */}
@@ -524,6 +474,6 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </>
   );
 };

@@ -188,9 +188,7 @@ const Index = () => {
 
             {/* Booking Interface - Rider Only */}
             <div className="fade-in" style={{ animationDelay: "0.3s" }}>
-             <div className="flex justify-center">
-          {renderStep()}
-        </div>
+              <BookingWidget />
             </div>
           </div>
         </div>
