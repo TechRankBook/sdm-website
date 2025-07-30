@@ -59,7 +59,6 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
     { id: "city", name: "CityRide", icon: Car },
     { id: "airport", name: "Airport Taxi", icon: Plane },
     { id: "outstation", name: "Outstation", icon: Route },
-    { id: "sharing", name: "Sharing", icon: Users },
     { id: "hourly", name: "Hourly Rentals", icon: RotateCcw }
   ];
 
