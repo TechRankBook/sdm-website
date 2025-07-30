@@ -48,10 +48,11 @@ export const Header = ({ isDarkMode, toggleDarkMode }: HeaderProps) => {
         <div className="flex items-center justify-between">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <img 
+            <img onClick={() => handleNavigation('/')}
               src={sdmLogo} 
               alt="SDM E-Mobility" 
-              className="h-10 w-auto"
+              className="h-10 w-auto cursor-pointer"
+              
             />
           </div>
 

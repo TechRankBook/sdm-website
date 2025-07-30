@@ -3,6 +3,7 @@ import { BookingForm } from "@/components/booking/BookingForm";
 import { FareCalculation } from "@/components/booking/FareCalculation";
 import { PaymentPage } from "@/components/booking/PaymentPage";
 import { ThankYouPage } from "@/components/booking/ThankYouPage";
+import { ArrowBigLeft, HomeIcon } from "lucide-react";
 
 export interface BookingData {
   serviceType: string;
