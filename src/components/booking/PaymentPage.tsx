@@ -5,6 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { 
   ArrowLeft,
   CreditCard,
@@ -51,14 +53,64 @@ export const PaymentPage = ({ bookingData, onNext, onBack }: PaymentPageProps) =
     }
   ];
 
+  const { toast } = useToast();
+
   const handlePayment = async () => {
+    if (!bookingData.selectedFare) {
+      toast({
+        title: "Error",
+        description: "No fare selected. Please go back and select a vehicle.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsProcessing(true);
     
-    // Simulate payment processing
-    await new Promise(resolve => setTimeout(resolve, 3000));
-    
-    setIsProcessing(false);
-    onNext();
+    try {
+      // Create booking in database first
+      const { data: booking, error: bookingError } = await supabase
+        .from('bookings')
+        .insert({
+          pickup_address: bookingData.pickupLocation,
+          dropoff_address: bookingData.dropoffLocation,
+          fare_amount: bookingData.selectedFare.price,
+          status: 'pending',
+          payment_status: 'pending',
+          scheduled_time: bookingData.scheduledDateTime,
+          ride_type: bookingData.serviceType as any,
+        })
+        .select()
+        .single();
+
+      if (bookingError) throw bookingError;
+
+      // Create Stripe checkout session
+      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+        body: {
+          bookingData,
+          bookingId: booking.id,
+        },
+      });
+
+      if (error) throw error;
+
+      // Redirect to Stripe checkout
+      if (data.url) {
+        window.open(data.url, '_blank');
+      } else {
+        throw new Error('No checkout URL received');
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      toast({
+        title: "Payment Error",
+        description: error.message || "Failed to process payment. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   return (

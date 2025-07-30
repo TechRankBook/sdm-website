@@ -1,9 +1,10 @@
-import { useState } from "react";
-import { BookingForm } from "@/components/booking/BookingForm";
-import { FareCalculation } from "@/components/booking/FareCalculation";
+import { useState, useEffect } from "react";
+import { EnhancedBookingForm } from "@/components/booking/EnhancedBookingForm";
 import { PaymentPage } from "@/components/booking/PaymentPage";
 import { ThankYouPage } from "@/components/booking/ThankYouPage";
 import { ArrowBigLeft, HomeIcon } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
+import { useToast } from "@/hooks/use-toast";
 
 export interface BookingData {
   serviceType: string;
@@ -22,7 +23,7 @@ export interface BookingData {
 const Booking = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [bookingData, setBookingData] = useState<BookingData>({
-    serviceType: "city",
+    serviceType: "city_ride",
     pickupLocation: "",
     dropoffLocation: "",
     scheduledDateTime: "",
@@ -31,6 +32,30 @@ const Booking = () => {
     carType: "",
     selectedFare: undefined
   });
+  const [searchParams] = useSearchParams();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Handle Stripe payment success/cancel
+    const sessionId = searchParams.get('session_id');
+    const success = searchParams.get('success');
+    const canceled = searchParams.get('canceled');
+
+    if (success === 'true' && sessionId) {
+      toast({
+        title: "Payment Successful! 🎉",
+        description: "Your booking has been confirmed. You'll receive driver details shortly.",
+      });
+      setCurrentStep(3); // Go to thank you page
+    } else if (canceled === 'true') {
+      toast({
+        title: "Payment Canceled",
+        description: "Your payment was canceled. You can try again.",
+        variant: "destructive",
+      });
+      setCurrentStep(2); // Go back to payment page
+    }
+  }, [searchParams, toast]);
 
   const updateBookingData = (data: Partial<BookingData>) => {
     setBookingData(prev => ({ ...prev, ...data }));
@@ -48,7 +73,7 @@ const Booking = () => {
     switch (currentStep) {
       case 1:
         return (
-          <BookingForm
+          <EnhancedBookingForm
             bookingData={bookingData}
             updateBookingData={updateBookingData}
             onNext={nextStep}
@@ -56,22 +81,13 @@ const Booking = () => {
         );
       case 2:
         return (
-          <FareCalculation
-            bookingData={bookingData}
-            updateBookingData={updateBookingData}
-            onNext={nextStep}
-            onBack={prevStep}
-          />
-        );
-      case 3:
-        return (
           <PaymentPage
             bookingData={bookingData}
             onNext={nextStep}
             onBack={prevStep}
           />
         );
-      case 4:
+      case 3:
         return <ThankYouPage />;
       default:
         return null;
