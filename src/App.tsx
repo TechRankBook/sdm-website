@@ -30,7 +30,7 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
-            <Route path="/" element={<AuthGuard><Index /></AuthGuard>} />
+            <Route path="/" element={<Index />} />
             <Route path="/services" element={<AuthGuard><Services /></AuthGuard>} />
             <Route path="/fleet" element={<AuthGuard><Fleet /></AuthGuard>} />
             <Route path="/mobile-app" element={<AuthGuard><MobileApp /></AuthGuard>} />
