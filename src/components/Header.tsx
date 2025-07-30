@@ -26,7 +26,7 @@ import {
   FileText
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import sdmLogo from "@/assets/sdm-logo.png";
+import sdmLogo from "@/assets/logo.png";
 
 interface HeaderProps {
   isDarkMode: boolean;
@@ -51,15 +51,8 @@ export const Header = ({ isDarkMode, toggleDarkMode }: HeaderProps) => {
             <img 
               src={sdmLogo} 
               alt="SDM E-Mobility" 
-              className="h-8 w-auto"
+              className="h-10 w-auto"
             />
-            <div className="hidden sm:block">
-              <h1 className="text-xl font-bold text-foreground">SDM E-Mobility</h1>
-              <Badge variant="secondary" className="text-xs">
-                <Car className="w-3 h-3 mr-1" />
-                Electric Cabs
-              </Badge>
-            </div>
           </div>
 
           {/* Desktop Navigation */}

@@ -16,7 +16,7 @@
     --popover: 38 12% 98%;
     --popover-foreground: 215 25% 26%;
 
-    --primary: 15 76% 58%;
+    --primary: 157 59% 49%; /* Changed from orange to green (#38c27a) */
     --primary-foreground: 38 12% 98%;
 
     --secondary: 38 8% 88%;
@@ -25,7 +25,7 @@
     --muted: 38 8% 92%;
     --muted-foreground: 215 15% 56%;
 
-    --accent: 210 76% 62%;
+    --accent: 284 75% 43%; /* Changed from blue to #9620bd */
     --accent-foreground: 38 12% 98%;
 
     --destructive: 0 84% 60%;
@@ -33,7 +33,7 @@
 
     --border: 38 6% 86%;
     --input: 38 6% 90%;
-    --ring: 15 76% 58%;
+    --ring: 157 59% 49%; /* Changed from orange to green (#38c27a) */
 
     --radius: 1rem;
 
@@ -43,15 +43,15 @@
     --glass-shadow: 215 25% 26% / 0.1;
     
     /* Premium Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(15 76% 58%) 0%, hsl(25 86% 65%) 100%);
-    --gradient-secondary: linear-gradient(135deg, hsl(210 76% 62%) 0%, hsl(200 86% 68%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(157 59% 49%) 0%, hsl(165 65% 55%) 100%); /* Changed from orange to green */
+    --gradient-secondary: linear-gradient(135deg, hsl(284 75% 43%) 0%, hsl(290 80% 50%) 100%); /* Changed from blue to #9620bd */
     --gradient-surface: linear-gradient(135deg, hsl(38 12% 98% / 0.9) 0%, hsl(38 8% 96% / 0.8) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(38 6% 96%) 0%, hsl(38 12% 98%) 50%, hsl(210 76% 62% / 0.05) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(38 6% 96%) 0%, hsl(38 12% 98%) 50%, hsl(284 75% 43% / 0.05) 100%); /* Changed blue part to #9620bd */
 
     /* Motion & Shadows */
     --shadow-glass: 0 8px 32px hsl(var(--glass-shadow));
     --shadow-elevation: 0 4px 24px hsl(215 25% 26% / 0.12);
-    --shadow-glow: 0 0 40px hsl(15 76% 58% / 0.3);
+    --shadow-glow: 0 0 40px hsl(157 59% 49% / 0.3); /* Changed from orange to green */
 
     /* Animation Transitions */
     --transition-smooth: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
@@ -86,7 +86,7 @@
     --popover: 215 25% 12%;
     --popover-foreground: 38 12% 96%;
 
-    --primary: 15 76% 58%;
+    --primary: 157 59% 49%; /* Changed from orange to green (#38c27a) */
     --primary-foreground: 215 28% 8%;
 
     --secondary: 215 20% 18%;
@@ -95,7 +95,7 @@
     --muted: 215 20% 16%;
     --muted-foreground: 215 15% 68%;
 
-    --accent: 210 76% 62%;
+    --accent: 284 75% 43%; /* Changed from blue to #9620bd */
     --accent-foreground: 215 28% 8%;
 
     --destructive: 0 84% 60%;
@@ -103,7 +103,7 @@
 
     --border: 215 20% 18%;
     --input: 215 20% 16%;
-    --ring: 15 76% 58%;
+    --ring: 157 59% 49%; /* Changed from orange to green (#38c27a) */
 
     /* Dark Glassmorphism */
     --glass-bg: 215 25% 12% / 0.8;
@@ -111,15 +111,15 @@
     --glass-shadow: 215 28% 8% / 0.4;
     
     /* Dark Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(15 76% 58%) 0%, hsl(25 86% 65%) 100%);
-    --gradient-secondary: linear-gradient(135deg, hsl(210 76% 62%) 0%, hsl(200 86% 68%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(157 59% 49%) 0%, hsl(165 65% 55%) 100%); /* Changed from orange to green */
+    --gradient-secondary: linear-gradient(135deg, hsl(284 75% 43%) 0%, hsl(290 80% 50%) 100%); /* Changed from blue to #9620bd */
     --gradient-surface: linear-gradient(135deg, hsl(215 25% 12% / 0.9) 0%, hsl(215 20% 14% / 0.8) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(215 28% 8%) 0%, hsl(215 25% 12%) 50%, hsl(210 76% 62% / 0.08) 100%);
+    --gradient-hero: linear-gradient(135deg, hsl(215 28% 8%) 0%, hsl(215 25% 12%) 50%, hsl(284 75% 43% / 0.08) 100%); /* Changed blue part to #9620bd */
 
     /* Dark Shadows */
     --shadow-glass: 0 8px 32px hsl(var(--glass-shadow));
     --shadow-elevation: 0 4px 24px hsl(215 28% 8% / 0.6);
-    --shadow-glow: 0 0 40px hsl(15 76% 58% / 0.4);
+    --shadow-glow: 0 0 40px hsl(157 59% 49% / 0.4); /* Changed from orange to green */
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;

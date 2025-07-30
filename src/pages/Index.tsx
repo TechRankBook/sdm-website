@@ -5,6 +5,7 @@ import { DriverDashboard } from "@/components/DriverDashboard";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+
 import { 
   Zap, 
   Leaf, 
@@ -17,6 +18,11 @@ import {
   Play
 } from "lucide-react";
 import heroImage from "@/assets/hero-image.jpg";
+import { ThankYouPage } from "@/components/booking/ThankYouPage";
+import { PaymentPage } from "@/components/booking/PaymentPage";
+import { FareCalculation } from "@/components/booking/FareCalculation";
+import { BookingForm } from "@/components/booking/BookingForm";
+import { BookingData } from "./Booking";
 
 const Index = () => {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -66,6 +72,64 @@ const Index = () => {
     { value: "24/7", label: "Available" }
   ];
 
+  const [currentStep, setCurrentStep] = useState(1);
+    const [bookingData, setBookingData] = useState<BookingData>({
+      serviceType: "city",
+      pickupLocation: "",
+      dropoffLocation: "",
+      scheduledDateTime: "",
+      passengers: 1,
+      packageSelection: "",
+      carType: "",
+      selectedFare: undefined
+    });
+  
+    const updateBookingData = (data: Partial<BookingData>) => {
+      setBookingData(prev => ({ ...prev, ...data }));
+    };
+  
+    const nextStep = () => {
+      setCurrentStep(prev => prev + 1);
+    };
+  
+    const prevStep = () => {
+      setCurrentStep(prev => prev - 1);
+    };
+  
+    const renderStep = () => {
+      switch (currentStep) {
+        case 1:
+          return (
+            <BookingForm
+              bookingData={bookingData}
+              updateBookingData={updateBookingData}
+              onNext={nextStep}
+            />
+          );
+        case 2:
+          return (
+            <FareCalculation
+              bookingData={bookingData}
+              updateBookingData={updateBookingData}
+              onNext={nextStep}
+              onBack={prevStep}
+            />
+          );
+        case 3:
+          return (
+            <PaymentPage
+              bookingData={bookingData}
+              onNext={nextStep}
+              onBack={prevStep}
+            />
+          );
+        case 4:
+          return <ThankYouPage />;
+        default:
+          return null;
+      }
+    };
+
   return (
     <div className="min-h-screen">
       <Header isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
@@ -74,7 +138,7 @@ const Index = () => {
       <section className="relative pt-24 pb-16 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-hero" />
         <div 
-          className="absolute inset-0 opacity-10 bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 opacity-20 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${heroImage})` }}
         />
         
@@ -124,6 +188,9 @@ const Index = () => {
 
             {/* Booking Interface - Rider Only */}
             <div className="fade-in" style={{ animationDelay: "0.3s" }}>
+             <div className="flex justify-center">
+          {renderStep()}
+        </div>
             </div>
           </div>
         </div>

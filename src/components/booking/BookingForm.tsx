@@ -120,7 +120,7 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
       <Card className="glass rounded-2xl p-6">
         {/* Service Type Selection */}
         <div className="mb-6">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Select Service Type</h2>
+          <h2 className="text-lg font-semibold text-foreground mb-4">Book Your Ride</h2>
           <div className="flex gap-2 p-1 glass rounded-lg overflow-x-auto scrollbar-hide">
             {serviceTypes.map((service) => (
               <Button
