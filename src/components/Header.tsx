@@ -6,6 +6,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { 
   Car, 
@@ -23,9 +24,11 @@ import {
   Users,
   Route,
   Clock,
-  FileText
+  FileText,
+  LogOut
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import sdmLogo from "@/assets/logo.png";
 
 interface HeaderProps {
@@ -36,9 +39,16 @@ interface HeaderProps {
 export const Header = ({ isDarkMode, toggleDarkMode }: HeaderProps) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const { user, signOut } = useAuth();
 
   const handleNavigation = (path: string) => {
     navigate(path);
+    setIsMenuOpen(false);
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
     setIsMenuOpen(false);
   };
 
@@ -116,10 +126,27 @@ export const Header = ({ isDarkMode, toggleDarkMode }: HeaderProps) => {
             >
               {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
-            <Button variant="default" className="micro-bounce bg-gradient-primary">
-              <User className="w-4 h-4 mr-2" />
-              Sign In
-            </Button>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="default" className="micro-bounce bg-gradient-primary">
+                  <User className="w-4 h-4 mr-2" />
+                  Account
+                  <ChevronDown className="w-4 h-4 ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="glass">
+                <DropdownMenuItem disabled>
+                  <User className="w-4 h-4 mr-2" />
+                  {user?.email || user?.phone || 'User'}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </nav>
 
           {/* Mobile Menu Button */}
@@ -212,9 +239,13 @@ export const Header = ({ isDarkMode, toggleDarkMode }: HeaderProps) => {
                 >
                   {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                 </Button>
-                <Button variant="default" className="flex-1 bg-gradient-primary">
-                  <User className="w-4 h-4 mr-2" />
-                  Sign In
+                <Button 
+                  onClick={handleSignOut}
+                  variant="destructive" 
+                  className="flex-1"
+                >
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
                 </Button>
               </div>
             </nav>

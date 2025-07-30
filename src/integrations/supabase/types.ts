@@ -1655,6 +1655,39 @@ export type Database = {
           },
         ]
       }
+      phone_verifications: {
+        Row: {
+          attempts: number
+          created_at: string
+          expires_at: string
+          id: string
+          otp_code: string
+          phone_number: string
+          updated_at: string
+          verified: boolean
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          expires_at: string
+          id?: string
+          otp_code: string
+          phone_number: string
+          updated_at?: string
+          verified?: boolean
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          expires_at?: string
+          id?: string
+          otp_code?: string
+          phone_number?: string
+          updated_at?: string
+          verified?: boolean
+        }
+        Relationships: []
+      }
       pricing_rules: {
         Row: {
           base_fare: number
@@ -2308,6 +2341,8 @@ export type Database = {
           id: string
           last_login_at: string | null
           phone_no: string | null
+          phone_verification_completed_at: string | null
+          phone_verified: boolean | null
           profile_picture_url: string | null
           role: Database["public"]["Enums"]["user_role_enum"]
           status: string | null
@@ -2325,6 +2360,8 @@ export type Database = {
           id: string
           last_login_at?: string | null
           phone_no?: string | null
+          phone_verification_completed_at?: string | null
+          phone_verified?: boolean | null
           profile_picture_url?: string | null
           role: Database["public"]["Enums"]["user_role_enum"]
           status?: string | null
@@ -2342,6 +2379,8 @@ export type Database = {
           id?: string
           last_login_at?: string | null
           phone_no?: string | null
+          phone_verification_completed_at?: string | null
+          phone_verified?: boolean | null
           profile_picture_url?: string | null
           role?: Database["public"]["Enums"]["user_role_enum"]
           status?: string | null
@@ -2954,6 +2993,21 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: number
       }
+      complete_phone_verification: {
+        Args: { p_user_id: string; p_phone_number: string }
+        Returns: boolean
+      }
+      create_phone_verification: {
+        Args: { p_phone_number: string }
+        Returns: {
+          verification_id: string
+          otp_code: string
+        }[]
+      }
+      generate_otp: {
+        Args: Record<PropertyKey, never>
+        Returns: string
+      }
       generate_ticket_number: {
         Args: Record<PropertyKey, never>
         Returns: string
@@ -3120,6 +3174,10 @@ export type Database = {
           p_setting_value: Json
           p_updated_by: string
         }
+        Returns: boolean
+      }
+      verify_phone_otp: {
+        Args: { p_phone_number: string; p_otp_code: string }
         Returns: boolean
       }
     }

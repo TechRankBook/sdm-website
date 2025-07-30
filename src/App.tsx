@@ -3,6 +3,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext";
+import AuthGuard from "./components/AuthGuard";
 import Index from "./pages/Index";
 import Services from "./pages/Services";
 import Fleet from "./pages/Fleet";
@@ -12,31 +14,37 @@ import Contact from "./pages/Contact";
 import About from "./pages/About";
 import Terms from "./pages/Terms";
 import Booking from "./pages/Booking";
+import Auth from "./pages/Auth";
+import AuthCallback from "./pages/AuthCallback";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/services" element={<Services />} />
-          <Route path="/fleet" element={<Fleet />} />
-          <Route path="/mobile-app" element={<MobileApp />} />
-          <Route path="/how-it-works" element={<HowItWorks />} />
-          <Route path="/contact" element={<Contact />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/terms" element={<Terms />} />
-          <Route path="/booking" element={<Booking />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
+    <AuthProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/auth" element={<Auth />} />
+            <Route path="/auth/callback" element={<AuthCallback />} />
+            <Route path="/" element={<AuthGuard><Index /></AuthGuard>} />
+            <Route path="/services" element={<AuthGuard><Services /></AuthGuard>} />
+            <Route path="/fleet" element={<AuthGuard><Fleet /></AuthGuard>} />
+            <Route path="/mobile-app" element={<AuthGuard><MobileApp /></AuthGuard>} />
+            <Route path="/how-it-works" element={<AuthGuard><HowItWorks /></AuthGuard>} />
+            <Route path="/contact" element={<AuthGuard><Contact /></AuthGuard>} />
+            <Route path="/about" element={<AuthGuard><About /></AuthGuard>} />
+            <Route path="/terms" element={<AuthGuard><Terms /></AuthGuard>} />
+            <Route path="/booking" element={<AuthGuard><Booking /></AuthGuard>} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </AuthProvider>
   </QueryClientProvider>
 );
 
