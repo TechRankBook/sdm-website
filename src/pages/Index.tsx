@@ -21,7 +21,7 @@ import heroImage from "@/assets/hero-image.jpg";
 import { ThankYouPage } from "@/components/booking/ThankYouPage";
 import { PaymentPage } from "@/components/booking/PaymentPage";
 import { FareCalculation } from "@/components/booking/FareCalculation";
-import { BookingForm } from "@/components/booking/BookingForm";
+import { EnhancedBookingForm } from "@/components/booking/EnhancedBookingForm";
 import { BookingData } from "./Booking";
 
 const Index = () => {
@@ -74,7 +74,7 @@ const Index = () => {
 
   const [currentStep, setCurrentStep] = useState(1);
     const [bookingData, setBookingData] = useState<BookingData>({
-      serviceType: "city",
+      serviceType: "city_ride",
       pickupLocation: "",
       dropoffLocation: "",
       scheduledDateTime: "",
@@ -100,7 +100,7 @@ const Index = () => {
       switch (currentStep) {
         case 1:
           return (
-            <BookingForm
+            <EnhancedBookingForm
               bookingData={bookingData}
               updateBookingData={updateBookingData}
               onNext={nextStep}

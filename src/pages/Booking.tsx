@@ -36,6 +36,24 @@ const Booking = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Handle pre-filled data from home page
+    const pickup = searchParams.get('pickup');
+    const destination = searchParams.get('destination');
+    const service = searchParams.get('service');
+    const time = searchParams.get('time');
+
+    if (pickup || destination || service) {
+      setBookingData(prev => ({
+        ...prev,
+        pickupLocation: pickup || "",
+        dropoffLocation: destination || "",
+        serviceType: service === "city" ? "city_ride" : 
+                   service === "airport" ? "airport" :
+                   service === "rental" ? "car_rental" :
+                   service === "outstation" ? "outstation" : prev.serviceType
+      }));
+    }
+
     // Handle Stripe payment success/cancel
     const sessionId = searchParams.get('session_id');
     const success = searchParams.get('success');
@@ -97,6 +115,20 @@ const Booking = () => {
   return (
     <div className="min-h-screen bg-gradient-hero">
       <div className="container mx-auto px-4 py-8">
+        {/* Header with Step Indication */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            {currentStep === 1 ? "Choose Your Ride" : 
+             currentStep === 2 ? "Secure Payment" : 
+             "Booking Confirmed"}
+          </h1>
+          <p className="text-muted-foreground">
+            {currentStep === 1 ? "Enter your trip details and see available options" : 
+             currentStep === 2 ? "Complete your payment to confirm your booking" : 
+             "Thank you for choosing SDM E-Mobility"}
+          </p>
+        </div>
+
         {/* Step Content */}
         <div className="flex justify-center">
           {renderStep()}

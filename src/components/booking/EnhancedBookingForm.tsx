@@ -8,11 +8,14 @@ import { cn } from "@/lib/utils";
 import { GooglePlacesInput } from "./GooglePlacesInput";
 import { GoogleMaps } from "./GoogleMaps";
 import { useFareCalculation } from "@/hooks/useFareCalculation";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
 import { 
   Clock, 
   Car,
   Users,
-  Calendar,
+  Calendar as CalendarIcon,
   Plane,
   RotateCcw,
   Route,
@@ -47,6 +50,8 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
   const [passengers, setPassengers] = useState(bookingData.passengers || 2);
   const [hours, setHours] = useState("");
   const [tripType, setTripType] = useState("oneway");
+  const [selectedDate, setSelectedDate] = useState<Date>();
+  const [selectedTime, setSelectedTime] = useState<string>("");
   
   // Location coordinates
   const [pickupCoords, setPickupCoords] = useState<LocationData | null>(null);
@@ -124,11 +129,15 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
   };
 
   const handleVehicleSelection = (vehicleType: string, fareData: any) => {
+    const dateTime = selectedDate && selectedTime 
+      ? `${format(selectedDate, "yyyy-MM-dd")} ${selectedTime}`
+      : "";
+      
     updateBookingData({
       serviceType,
       pickupLocation,
       dropoffLocation: serviceType === "car_rental" ? undefined : dropoffLocation,
-      scheduledDateTime,
+      scheduledDateTime: dateTime,
       passengers,
       packageSelection: serviceType === "car_rental" ? hours : undefined,
       carType: vehicleType,
@@ -149,241 +158,310 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
   const canAddStops = serviceType !== "car_rental";
 
   return (
-    <div className="w-full max-w-4xl mx-auto space-y-6">
-      {/* Main Booking Form */}
-      <Card className="glass rounded-2xl p-6">
-        {/* Service Type Selection */}
-        <div className="mb-6">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Book Your Ride</h2>
-          <div className="flex gap-2 p-1 glass rounded-lg overflow-x-auto scrollbar-hide">
-            {serviceTypes.map((service) => (
-              <Button
-                key={service.id}
-                variant={serviceType === service.id ? "default" : "ghost"}
-                className={cn(
-                  "h-auto py-3 px-2 flex flex-col gap-2 text-xs transition-all duration-200 flex-shrink-0 min-w-[80px]",
-                  serviceType === service.id 
-                    ? "bg-gradient-primary text-white shadow-glow" 
-                    : "text-muted-foreground hover:text-foreground hover:bg-accent/20"
-                )}
-                onClick={() => {
-                  setServiceType(service.id);
-                  if (service.id === "car_rental") {
-                    setDropoffLocation("");
-                    setDropoffCoords(null);
-                  } else {
-                    setHours("");
-                  }
-                }}
-              >
-                <service.icon className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="text-center leading-tight text-[10px] sm:text-xs whitespace-nowrap">{service.name}</span>
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        {/* Trip Type for Outstation and Airport */}
-        {(serviceType === "outstation" || serviceType === "airport") && (
-          <div className="mb-6">
-            <div className="flex gap-2 p-1 glass rounded-lg">
-              {serviceType === "outstation" ? (
-                <>
-                  <Button
-                    variant={tripType === "oneway" ? "default" : "ghost"}
-                    className={cn(
-                      "flex-1 text-sm",
-                      tripType === "oneway" 
-                        ? "bg-gradient-primary text-white" 
-                        : "text-muted-foreground"
-                    )}
-                    onClick={() => setTripType("oneway")}
-                  >
-                    One way
-                  </Button>
-                  <Button
-                    variant={tripType === "roundtrip" ? "default" : "ghost"}
-                    className={cn(
-                      "flex-1 text-sm",
-                      tripType === "roundtrip" 
-                        ? "bg-gradient-primary text-white" 
-                        : "text-muted-foreground"
-                    )}
-                    onClick={() => setTripType("roundtrip")}
-                  >
-                    Round Trip
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button
-                    variant={tripType === "pickup" ? "default" : "ghost"}
-                    className={cn(
-                      "flex-1 text-xs sm:text-sm",
-                      tripType === "pickup" 
-                        ? "bg-gradient-primary text-white" 
-                        : "text-muted-foreground"
-                    )}
-                    onClick={() => setTripType("pickup")}
-                  >
-                    Pick-up From Airport
-                  </Button>
-                  <Button
-                    variant={tripType === "drop" ? "default" : "ghost"}
-                    className={cn(
-                      "flex-1 text-xs sm:text-sm",
-                      tripType === "drop" 
-                        ? "bg-gradient-primary text-white" 
-                        : "text-muted-foreground"
-                    )}
-                    onClick={() => setTripType("drop")}
-                  >
-                    Drop To Airport
-                  </Button>
-                </>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Location Inputs */}
-        <div className="space-y-4 mb-6">
-          <GooglePlacesInput
-            placeholder="Pick-up location"
-            value={pickupLocation}
-            onChange={(value) => setPickupLocation(value)}
-            onPlaceSelect={handlePickupSelect}
-            icon="pickup"
-            showCurrentLocation={true}
-          />
-
-          {serviceType === "car_rental" ? (
-            <div className="relative">
-              <Clock className="absolute left-3 top-3 w-5 h-5 text-accent z-10" />
-              <Button
-                variant="outline"
-                className="w-full h-12 justify-start pl-10 glass-hover"
-                onClick={() => setShowHoursModal(true)}
-              >
-                {hours ? `${hours} hours` : "Select hours"}
-              </Button>
-            </div>
-          ) : (
-            <GooglePlacesInput
-              placeholder={
-                serviceType === "airport" && tripType === "drop" 
-                  ? "KIA (BLR)" 
-                  : "Drop-off location"
-              }
-              value={dropoffLocation}
-              onChange={(value) => setDropoffLocation(value)}
-              onPlaceSelect={handleDropoffSelect}
-              icon="dropoff"
-            />
-          )}
-        </div>
-
-        {/* Guest Selection */}
-        <div className="mb-6">
-          <Button
-            variant="outline"
-            className="w-full h-12 glass-hover justify-between"
-            onClick={() => setShowGuestModal(true)}
-          >
-            <div className="flex items-center gap-2">
-              <Users className="w-5 h-5 text-primary" />
-              <span>{passengers} Guest{passengers !== 1 ? 's' : ''}</span>
-            </div>
-            <ChevronRight className="w-4 h-4" />
-          </Button>
-        </div>
-
-        {/* Show Map and Route */}
-        {(pickupCoords || dropoffCoords) && (
-          <div className="mb-6">
-            <h3 className="text-sm font-medium text-foreground mb-2">Route Preview</h3>
-            <GoogleMaps
-              pickup={pickupCoords ? {
-                lat: pickupCoords.lat,
-                lng: pickupCoords.lng,
-                address: pickupCoords.address
-              } : undefined}
-              dropoff={dropoffCoords ? {
-                lat: dropoffCoords.lat,
-                lng: dropoffCoords.lng,
-                address: dropoffCoords.address
-              } : undefined}
-              height="250px"
-              onRouteUpdate={handleRouteUpdate}
-            />
-            {routeData && (
-              <div className="mt-2 flex gap-4 text-sm text-muted-foreground">
-                <span>Distance: {routeData.distance}</span>
-                <span>Duration: {routeData.duration}</span>
-              </div>
-            )}
-          </div>
-        )}
-      </Card>
-
-      {/* Vehicle Selection with Fare Display */}
-      {pickupLocation && (serviceType === "car_rental" ? hours : dropoffLocation) && (
+    <div className="w-full max-w-7xl mx-auto">
+      <div className="grid lg:grid-cols-2 gap-6">
+        {/* Booking Form */}
         <Card className="glass rounded-2xl p-6">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Choose Your Vehicle</h2>
-          
-          <div className="space-y-4">
-            {vehicleTypes.map((vehicle) => {
-              const fareCalculation = vehicle.type === "Sedan" ? sedanFare : 
-                                   vehicle.type === "SUV" ? suvFare : premiumFare;
-              
-              return (
-                <Card
-                  key={vehicle.type}
-                  className="glass-hover p-4 cursor-pointer transition-all duration-300 hover:scale-[1.01]"
-                  onClick={() => handleVehicleSelection(vehicle.type, fareCalculation.fareData)}
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold text-foreground mb-4">Book Your Ride</h2>
+            <div className="flex gap-2 p-1 glass rounded-lg overflow-x-auto scrollbar-hide">
+              {serviceTypes.map((service) => (
+                <Button
+                  key={service.id}
+                  variant={serviceType === service.id ? "default" : "ghost"}
+                  className={cn(
+                    "h-auto py-3 px-2 flex flex-col gap-2 text-xs transition-all duration-200 flex-shrink-0 min-w-[80px]",
+                    serviceType === service.id 
+                      ? "bg-gradient-primary text-white shadow-glow" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent/20"
+                  )}
+                  onClick={() => {
+                    setServiceType(service.id);
+                    if (service.id === "car_rental") {
+                      setDropoffLocation("");
+                      setDropoffCoords(null);
+                    } else {
+                      setHours("");
+                    }
+                  }}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 flex-1">
-                      <div className="p-3 rounded-lg bg-gradient-primary">
-                        <Car className="w-6 h-6 text-white" />
-                      </div>
-                      <div className="space-y-1">
-                        <h3 className="text-lg font-semibold text-foreground">{vehicle.type}</h3>
-                        <p className="text-sm text-muted-foreground">{vehicle.capacity}</p>
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <span>{vehicle.estimatedTime} arrival</span>
-                          {fareCalculation.fareData && (
-                            <span>• {fareCalculation.fareData.distance}</span>
+                  <service.icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="text-center leading-tight text-[10px] sm:text-xs whitespace-nowrap">{service.name}</span>
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Trip Type for Outstation and Airport */}
+          {(serviceType === "outstation" || serviceType === "airport") && (
+            <div className="mb-6">
+              <div className="flex gap-2 p-1 glass rounded-lg">
+                {serviceType === "outstation" ? (
+                  <>
+                    <Button
+                      variant={tripType === "oneway" ? "default" : "ghost"}
+                      className={cn(
+                        "flex-1 text-sm",
+                        tripType === "oneway" 
+                          ? "bg-gradient-primary text-white" 
+                          : "text-muted-foreground"
+                      )}
+                      onClick={() => setTripType("oneway")}
+                    >
+                      One way
+                    </Button>
+                    <Button
+                      variant={tripType === "roundtrip" ? "default" : "ghost"}
+                      className={cn(
+                        "flex-1 text-sm",
+                        tripType === "roundtrip" 
+                          ? "bg-gradient-primary text-white" 
+                          : "text-muted-foreground"
+                      )}
+                      onClick={() => setTripType("roundtrip")}
+                    >
+                      Round Trip
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Button
+                      variant={tripType === "pickup" ? "default" : "ghost"}
+                      className={cn(
+                        "flex-1 text-xs sm:text-sm",
+                        tripType === "pickup" 
+                          ? "bg-gradient-primary text-white" 
+                          : "text-muted-foreground"
+                      )}
+                      onClick={() => setTripType("pickup")}
+                    >
+                      Pick-up From Airport
+                    </Button>
+                    <Button
+                      variant={tripType === "drop" ? "default" : "ghost"}
+                      className={cn(
+                        "flex-1 text-xs sm:text-sm",
+                        tripType === "drop" 
+                          ? "bg-gradient-primary text-white" 
+                          : "text-muted-foreground"
+                      )}
+                      onClick={() => setTripType("drop")}
+                    >
+                      Drop To Airport
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Location Inputs */}
+          <div className="space-y-4 mb-6">
+            <GooglePlacesInput
+              placeholder="Pick-up location"
+              value={pickupLocation}
+              onChange={(value) => setPickupLocation(value)}
+              onPlaceSelect={handlePickupSelect}
+              icon="pickup"
+              showCurrentLocation={true}
+            />
+
+            {serviceType === "car_rental" ? (
+              <div className="relative">
+                <Clock className="absolute left-3 top-3 w-5 h-5 text-accent z-10" />
+                <Button
+                  variant="outline"
+                  className="w-full h-12 justify-start pl-10 glass-hover"
+                  onClick={() => setShowHoursModal(true)}
+                >
+                  {hours ? `${hours} hours` : "Select hours"}
+                </Button>
+              </div>
+            ) : (
+              <GooglePlacesInput
+                placeholder={
+                  serviceType === "airport" && tripType === "drop" 
+                    ? "KIA (BLR)" 
+                    : "Drop-off location"
+                }
+                value={dropoffLocation}
+                onChange={(value) => setDropoffLocation(value)}
+                onPlaceSelect={handleDropoffSelect}
+                icon="dropoff"
+              />
+            )}
+
+            {/* Date & Time Selection */}
+            <div className="grid grid-cols-2 gap-3">
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="h-12 justify-start glass-hover"
+                  >
+                    <CalendarIcon className="w-5 h-5 mr-3 text-primary" />
+                    {selectedDate ? format(selectedDate, "MMM dd") : "Select Date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={setSelectedDate}
+                    disabled={(date) => date < new Date()}
+                    initialFocus
+                    className="p-3 pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="h-12 justify-start glass-hover"
+                  >
+                    <Clock className="w-5 h-5 mr-3 text-accent" />
+                    {selectedTime || "Select Time"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-64 p-0" align="start">
+                  <div className="grid grid-cols-3 gap-1 p-4 max-h-60 overflow-y-auto">
+                    {[
+                      "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+                      "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
+                      "15:00", "15:30", "16:00", "16:30", "17:00", "17:30",
+                      "18:00", "18:30", "19:00", "19:30", "20:00", "20:30"
+                    ].map((time) => (
+                      <Button
+                        key={time}
+                        variant={selectedTime === time ? "default" : "ghost"}
+                        size="sm"
+                        className={cn(
+                          "text-sm",
+                          selectedTime === time ? "bg-gradient-primary" : ""
+                        )}
+                        onClick={() => setSelectedTime(time)}
+                      >
+                        {time}
+                      </Button>
+                    ))}
+                  </div>
+                </PopoverContent>
+              </Popover>
+            </div>
+          </div>
+
+          {/* Guest Selection */}
+          <div className="mb-6">
+            <Button
+              variant="outline"
+              className="w-full h-12 glass-hover justify-between"
+              onClick={() => setShowGuestModal(true)}
+            >
+              <div className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-primary" />
+                <span>{passengers} Guest{passengers !== 1 ? 's' : ''}</span>
+              </div>
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        </Card>
+
+        {/* Map & Route Display */}
+        <div className="space-y-6">
+          {(pickupCoords || dropoffCoords) && (
+            <Card className="glass rounded-2xl p-6">
+              <h3 className="text-lg font-semibold text-foreground mb-4">Route Preview</h3>
+              <GoogleMaps
+                pickup={pickupCoords ? {
+                  lat: pickupCoords.lat,
+                  lng: pickupCoords.lng,
+                  address: pickupCoords.address
+                } : undefined}
+                dropoff={dropoffCoords ? {
+                  lat: dropoffCoords.lat,
+                  lng: dropoffCoords.lng,
+                  address: dropoffCoords.address
+                } : undefined}
+                height="350px"
+                onRouteUpdate={handleRouteUpdate}
+              />
+              {routeData && (
+                <div className="mt-4 grid grid-cols-2 gap-4 text-sm">
+                  <div className="p-3 glass rounded-lg text-center">
+                    <p className="text-2xl font-bold text-primary">{routeData.distance}</p>
+                    <p className="text-muted-foreground">Distance</p>
+                  </div>
+                  <div className="p-3 glass rounded-lg text-center">
+                    <p className="text-2xl font-bold text-accent">{routeData.duration}</p>
+                    <p className="text-muted-foreground">Duration</p>
+                  </div>
+                </div>
+              )}
+            </Card>
+          )}
+
+          {/* Vehicle Selection with Fare Display */}
+          {pickupLocation && (serviceType === "car_rental" ? hours : dropoffLocation) && (
+            <Card className="glass rounded-2xl p-6">
+              <h2 className="text-lg font-semibold text-foreground mb-4">Choose Your Vehicle</h2>
+              
+              <div className="space-y-4">
+                {vehicleTypes.map((vehicle) => {
+                  const fareCalculation = vehicle.type === "Sedan" ? sedanFare : 
+                                       vehicle.type === "SUV" ? suvFare : premiumFare;
+                  
+                  return (
+                    <Card
+                      key={vehicle.type}
+                      className="glass-hover p-4 cursor-pointer transition-all duration-300 hover:scale-[1.01]"
+                      onClick={() => handleVehicleSelection(vehicle.type, fareCalculation.fareData)}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3 flex-1">
+                          <div className="p-3 rounded-lg bg-gradient-primary">
+                            <Car className="w-6 h-6 text-white" />
+                          </div>
+                          <div className="space-y-1">
+                            <h3 className="text-lg font-semibold text-foreground">{vehicle.type}</h3>
+                            <p className="text-sm text-muted-foreground">{vehicle.capacity}</p>
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                              <span>{vehicle.estimatedTime} arrival</span>
+                              {fareCalculation.fareData && (
+                                <span>• {fareCalculation.fareData.distance}</span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="text-right">
+                          {fareCalculation.isLoading ? (
+                            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                          ) : fareCalculation.fareData ? (
+                            <>
+                              <div className="text-2xl font-bold text-primary">
+                                ₹{fareCalculation.fareData.totalFare}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {fareCalculation.fareData.estimatedTime}
+                              </div>
+                            </>
+                          ) : (
+                            <div className="text-sm text-muted-foreground">
+                              Calculating...
+                            </div>
                           )}
                         </div>
                       </div>
-                    </div>
-                    
-                    <div className="text-right">
-                      {fareCalculation.isLoading ? (
-                        <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-                      ) : fareCalculation.fareData ? (
-                        <>
-                          <div className="text-2xl font-bold text-primary">
-                            ₹{fareCalculation.fareData.totalFare}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {fareCalculation.fareData.estimatedTime}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="text-sm text-muted-foreground">
-                          Calculating...
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
-          </div>
-        </Card>
-      )}
+                    </Card>
+                  );
+                })}
+              </div>
+            </Card>
+          )}
+        </div>
+      </div>
 
       {/* Modals */}
       <Dialog open={showGuestModal} onOpenChange={setShowGuestModal}>
