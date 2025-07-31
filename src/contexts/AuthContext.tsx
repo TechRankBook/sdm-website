@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { sendSMS, formatPhoneNumber, generateOTPMessage } from '@/utils/smsService';
 
 interface AuthContextType {
   user: User | null;
@@ -84,85 +85,131 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signInWithPhone = async (phone: string) => {
     try {
+      const formattedPhone = formatPhoneNumber(phone);
+      console.log('Attempting to send OTP to:', formattedPhone);
+      
       // Create phone verification
       const { data, error } = await supabase.rpc('create_phone_verification', {
-        p_phone_number: phone
+        p_phone_number: formattedPhone
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating phone verification:', error);
+        throw new Error(`Database error: ${error.message}`);
+      }
 
-      // In a real app, you would send SMS here
-      // For demo, we'll console log the OTP
-      console.log('OTP for', phone, ':', data[0]?.otp_code);
+      if (!data || data.length === 0) {
+        throw new Error('Failed to generate OTP - no data returned');
+      }
+
+      const otpCode = data[0]?.otp_code;
+      if (!otpCode) {
+        throw new Error('Failed to generate OTP - missing OTP code');
+      }
+
+      console.log('OTP generated successfully for', formattedPhone, ':', otpCode);
+      
+      // Send SMS with OTP
+      const smsMessage = generateOTPMessage(otpCode);
+      const smsResult = await sendSMS(formattedPhone, smsMessage);
+      
+      if (!smsResult.success) {
+        console.error('SMS sending failed:', smsResult.error);
+        // In production, you might want to still return success since OTP is generated
+        // but log the SMS failure for monitoring
+      }
       
       return { success: true };
     } catch (error: any) {
-      return { success: false, error: error.message };
+      console.error('signInWithPhone error:', error);
+      return { success: false, error: error.message || 'Failed to send OTP' };
     }
   };
 
   const verifyOTP = async (phone: string, otp: string) => {
     try {
+      const formattedPhone = formatPhoneNumber(phone);
+      console.log('Attempting to verify OTP for:', formattedPhone, 'with code:', otp);
+      
       // Verify OTP
       const { data: isValid, error } = await supabase.rpc('verify_phone_otp', {
-        p_phone_number: phone,
-        p_otp_code: otp
+        p_phone_number: formattedPhone,
+        p_otp_code: otp.trim()
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('OTP verification error:', error);
+        throw new Error(`Verification failed: ${error.message}`);
+      }
+      
       if (!isValid) {
-        return { success: false, error: 'Invalid or expired OTP' };
+        console.log('OTP verification failed: Invalid or expired code');
+        return { success: false, error: 'Invalid or expired OTP. Please check the code and try again.' };
       }
 
+      console.log('OTP verified successfully');
+
       // Check if user exists with this phone number
-      const { data: existingUser } = await supabase
+      const { data: existingUser, error: userError } = await supabase
         .from('users')
-        .select('id')
-        .eq('phone_no', phone)
+        .select('id, email')
+        .eq('phone_no', formattedPhone)
         .eq('phone_verified', true)
         .single();
 
+      if (userError && userError.code !== 'PGRST116') {
+        console.error('Error checking existing user:', userError);
+        throw new Error(`User lookup failed: ${userError.message}`);
+      }
+
       if (existingUser) {
-        // User exists, sign them in
-        // In a real app, you'd create a session here
-        // For now, we'll create a dummy user in auth.users
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: `${phone}@temp.com`,
-          password: 'temppassword123',
-          options: {
-            data: {
-              phone_number: phone,
-              phone_verified: true
-            }
-          }
+        console.log('Existing user found, signing in...');
+        // User exists, sign them in using their existing email
+        const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+          email: existingUser.email,
+          password: 'temppassword123' // In production, use proper session management
         });
 
-        if (authError) throw authError;
+        if (authError) {
+          console.error('Sign in error:', authError);
+          throw new Error(`Sign in failed: ${authError.message}`);
+        }
+        
         return { success: true };
       } else {
+        console.log('New user, creating account...');
         // New user, create account
+        const tempEmail = `${formattedPhone.replace(/\D/g, '')}@temp.sdmmobility.com`;
         const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: `${phone}@temp.com`,
+          email: tempEmail,
           password: 'temppassword123',
           options: {
             data: {
-              phone_number: phone,
+              phone_number: formattedPhone,
               phone_verified: false
             }
           }
         });
 
-        if (authError) throw authError;
+        if (authError) {
+          console.error('Sign up error:', authError);
+          throw new Error(`Account creation failed: ${authError.message}`);
+        }
 
         // Complete phone verification
         if (authData.user) {
-          await completePhoneVerification(phone);
+          console.log('Completing phone verification...');
+          const verificationResult = await completePhoneVerification(formattedPhone);
+          if (!verificationResult.success) {
+            throw new Error(verificationResult.error || 'Failed to complete verification');
+          }
         }
 
         return { success: true };
       }
     } catch (error: any) {
-      return { success: false, error: error.message };
+      console.error('verifyOTP error:', error);
+      return { success: false, error: error.message || 'Failed to verify OTP' };
     }
   };
 

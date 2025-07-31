@@ -46,12 +46,13 @@ const Auth = () => {
       setStep('otp');
       toast({
         title: "OTP Sent",
-        description: `Verification code sent to ${phoneNumber}. Check console for demo OTP.`,
+        description: `Verification code sent to ${phoneNumber}. For demo purposes, check browser console for the OTP code.`,
       });
     } else {
+      console.error('Failed to send OTP:', result.error);
       toast({
-        title: "Error",
-        description: result.error || "Failed to send OTP",
+        title: "Failed to Send OTP",
+        description: result.error || "Unable to send verification code. Please try again.",
         variant: "destructive"
       });
     }
@@ -74,14 +75,15 @@ const Auth = () => {
     
     if (result.success) {
       toast({
-        title: "Success",
-        description: "Phone number verified successfully!",
+        title: "Verification Successful",
+        description: "Welcome to SDM E-Mobility! You're now signed in.",
       });
       navigate('/');
     } else {
+      console.error('OTP verification failed:', result.error);
       toast({
-        title: "Invalid OTP",
-        description: result.error || "Please try again",
+        title: "Verification Failed",
+        description: result.error || "Invalid OTP code. Please check and try again.",
         variant: "destructive"
       });
     }
