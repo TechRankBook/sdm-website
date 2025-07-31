@@ -106,7 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setIsPhoneVerified(false);
           // Optionally, redirect to login page if user logs out
           if (event === 'SIGNED_OUT' && router.pathname !== '/login') {
-            navigate('/login'); // Adjust to your login route
+            navigate('/auth'); // Adjust to your login route
           }
         }
         setLoading(false); // Auth state change is complete
@@ -302,7 +302,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(null);
       setIsPhoneVerified(false);
       // Redirect to login page after successful sign out
-      navigate('/login'); // Adjust to your login route
+      navigate('/auth'); // Adjust to your login route
     } catch (error: any) {
       console.error('Sign out failed:', error);
       // Do not block sign out due to an error, but inform the user
