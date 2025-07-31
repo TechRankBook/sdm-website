@@ -167,7 +167,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // User exists, sign them in using their existing email
         const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
           email: existingUser.email,
-          password: 'temppassword123' // In production, use proper session management
+          password: '#@sdm2025' // In production, use proper session management
         });
 
         if (authError) {
