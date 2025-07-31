@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback } fr
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
 import { sendSMS, formatPhoneNumber, generateOTPMessage } from '@/utils/smsService'; // Ensure this is for client-side or mocked
-import { useRouter } from 'next/router'; // Assuming Next.js for router
+import { useNavigate } from 'react-router-dom';
 
 interface AuthContextType {
   user: User | null;
@@ -31,7 +31,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
-  const router = useRouter(); // Initialize useRouter for redirects
+   const navigate = useNavigate(); // Initialize useRouter for redirects
 
   // Memoize checkPhoneVerificationStatus to avoid unnecessary re-renders/re-creations
   const checkPhoneVerificationStatus = useCallback(async (userId: string) => {
@@ -106,7 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setIsPhoneVerified(false);
           // Optionally, redirect to login page if user logs out
           if (event === 'SIGNED_OUT' && router.pathname !== '/login') {
-            router.push('/login'); // Adjust to your login route
+            navigate('/login'); // Adjust to your login route
           }
         }
         setLoading(false); // Auth state change is complete
@@ -302,7 +302,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(null);
       setIsPhoneVerified(false);
       // Redirect to login page after successful sign out
-      router.push('/login'); // Adjust to your login route
+      navigate('/login'); // Adjust to your login route
     } catch (error: any) {
       console.error('Sign out failed:', error);
       // Do not block sign out due to an error, but inform the user
