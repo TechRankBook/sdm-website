@@ -167,7 +167,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // User exists, sign them in using their existing email
         const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
           email: existingUser.email,
-          password: '#@sdm2025' // In production, use proper session management
+          password: '#@Sdm2025' // In production, use proper session management
         });
 
         if (authError) {
@@ -182,7 +182,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const tempEmail = `${formattedPhone.replace(/\D/g, '')}@temp.sdmmobility.com`;
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: tempEmail,
-          password: 'temppassword123',
+          password: '#@Sdm2025',
           options: {
             data: {
               phone_number: formattedPhone,
