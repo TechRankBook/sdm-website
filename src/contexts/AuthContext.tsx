@@ -166,116 +166,73 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  384431const verifyOTP = async (phone: string, otp: string) => {
-    try {
-      const formattedPhone = formatPhoneNumber(phone);
-      console.log('Attempting to verify OTP for:', formattedPhone, 'with code:', otp);
-      
-      // Verify OTP (This part remains the same)
-      const { data: isValid, error } = await supabase.rpc('verify_phone_otp', {
-        p_phone_number: formattedPhone,
-        p_otp_code: otp.trim()
-      });
+  const verifyOTP = async (phone: string, otp: string) => {
+    setLoading(true);
+    try {
+      const formattedPhone = formatPhoneNumber(phone);
+      console.log('Attempting to verify OTP for:', formattedPhone, 'with code:', otp);
 
-      if (error) {
-        console.error('OTP verification error:', error);
-        throw new Error(`Verification failed: ${error.message}`);
-      }
-      
-      if (!isValid) {
-        console.log('OTP verification failed: Invalid or expired code');
-        return { success: false, error: 'Invalid or expired OTP. Please check the code and try again.' };
-      }
+      // Verify OTP via Supabase RPC
+      const { data: isValid, error: otpError } = await supabase.rpc('verify_phone_otp', {
+        p_phone_number: formattedPhone,
+        p_otp_code: otp.trim()
+      });
 
-      console.log('OTP verified successfully');
+      if (otpError) {
+        console.error('OTP verification RPC error:', otpError);
+        throw new Error(`OTP verification failed: ${otpError.message}`);
+      }
 
-      // Check if user exists with this phone number (This part also remains mostly the same)
-      const { data: existingUser, error: userError } = await supabase
-        .from('users')
-        .select('id, email')
-        .eq('phone_no', formattedPhone)
-        .eq('phone_verified', true)
-        .single();
+      if (!isValid) {
+        console.log('OTP verification failed: Invalid or expired code');
+        return { success: false, error: 'Invalid or expired OTP. Please check the code and try again.' };
+      }
 
-      if (userError && userError.code !== 'PGRST116') { // PGRST116 means "no rows found"
-        console.error('Error checking existing user:', userError);
-        throw new Error(`User lookup failed: ${userError.message}`);
-      }
+      console.log('OTP verified successfully');
 
-      if (existingUser) {
-        console.log('Existing user found, signing in...');
-        // **Important: For existing users, if they have an email, use signInWithOtp (magic link) or ask for password.**
-        // If you strictly want passwordless by phone, you might need a custom auth flow
-        // that directly issues a session based on the OTP verification.
-        // The `signInWithPassword` will only work if `existingUser.email` also has a real password.
-        // If this is meant to be a purely passwordless flow, you might need a server-side
-        // function (Edge Function) to mint a session after OTP verification.
-        // For now, let's assume `signInWithPassword` is suitable if the user actually set a password.
-        // If not, the current `signInWithPassword` will fail here too.
-        // A common pattern is to redirect to a "create password" page if they are existing but only logged in via OTP.
-        // Or, if truly passwordless, you'd use signInWithOtp:
-        const { error: signInError } = await supabase.auth.signInWithOtp({
-            email: existingUser.email,
-            options: {
-                shouldCreateUser: false, // Don't create if email exists
-            }
-        });
-        if (signInError) {
-            console.error('Sign in with OTP error:', signInError);
-            // This would mean sending an email magic link. Not ideal for phone-first.
-            // For a truly phone-first passwordless experience, consider a custom Supabase Edge Function
-            // that leverages the internal `auth.admin.signIn()` if the OTP is valid.
-            // For simplicity here, let's keep the user creation path robust.
-            throw new Error(`Sign in failed for existing user: ${signInError.message}`);
+      // Attempt to sign in or sign up using signInWithOtp (passwordless)
+      const { data: authResponse, error: authError } = await supabase.auth.signInWithOtp({
+        phone: formattedPhone,
+        options: {
+          shouldCreateUser: true, // Create user if not exists
+          data: {
+            phone_number: formattedPhone,
+            phone_verified: false // Will be set to true by completePhoneVerification
+          }
         }
-        return { success: true };
+      });
 
-      } else {
-        console.log('New user, creating account...');
-        // *** Crucial Change Here: Use signInWithOtp for phone/email instead of signUp with dummy password ***
-        // Supabase allows phone sign-in directly if you've enabled it.
-        // If not, you'd stick to email sign-up and then connect the phone.
-
-        const { data: authData, error: authError } = await supabase.auth.signInWithOtp({
-            phone: formattedPhone, // Use phone directly if phone sign-in is enabled in Supabase
-            // If phone sign-in is not enabled, you'd need to use email magic link,
-            // or perform a server-side call after OTP verification.
-            options: {
-                shouldCreateUser: true // Create user if phone/email doesn't exist
-            }
-        });
-
-        if (authError) {
-          console.error('Sign up/in error:', authError);
-          throw new Error(`Account creation/sign-in failed: ${authError.message}`);
-        }
-
-        // After successful signInWithOtp (which also logs in the user),
-        // complete phone verification if authData.user is available
-        if (authData.user) {
-          console.log('Completing phone verification...');
-          const verificationResult = await completePhoneVerification(formattedPhone);
-          if (!verificationResult.success) {
-            throw new Error(verificationResult.error || 'Failed to complete verification');
-          }
-        } else if (authData.session) {
-            // If user object isn't immediately available but session is,
-            // ensure state is updated or handle based on onAuthStateChange listener
-            // The onAuthStateChange listener should pick this up anyway.
-        } else {
-            // This might happen if signInWithOtp sends a link to an email/phone that
-            // needs to be clicked/verified separately, not immediately signing in.
-            // For phone OTP, typically it signs in immediately.
-            console.warn("signInWithOtp completed, but no user or session immediately available. User may need to complete action (e.g., email link).");
+      if (authError) {
+        console.error('Supabase signInWithOtp error:', authError);
+        // Handle specific errors like "User already exists with different sign-in method"
+        if (authError.message.includes('AuthApiError: User already registered')) {
+            return { success: false, error: 'This phone number is already associated with an account. Please sign in with your usual method.' };
         }
+        throw new Error(`Authentication failed: ${authError.message}`);
+      }
 
-        return { success: true };
-      }
-    } catch (error: any) {
-      console.error('verifyOTP error:', error);
-      return { success: false, error: error.message || 'Failed to verify OTP' };
-    }
-  };
+      if (authResponse.user) {
+        console.log('User signed in/signed up successfully, completing phone verification...');
+        const verificationResult = await completePhoneVerification(formattedPhone);
+        if (!verificationResult.success) {
+          throw new Error(verificationResult.error || 'Failed to complete phone verification in database.');
+        }
+      } else {
+        // This case might occur if Supabase sends an email confirmation or if the flow
+        // requires another step, but for phone OTP, a session is usually created immediately.
+        // Log a warning or handle as per your Supabase auth configuration.
+        console.warn('signInWithOtp completed, but no user object was immediately returned. Session might be pending.', authResponse);
+        // Consider if you need to fetch the session explicitly here or if onAuthStateChange handles it.
+      }
+
+      return { success: true };
+    } catch (error: any) {
+      console.error('verifyOTP error:', error);
+      return { success: false, error: error.message || 'Failed to verify OTP' };
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const signInWithGoogle = async () => {
     setLoading(true);
