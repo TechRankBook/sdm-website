@@ -36,20 +36,55 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     let mounted = true;
-    let authTimeout: NodeJS.Timeout;
+    let initTimeout: NodeJS.Timeout;
 
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (!mounted) return;
+
+        console.log('Auth state changed:', event, session?.user?.id);
+        
+        // Clear any timeouts since we got an auth event
+        if (initTimeout) {
+          clearTimeout(initTimeout);
+        }
+        
+        // Clear previous errors
+        setAuthError(null);
+        
+        if (event === 'SIGNED_OUT' || !session) {
+          setSession(session);
+          setUser(session?.user || null);
+          setIsPhoneVerified(false);
+          setLoading(false);
+          return;
+        }
+
+        if (session?.user) {
+          // Handle user session synchronously to avoid deadlocks
+          setSession(session);
+          setUser(session.user);
+          
+          // Defer database operations
+          setTimeout(() => {
+            if (mounted) {
+              handleUserSession(session).catch((error) => {
+                console.error('Error in deferred session handling:', error);
+                if (mounted) {
+                  setAuthError('Failed to verify user session');
+                  setLoading(false);
+                }
+              });
+            }
+          }, 0);
+        }
+      }
+    );
+
+    // THEN initialize auth
     const initializeAuth = async () => {
       try {
-        // Set a timeout to prevent infinite loading
-        authTimeout = setTimeout(() => {
-          if (mounted && loading) {
-            console.warn('Auth initialization timeout');
-            setAuthError('Authentication timeout. Please refresh the page.');
-            setLoading(false);
-          }
-        }, 8000); // 8 second timeout
-
-        // Get current session
         const { data: { session: currentSession }, error } = await supabase.auth.getSession();
         
         if (error) {
@@ -62,18 +97,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
 
         if (currentSession?.user && mounted) {
-          await handleUserSession(currentSession);
+          // Session exists, let the auth state change handler deal with it
+          // Just set loading to false here since handler will be called
+          setLoading(false);
         } else if (mounted) {
           // No session - user is not logged in
           setSession(null);
           setUser(null);
           setIsPhoneVerified(false);
           setLoading(false);
-        }
-
-        // Clear timeout if auth completed successfully
-        if (authTimeout) {
-          clearTimeout(authTimeout);
         }
       } catch (error) {
         console.error('Auth initialization error:', error);
@@ -84,44 +116,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
     };
 
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (!mounted) return;
-
-        console.log('Auth state changed:', event, session?.user?.id);
-        
-        try {
-          setAuthError(null); // Clear any previous errors
-          
-          if (event === 'SIGNED_OUT' || !session) {
-            setSession(null);
-            setUser(null);
-            setIsPhoneVerified(false);
-            setLoading(false);
-            return;
-          }
-
-          if (session?.user) {
-            await handleUserSession(session);
-          }
-        } catch (error) {
-          console.error('Error handling auth state change:', error);
-          if (mounted) {
-            setAuthError('Authentication state error');
-            setLoading(false);
-          }
-        }
+    // Set timeout for auth initialization
+    initTimeout = setTimeout(() => {
+      if (mounted && loading) {
+        console.warn('Auth initialization timeout - no auth events received');
+        setLoading(false);
       }
-    );
+    }, 5000); // Reduced to 5 seconds
 
-    // Initialize auth
     initializeAuth();
 
     return () => {
       mounted = false;
-      if (authTimeout) {
-        clearTimeout(authTimeout);
+      if (initTimeout) {
+        clearTimeout(initTimeout);
       }
       subscription.unsubscribe();
     };
@@ -129,9 +137,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const handleUserSession = async (session: Session) => {
     try {
-      setSession(session);
-      setUser(session.user);
-
       // Check if user exists in database and sync if necessary
       const userSyncResult = await ensureUserInDatabase(session.user);
       
@@ -173,6 +178,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           .from('users')
           .insert({
             id: user.id,
+            role: 'customer',
             email: user.email,
             phone_no: user.phone || null,
             phone_verified: user.phone_confirmed_at ? true : false,
