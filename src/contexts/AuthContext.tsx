@@ -482,7 +482,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setAuthError(null);
       await supabase.auth.signOut();
-      setIsPhoneVerified(false);
     } catch (error) {
       console.error('Sign out error:', error);
       // Force reset state even if signOut fails
