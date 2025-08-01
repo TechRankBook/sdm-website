@@ -226,27 +226,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const checkPhoneVerificationStatus = async (user: User) => {
     try {
-      // Check if user has a verified phone in Supabase Auth
+      // First, always check our custom users table for verification status
+      const { data, error } = await supabase
+        .from('users')
+        .select('phone_verified, phone_no')
+        .eq('id', user.id)
+        .single();
+      
+      if (!error && data) {
+        // If user has already verified phone in our database, use that status
+        if (data.phone_verified) {
+          setIsPhoneVerified(true);
+          return;
+        }
+      }
+      
+      // If not verified in our database, check Supabase Auth for phone confirmation
       const hasVerifiedPhone = user.phone && user.phone_confirmed_at;
       
       if (hasVerifiedPhone) {
         setIsPhoneVerified(true);
-        // Ensure our users table is in sync
+        // Sync the verification status to our users table
         await updateUserPhoneStatus(user.id, user.phone!, true);
       } else {
-        // Check our custom users table
-        const { data, error } = await supabase
-          .from('users')
-          .select('phone_verified, phone_no')
-          .eq('id', user.id)
-          .single();
-        
-        if (!error && data) {
-          setIsPhoneVerified(data.phone_verified || false);
-        } else {
-          console.error('Error checking phone verification status:', error);
-          setIsPhoneVerified(false);
-        }
+        // No phone verification found anywhere
+        setIsPhoneVerified(false);
       }
     } catch (error) {
       console.error('Error checking phone verification status:', error);
