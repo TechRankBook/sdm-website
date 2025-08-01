@@ -25,7 +25,12 @@ import {
   Route,
   Clock,
   FileText,
-  LogOut
+  LogOut,
+  Home,
+  Smartphone,
+  Workflow,
+  CarTaxiFront
+
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -84,25 +89,29 @@ export const Header = ({ isDarkMode, toggleDarkMode }: HeaderProps) => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="glass">
+                <DropdownMenuItem onClick={() => handleNavigation('/')}>
+                  <Home className="w-4 h-4 mr-2" />
+                  Home
+                </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleNavigation('/about')}>
                   <Info className="w-4 h-4 mr-2" />
                   About
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleNavigation('/services')}>
-                  <Wrench className="w-4 h-4 mr-2" />
+                  <CarTaxiFront className="w-4 h-4 mr-2" />
                   Services
+                </DropdownMenuItem>
+                {/* <DropdownMenuItem onClick={() => handleNavigation('/how-it-works')}>
+                  <Workflow className="w-4 h-4 mr-2" />
+                  How It Works
+                </DropdownMenuItem> */}
+                <DropdownMenuItem onClick={() => handleNavigation('/mobile-app')}>
+                  <Smartphone className="w-4 h-4 mr-2" />
+                  Mobile App
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleNavigation('/fleet')}>
                   <Car className="w-4 h-4 mr-2" />
                   Fleet
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleNavigation('/how-it-works')}>
-                  <Route className="w-4 h-4 mr-2" />
-                  How It Works
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => handleNavigation('/mobile-app')}>
-                  <Phone className="w-4 h-4 mr-2" />
-                  Mobile App
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => handleNavigation('/contact')}>
                   <Phone className="w-4 h-4 mr-2" />
@@ -176,6 +185,14 @@ export const Header = ({ isDarkMode, toggleDarkMode }: HeaderProps) => {
                 variant="ghost" 
                 className="justify-start"
               >
+                <Home className="w-4 h-4 mr-2" />
+                Home
+              </Button>
+              <Button 
+                onClick={() => handleNavigation('/about')}
+                variant="ghost" 
+                className="justify-start"
+              >
                 <Info className="w-4 h-4 mr-2" />
                 About
               </Button>
@@ -184,7 +201,7 @@ export const Header = ({ isDarkMode, toggleDarkMode }: HeaderProps) => {
                 variant="ghost" 
                 className="justify-start"
               >
-                <Wrench className="w-4 h-4 mr-2" />
+                <CarTaxiFront className="w-4 h-4 mr-2" />
                 Services
               </Button>
               <Button 
@@ -195,14 +212,14 @@ export const Header = ({ isDarkMode, toggleDarkMode }: HeaderProps) => {
                 <Car className="w-4 h-4 mr-2" />
                 Fleet
               </Button>
-              <Button 
+              {/* <Button 
                 onClick={() => handleNavigation('/how-it-works')}
                 variant="ghost" 
                 className="justify-start"
               >
                 <Route className="w-4 h-4 mr-2" />
                 How It Works
-              </Button>
+              </Button> */}
               <Button 
                 onClick={() => handleNavigation('/mobile-app')}
                 variant="ghost" 

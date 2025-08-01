@@ -235,7 +235,7 @@ const About = () => {
             </div>
           </div>
 
-          {/* Achievements */}
+          {/* Achievements
           <Card className="glass p-8 mb-16">
             <h2 className="text-3xl font-bold text-center mb-8">Awards & Recognition</h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -246,7 +246,7 @@ const About = () => {
                 </div>
               ))}
             </div>
-          </Card>
+          </Card> */}
 
           {/* Environmental Impact */}
           <Card className="glass p-8 mb-16">

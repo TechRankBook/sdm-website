@@ -26,7 +26,8 @@ import {
   Luggage,
   Zap,
   MapPin,
-  Navigation2
+  Navigation2,
+  TimerReset
 } from "lucide-react";
 import { BookingData } from "@/pages/Booking";
 
@@ -72,7 +73,7 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
     { id: "city_ride", name: "CityRide", icon: Car },
     { id: "airport", name: "Airport Taxi", icon: Plane },
     { id: "outstation", name: "Outstation", icon: Route },
-    { id: "car_rental", name: "Hourly Rentals", icon: RotateCcw }
+    { id: "car_rental", name: "Hourly Rentals", icon: TimerReset }
   ];
 
   const vehicleTypes = [
