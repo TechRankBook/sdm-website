@@ -8,13 +8,20 @@ import { useAuth } from '@/contexts/AuthContext';
 import { toast } from '@/hooks/use-toast';
 import { Phone, Shield, Chrome } from 'lucide-react';
 
-
 const Auth = () => {
-  const [step, setStep] = useState<'phone' | 'otp' | 'phone-verify'>('phone');
+  const [step, setStep] = useState<'phone' | 'otp' | 'google-phone-verify' | 'google-phone-otp'>('phone');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signInWithPhone, verifyOTP, signInWithGoogle, user, isPhoneVerified } = useAuth();
+  const { 
+    signInWithPhone, 
+    verifyPhoneOTP, 
+    signInWithGoogle, 
+    user, 
+    isPhoneVerified,
+    sendPhoneVerification,
+    verifyPhoneForGoogleUser
+  } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -24,7 +31,7 @@ const Auth = () => {
     }
     // If user is authenticated but phone not verified, show phone verification step
     else if (user && !isPhoneVerified) {
-      setStep('phone-verify');
+      setStep('google-phone-verify');
     }
   }, [user, isPhoneVerified, navigate]);
 
@@ -46,7 +53,7 @@ const Auth = () => {
       setStep('otp');
       toast({
         title: "OTP Sent",
-        description: `Verification code sent to ${phoneNumber}. For demo purposes, check browser console for the OTP code.`,
+        description: `Verification code sent to ${phoneNumber}`,
       });
     } else {
       console.error('Failed to send OTP:', result.error);
@@ -71,7 +78,7 @@ const Auth = () => {
     }
 
     setLoading(true);
-    const result = await verifyOTP(phoneNumber, otp);
+    const result = await verifyPhoneOTP(phoneNumber, otp);
     
     if (result.success) {
       toast({
@@ -105,6 +112,71 @@ const Auth = () => {
     // Loading will be handled by auth state change
   };
 
+  // For Google users to send phone verification
+  const handleGooglePhoneVerification = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!phoneNumber || phoneNumber.length < 10) {
+      toast({
+        title: "Invalid Phone Number",
+        description: "Please enter a valid phone number",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+    const result = await sendPhoneVerification(phoneNumber);
+    
+    if (result.success) {
+      setStep('google-phone-otp');
+      toast({
+        title: "Verification Code Sent",
+        description: `Verification code sent to ${phoneNumber}`,
+      });
+    } else {
+      console.error('Failed to send verification code:', result.error);
+      toast({
+        title: "Failed to Send Code",
+        description: result.error || "Unable to send verification code. Please try again.",
+        variant: "destructive"
+      });
+    }
+    setLoading(false);
+  };
+
+  // For Google users to verify phone OTP
+  const handleGooglePhoneOTPVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otp || otp.length !== 6) {
+      toast({
+        title: "Invalid OTP",
+        description: "Please enter the 6-digit OTP",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setLoading(true);
+    const result = await verifyPhoneForGoogleUser(phoneNumber, otp);
+    
+    if (result.success) {
+      toast({
+        title: "Phone Verified Successfully",
+        description: "Your phone number has been verified. Welcome to SDM E-Mobility!",
+      });
+      navigate('/');
+    } else {
+      console.error('Phone verification failed:', result.error);
+      toast({
+        title: "Verification Failed",
+        description: result.error || "Invalid OTP code. Please check and try again.",
+        variant: "destructive"
+      });
+    }
+    setLoading(false);
+  };
+
+  // Phone number entry step
   if (step === 'phone') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary/20 p-4">
@@ -112,10 +184,10 @@ const Auth = () => {
           <CardHeader className="text-center">
             <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
               <img 
-              src="/logo1.png" 
-              alt="SDM E-Mobility" 
-              className="h-10 w-auto cursor-pointer"
-            />
+                src="/logo1.png" 
+                alt="SDM E-Mobility" 
+                className="h-10 w-auto cursor-pointer"
+              />
             </div>
             <CardTitle>Welcome to SDM E-Mobility</CardTitle>
             <CardDescription>
@@ -162,6 +234,7 @@ const Auth = () => {
     );
   }
 
+  // Phone OTP verification step
   if (step === 'otp') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary/20 p-4">
@@ -209,7 +282,8 @@ const Auth = () => {
     );
   }
 
-  if (step === 'phone-verify') {
+  // Google user phone verification step
+  if (step === 'google-phone-verify') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary/20 p-4">
         <Card className="w-full max-w-md">
@@ -223,7 +297,7 @@ const Auth = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <form onSubmit={handlePhoneSubmit} className="space-y-4">
+            <form onSubmit={handleGooglePhoneVerification} className="space-y-4">
               <div>
                 <Input
                   type="tel"
@@ -234,9 +308,57 @@ const Auth = () => {
                 />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Sending OTP..." : "Send Verification Code"}
+                {loading ? "Sending Code..." : "Send Verification Code"}
               </Button>
             </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Google user phone OTP verification step
+  if (step === 'google-phone-otp') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary/20 p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mb-4">
+              <Shield className="w-6 h-6 text-primary" />
+            </div>
+            <CardTitle>Verify Your Phone</CardTitle>
+            <CardDescription>
+              Enter the 6-digit code sent to {phoneNumber}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <form onSubmit={handleGooglePhoneOTPVerify} className="space-y-6">
+              <div className="flex justify-center">
+                <InputOTP value={otp} onChange={setOtp} maxLength={6}>
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} />
+                    <InputOTPSlot index={1} />
+                    <InputOTPSlot index={2} />
+                    <InputOTPSlot index={3} />
+                    <InputOTPSlot index={4} />
+                    <InputOTPSlot index={5} />
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Verifying..." : "Verify Phone Number"}
+              </Button>
+            </form>
+
+            <div className="text-center">
+              <Button
+                variant="ghost"
+                onClick={() => setStep('google-phone-verify')}
+                className="text-sm text-muted-foreground"
+              >
+                Change phone number
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
