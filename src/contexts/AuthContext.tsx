@@ -481,13 +481,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signOut = async () => {
     try {
       setAuthError(null);
-      await supabase.auth.signOut();
-    } catch (error) {
-      console.error('Sign out error:', error);
-      // Force reset state even if signOut fails
+      setLoading(true);
+      
+      // First update local state immediately
       setSession(null);
       setUser(null);
       setIsPhoneVerified(false);
+      
+      // Then call signOut (this will trigger auth state change)
+      const { error } = await supabase.auth.signOut();
+      
+      if (error) {
+        console.error('Sign out error:', error);
+        // Don't throw here, just log - state is already cleared
+      }
+      
+      console.log('Sign out successful');
+    } catch (error) {
+      console.error('Sign out error:', error);
+      // State is already cleared above
+    } finally {
+      setLoading(false);
     }
   };
 

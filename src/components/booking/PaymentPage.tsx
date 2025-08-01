@@ -77,13 +77,18 @@ export const PaymentPage = ({ bookingData, onNext, onBack }: PaymentPageProps) =
           fare_amount: bookingData.selectedFare.price,
           status: 'pending',
           payment_status: 'pending',
-          scheduled_time: bookingData.scheduledDateTime,
-          ride_type: bookingData.serviceType as any,
+          scheduled_time: bookingData.scheduledDateTime || null,
+          service_type_id: null, // Will be set based on actual service types
+          rental_package_id: null,
+          zone_pricing_id: null,
+          is_scheduled: bookingData.scheduledDateTime ? true : false,
         })
         .select()
         .single();
 
       if (bookingError) throw bookingError;
+
+      console.log('Booking created:', booking);
 
       // Create Stripe checkout session
       const { data, error } = await supabase.functions.invoke('create-checkout-session', {
@@ -93,6 +98,8 @@ export const PaymentPage = ({ bookingData, onNext, onBack }: PaymentPageProps) =
         },
       });
 
+      console.log('Stripe session response:', { data, error });
+
       if (error) throw error;
 
       // Redirect to Stripe checkout
@@ -101,11 +108,11 @@ export const PaymentPage = ({ bookingData, onNext, onBack }: PaymentPageProps) =
       } else {
         throw new Error('No checkout URL received');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Payment error:', error);
       toast({
         title: "Payment Error",
-        description: error.message || "Failed to process payment. Please try again.",
+        description: error?.message || "Failed to process payment. Please try again.",
         variant: "destructive",
       });
     } finally {
