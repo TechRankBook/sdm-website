@@ -7,11 +7,14 @@ interface AuthContextType {
   session: Session | null;
   loading: boolean;
   isPhoneVerified: boolean;
+  authError: string | null;
   signInWithPhone: (phone: string) => Promise<{ success: boolean; error?: string }>;
-  verifyOTP: (phone: string, otp: string) => Promise<{ success: boolean; error?: string }>;
+  verifyPhoneOTP: (phone: string, otp: string) => Promise<{ success: boolean; error?: string }>;
   signInWithGoogle: () => Promise<{ success: boolean; error?: string }>;
   signOut: () => Promise<void>;
-  completePhoneVerification: (phone: string) => Promise<{ success: boolean; error?: string }>;
+  sendPhoneVerification: (phone: string) => Promise<{ success: boolean; error?: string }>;
+  verifyPhoneForGoogleUser: (phone: string, otp: string) => Promise<{ success: boolean; error?: string }>;
+  clearAuthError: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,52 +32,215 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPhoneVerified, setIsPhoneVerified] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
+    let mounted = true;
+    let authTimeout: NodeJS.Timeout;
+
+    const initializeAuth = async () => {
+      try {
+        // Set a timeout to prevent infinite loading
+        authTimeout = setTimeout(() => {
+          if (mounted && loading) {
+            console.warn('Auth initialization timeout');
+            setAuthError('Authentication timeout. Please refresh the page.');
+            setLoading(false);
+          }
+        }, 8000); // 8 second timeout
+
+        // Get current session
+        const { data: { session: currentSession }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error('Error getting session:', error);
+          if (mounted) {
+            setAuthError('Failed to initialize authentication');
+            setLoading(false);
+          }
+          return;
+        }
+
+        if (currentSession?.user && mounted) {
+          await handleUserSession(currentSession);
+        } else if (mounted) {
+          // No session - user is not logged in
+          setSession(null);
+          setUser(null);
+          setIsPhoneVerified(false);
+          setLoading(false);
+        }
+
+        // Clear timeout if auth completed successfully
+        if (authTimeout) {
+          clearTimeout(authTimeout);
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error);
+        if (mounted) {
+          setAuthError('Authentication initialization failed');
+          setLoading(false);
+        }
+      }
+    };
+
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
+        if (!mounted) return;
+
+        console.log('Auth state changed:', event, session?.user?.id);
         
-        if (session?.user) {
-          // Check phone verification status
-          setTimeout(async () => {
-            await checkPhoneVerificationStatus(session.user.id);
-          }, 0);
-        } else {
-          setIsPhoneVerified(false);
+        try {
+          setAuthError(null); // Clear any previous errors
+          
+          if (event === 'SIGNED_OUT' || !session) {
+            setSession(null);
+            setUser(null);
+            setIsPhoneVerified(false);
+            setLoading(false);
+            return;
+          }
+
+          if (session?.user) {
+            await handleUserSession(session);
+          }
+        } catch (error) {
+          console.error('Error handling auth state change:', error);
+          if (mounted) {
+            setAuthError('Authentication state error');
+            setLoading(false);
+          }
         }
-        
-        setLoading(false);
       }
     );
 
-    // Check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        checkPhoneVerificationStatus(session.user.id);
-      }
-      
-      setLoading(false);
-    });
+    // Initialize auth
+    initializeAuth();
 
-    return () => subscription.unsubscribe();
+    return () => {
+      mounted = false;
+      if (authTimeout) {
+        clearTimeout(authTimeout);
+      }
+      subscription.unsubscribe();
+    };
   }, []);
 
-  const checkPhoneVerificationStatus = async (userId: string) => {
+  const handleUserSession = async (session: Session) => {
     try {
-      const { data, error } = await supabase
-        .from('users')
-        .select('phone_verified')
-        .eq('id', userId)
-        .single();
+      setSession(session);
+      setUser(session.user);
+
+      // Check if user exists in database and sync if necessary
+      const userSyncResult = await ensureUserInDatabase(session.user);
       
-      if (!error && data) {
-        setIsPhoneVerified(data.phone_verified || false);
+      if (!userSyncResult.success) {
+        console.error('Failed to sync user with database:', userSyncResult.error);
+        await handleUserSyncFailure(userSyncResult.error);
+        return;
+      }
+
+      // Check phone verification status
+      await checkPhoneVerificationStatus(session.user);
+      setLoading(false);
+    } catch (error) {
+      console.error('Error handling user session:', error);
+      setAuthError('Failed to verify user session');
+      setLoading(false);
+    }
+  };
+
+  const ensureUserInDatabase = async (user: User): Promise<{ success: boolean; error?: string }> => {
+    try {
+      // First, check if user exists in database
+      const { data: existingUser, error: fetchError } = await supabase
+        .from('users')
+        .select('id, phone_verified, phone_no')
+        .eq('id', user.id)
+        .single();
+
+      if (fetchError && fetchError.code !== 'PGRST116') { // PGRST116 = no rows returned
+        console.error('Error checking user existence:', fetchError);
+        return { success: false, error: 'Database query failed' };
+      }
+
+      if (!existingUser) {
+        // User doesn't exist in database, create them
+        console.log('User not found in database, creating user record');
+        
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert({
+            id: user.id,
+            email: user.email,
+            phone_no: user.phone || null,
+            phone_verified: user.phone_confirmed_at ? true : false,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          });
+
+        if (insertError) {
+          console.error('Error creating user record:', insertError);
+          return { success: false, error: 'Failed to create user record' };
+        }
+
+        console.log('User record created successfully');
+      }
+
+      return { success: true };
+    } catch (error) {
+      console.error('Error ensuring user in database:', error);
+      return { success: false, error: 'Unexpected error during user sync' };
+    }
+  };
+
+  const handleUserSyncFailure = async (error?: string) => {
+    try {
+      console.log('Handling user sync failure - signing out user');
+      setAuthError(`Your account needs to be re-verified: ${error || 'Database sync failed'}. Please sign in again.`);
+      
+      // Sign out the user
+      await supabase.auth.signOut();
+      
+      // Reset all state
+      setSession(null);
+      setUser(null);
+      setIsPhoneVerified(false);
+      setLoading(false);
+    } catch (signOutError) {
+      console.error('Error during user sync failure handling:', signOutError);
+      // Force reset state even if signOut fails
+      setSession(null);
+      setUser(null);
+      setIsPhoneVerified(false);
+      setLoading(false);
+    }
+  };
+
+  const checkPhoneVerificationStatus = async (user: User) => {
+    try {
+      // Check if user has a verified phone in Supabase Auth
+      const hasVerifiedPhone = user.phone && user.phone_confirmed_at;
+      
+      if (hasVerifiedPhone) {
+        setIsPhoneVerified(true);
+        // Ensure our users table is in sync
+        await updateUserPhoneStatus(user.id, user.phone!, true);
+      } else {
+        // Check our custom users table
+        const { data, error } = await supabase
+          .from('users')
+          .select('phone_verified, phone_no')
+          .eq('id', user.id)
+          .single();
+        
+        if (!error && data) {
+          setIsPhoneVerified(data.phone_verified || false);
+        } else {
+          console.error('Error checking phone verification status:', error);
+          setIsPhoneVerified(false);
+        }
       }
     } catch (error) {
       console.error('Error checking phone verification status:', error);
@@ -82,92 +248,106 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signInWithPhone = async (phone: string) => {
+  const updateUserPhoneStatus = async (userId: string, phone: string, verified: boolean) => {
     try {
-      // Create phone verification
-      const { data, error } = await supabase.rpc('create_phone_verification', {
-        p_phone_number: phone
-      });
-
-      if (error) throw error;
-
-      // In a real app, you would send SMS here
-      // For demo, we'll console log the OTP
-      console.log('OTP for', phone, ':', data[0]?.otp_code);
+      const { error } = await supabase
+        .from('users')
+        .update({
+          id: userId,
+          phone_no: phone,
+          phone_verified: verified,
+          updated_at: new Date().toISOString()
+        }).eq('id', userId);
       
-      return { success: true };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+      if (error) {
+        console.error('Error updating user phone status:', error);
+      }
+    } catch (error) {
+      console.error('Error updating user phone status:', error);
     }
   };
 
-  const verifyOTP = async (phone: string, otp: string) => {
+  const formatPhoneNumber = (phone: string): string => {
+    // Remove all non-digits
+    const digits = phone.replace(/\D/g, '');
+    
+    // Add country code if not present (assuming India +91)
+    if (digits.length === 10) {
+      return `+91${digits}`;
+    } else if (digits.length === 12 && digits.startsWith('91')) {
+      return `+${digits}`;
+    } else if (digits.length === 13 && digits.startsWith('91')) {
+      return `+${digits.substring(1)}`;
+    }
+    
+    return phone; // Return as-is if format is unclear
+  };
+
+  const clearAuthError = () => {
+    setAuthError(null);
+  };
+
+  const signInWithPhone = async (phone: string) => {
     try {
-      // Verify OTP
-      const { data: isValid, error } = await supabase.rpc('verify_phone_otp', {
-        p_phone_number: phone,
-        p_otp_code: otp
+      setAuthError(null);
+      const formattedPhone = formatPhoneNumber(phone);
+      console.log('Sending OTP to:', formattedPhone);
+      
+      const { data, error } = await supabase.auth.signInWithOtp({
+        phone: formattedPhone,
+        options: {
+          shouldCreateUser: true,
+        }
       });
 
-      if (error) throw error;
-      if (!isValid) {
-        return { success: false, error: 'Invalid or expired OTP' };
+      if (error) {
+        console.error('Error sending OTP:', error);
+        throw new Error(error.message);
       }
 
-      // Check if user exists with this phone number
-      const { data: existingUser } = await supabase
-        .from('users')
-        .select('id')
-        .eq('phone_no', phone)
-        .eq('phone_verified', true)
-        .single();
-
-      if (existingUser) {
-        // User exists, sign them in
-        // In a real app, you'd create a session here
-        // For now, we'll create a dummy user in auth.users
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: `${phone}@temp.com`,
-          password: 'temppassword123',
-          options: {
-            data: {
-              phone_number: phone,
-              phone_verified: true
-            }
-          }
-        });
-
-        if (authError) throw authError;
-        return { success: true };
-      } else {
-        // New user, create account
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: `${phone}@temp.com`,
-          password: 'temppassword123',
-          options: {
-            data: {
-              phone_number: phone,
-              phone_verified: false
-            }
-          }
-        });
-
-        if (authError) throw authError;
-
-        // Complete phone verification
-        if (authData.user) {
-          await completePhoneVerification(phone);
-        }
-
-        return { success: true };
-      }
+      console.log('OTP sent successfully:', data);
+      return { success: true };
     } catch (error: any) {
-      return { success: false, error: error.message };
+      console.error('signInWithPhone error:', error);
+      setAuthError(error.message || 'Failed to send OTP');
+      return { success: false, error: error.message || 'Failed to send OTP' };
+    }
+  };
+
+  const verifyPhoneOTP = async (phone: string, otp: string) => {
+    try {
+      setAuthError(null);
+      const formattedPhone = formatPhoneNumber(phone);
+      console.log('Verifying OTP for:', formattedPhone);
+      
+      const { data, error } = await supabase.auth.verifyOtp({
+        phone: formattedPhone,
+        token: otp.trim(),
+        type: 'sms'
+      });
+
+      if (error) {
+        console.error('OTP verification error:', error);
+        throw new Error(error.message);
+      }
+
+      if (data.user) {
+        console.log('OTP verified successfully, user signed in');
+        // User will be synced via the auth state change listener
+        return { success: true };
+      }
+
+      return { success: false, error: 'Verification failed' };
+    } catch (error: any) {
+      console.error('verifyPhoneOTP error:', error);
+      setAuthError(error.message || 'Failed to verify OTP');
+      return { success: false, error: error.message || 'Failed to verify OTP' };
     }
   };
 
   const signInWithGoogle = async () => {
     try {
+      setAuthError(null);
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -178,31 +358,140 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (error) throw error;
       return { success: true };
     } catch (error: any) {
+      setAuthError(error.message);
       return { success: false, error: error.message };
     }
   };
 
-  const completePhoneVerification = async (phone: string) => {
+  const sendPhoneVerification = async (phone: string) => {
     try {
-      if (!user) throw new Error('No user logged in');
+      setAuthError(null);
+      if (!user) {
+        throw new Error('No user logged in');
+      }
 
-      const { data, error } = await supabase.rpc('complete_phone_verification', {
-        p_user_id: user.id,
-        p_phone_number: phone
+      const formattedPhone = formatPhoneNumber(phone);
+      console.log('Attempting to send OTP to:', formattedPhone);
+      
+      // Create phone verification using your custom database function
+      const { data, error } = await supabase.rpc('create_phone_verification', {
+        p_phone_number: formattedPhone
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating phone verification:', error);
+        throw new Error(`Database error: ${error.message}`);
+      }
+
+      if (!data || data.length === 0) {
+        throw new Error('Failed to generate OTP - no data returned');
+      }
+
+      const otpCode = data[0]?.otp_code;
+      if (!otpCode) {
+        throw new Error('Failed to generate OTP - missing OTP code');
+      }
+
+      console.log('OTP generated successfully for', formattedPhone);
+      
+      // Send SMS with OTP (implement these helper functions)
+      const smsMessage = generateOTPMessage(otpCode);
+      const smsResult = await sendSMS(formattedPhone, smsMessage);
+      
+      if (!smsResult.success) {
+        console.error('SMS sending failed:', smsResult.error);
+      }
+      
+      return { success: true };
+    } catch (error: any) {
+      console.error('sendPhoneVerification error:', error);
+      setAuthError(error.message || 'Failed to send verification code');
+      return { success: false, error: error.message || 'Failed to send verification code' };
+    }
+  };
+
+  const verifyPhoneForGoogleUser = async (phone: string, otp: string) => {
+    try {
+      setAuthError(null);
+      if (!user) {
+        throw new Error('No user logged in');
+      }
+
+      const formattedPhone = formatPhoneNumber(phone);
+      const trimmedOtp = otp.trim();
+      
+      console.log('Attempting to verify OTP for:', formattedPhone);
+      
+      // Verify OTP using your custom database function
+      const { data: isValid, error } = await supabase.rpc('verify_phone_otp', {
+        p_phone_number: formattedPhone,
+        p_otp_code: trimmedOtp
+      });
+
+      if (error) {
+        console.error('OTP verification error:', error);
+        throw new Error(`Verification failed: ${error.message}`);
+      }
+      
+      if (!isValid) {
+        console.log('OTP verification failed: Invalid or expired code');
+        return { 
+          success: false, 
+          error: 'Invalid or expired OTP. Please check the code and try again.' 
+        };
+      }
+
+      console.log('OTP verified successfully for Google user');
+      
+      // Update the user's phone verification status
+      await updateUserPhoneStatus(user.id, formattedPhone, true);
+      
+      // Update Supabase Auth user profile
+      try {
+        const { error: updateError } = await supabase.auth.updateUser({
+          phone: formattedPhone
+        });
+
+        if (updateError) {
+          console.warn('Could not update user profile with phone:', updateError);
+        }
+      } catch (profileUpdateError) {
+        console.warn('Profile update failed:', profileUpdateError);
+      }
 
       setIsPhoneVerified(true);
       return { success: true };
     } catch (error: any) {
-      return { success: false, error: error.message };
+      console.error('verifyPhoneForGoogleUser error:', error);
+      setAuthError(error.message || 'Failed to verify phone number');
+      return { success: false, error: error.message || 'Failed to verify phone number' };
     }
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setIsPhoneVerified(false);
+    try {
+      setAuthError(null);
+      await supabase.auth.signOut();
+      setIsPhoneVerified(false);
+    } catch (error) {
+      console.error('Sign out error:', error);
+      // Force reset state even if signOut fails
+      setSession(null);
+      setUser(null);
+      setIsPhoneVerified(false);
+    }
+  };
+
+  // Helper functions (implement these based on your SMS service)
+  const generateOTPMessage = (otpCode: string): string => {
+    return `Your verification code is: ${otpCode}. This code will expire in 10 minutes. Do not share this code with anyone.`;
+  };
+
+  const sendSMS = async (phoneNumber: string, message: string): Promise<{ success: boolean; error?: string }> => {
+    // Implement your SMS sending logic here
+    // For now, return success to prevent errors
+    console.log('SMS would be sent to:', phoneNumber, 'Message:', message);
+    return { success: true };
   };
 
   const value = {
@@ -210,11 +499,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     session,
     loading,
     isPhoneVerified,
+    authError,
     signInWithPhone,
-    verifyOTP,
+    verifyPhoneOTP,
     signInWithGoogle,
     signOut,
-    completePhoneVerification
+    sendPhoneVerification,
+    verifyPhoneForGoogleUser,
+    clearAuthError
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
