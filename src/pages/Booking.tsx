@@ -19,6 +19,10 @@ export interface BookingData {
     type: string;
     price: number;
   };
+  isRoundTrip?: boolean;
+  returnDateTime?: string;
+  tripType?: string;
+  specialInstructions?: string;
 }
 
 const Booking = () => {

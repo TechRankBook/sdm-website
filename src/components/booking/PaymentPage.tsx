@@ -17,6 +17,7 @@ import {
   CheckCircle
 } from "lucide-react";
 import { BookingData } from "@/pages/Booking";
+import { BookingSummary } from "./BookingSummary";
 
 interface PaymentPageProps {
   bookingData: BookingData;
@@ -68,20 +69,38 @@ export const PaymentPage = ({ bookingData, onNext, onBack }: PaymentPageProps) =
     setIsProcessing(true);
     
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Please login to continue booking');
+      }
+
+      // Get service type ID
+      const { data: serviceType } = await supabase
+        .from('service_types')
+        .select('id')
+        .eq('name', bookingData.serviceType)
+        .single();
+
       // Create booking in database first
       const { data: booking, error: bookingError } = await supabase
         .from('bookings')
         .insert({
+          user_id: user.id,
           pickup_address: bookingData.pickupLocation,
           dropoff_address: bookingData.dropoffLocation,
           fare_amount: bookingData.selectedFare.price,
           status: 'pending',
           payment_status: 'pending',
           scheduled_time: bookingData.scheduledDateTime || null,
-          service_type_id: null, // Will be set based on actual service types
-          rental_package_id: null,
-          zone_pricing_id: null,
+          service_type_id: serviceType?.id || null,
           is_scheduled: bookingData.scheduledDateTime ? true : false,
+          is_round_trip: bookingData.isRoundTrip || false,
+          return_scheduled_time: bookingData.returnDateTime || null,
+          trip_type: bookingData.tripType,
+          vehicle_type: bookingData.carType,
+          special_instructions: bookingData.specialInstructions,
+          package_hours: bookingData.packageSelection ? parseInt(bookingData.packageSelection) : null,
         })
         .select()
         .single();
@@ -138,51 +157,7 @@ export const PaymentPage = ({ bookingData, onNext, onBack }: PaymentPageProps) =
         </div>
 
         {/* Booking Summary */}
-        <Card className="glass-hover p-4 mb-6">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Booking Summary</h2>
-          
-          <div className="space-y-3">
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Service</span>
-              <span className="text-foreground font-medium">
-                {bookingData.serviceType.charAt(0).toUpperCase() + bookingData.serviceType.slice(1)}
-              </span>
-            </div>
-            
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Vehicle</span>
-              <span className="text-foreground font-medium">{bookingData.selectedFare?.type}</span>
-            </div>
-            
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Pickup</span>
-              <span className="text-foreground font-medium text-right max-w-32 sm:max-w-48 truncate">
-                {bookingData.pickupLocation}
-              </span>
-            </div>
-            
-            {bookingData.dropoffLocation && (
-              <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Drop-off</span>
-                <span className="text-foreground font-medium text-right max-w-32 sm:max-w-48 truncate">
-                  {bookingData.dropoffLocation}
-                </span>
-              </div>
-            )}
-            
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Passengers</span>
-              <span className="text-foreground font-medium">{bookingData.passengers}</span>
-            </div>
-            
-            <div className="border-t border-glass-border pt-3 mt-4">
-              <div className="flex justify-between">
-                <span className="text-foreground font-semibold">Total Fare</span>
-                <span className="text-primary font-bold text-lg">₹{totalFare}</span>
-              </div>
-            </div>
-          </div>
-        </Card>
+        <BookingSummary bookingData={bookingData} />
 
         {/* Payment Breakdown */}
         <Card className="glass-hover p-4 mb-6">

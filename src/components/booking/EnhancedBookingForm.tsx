@@ -4,6 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { GooglePlacesInput } from "./GooglePlacesInput";
 import { GoogleMaps } from "./GoogleMaps";
@@ -53,6 +54,10 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
   const [tripType, setTripType] = useState("oneway");
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedTime, setSelectedTime] = useState<string>("");
+  const [isRoundTrip, setIsRoundTrip] = useState(false);
+  const [returnDate, setReturnDate] = useState<Date>();
+  const [returnTime, setReturnTime] = useState<string>("");
+  const [specialInstructions, setSpecialInstructions] = useState("");
   
   // Location coordinates
   const [pickupCoords, setPickupCoords] = useState<LocationData | null>(null);
@@ -133,6 +138,10 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
     const dateTime = selectedDate && selectedTime 
       ? `${format(selectedDate, "yyyy-MM-dd")} ${selectedTime}`
       : "";
+    
+    const returnDateTime = returnDate && returnTime && isRoundTrip
+      ? `${format(returnDate, "yyyy-MM-dd")} ${returnTime}`
+      : "";
       
     updateBookingData({
       serviceType,
@@ -145,7 +154,11 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
       selectedFare: {
         type: vehicleType,
         price: fareData?.totalFare || 0
-      }
+      },
+      isRoundTrip,
+      returnDateTime,
+      tripType,
+      specialInstructions
     });
     onNext();
   };
@@ -206,7 +219,10 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                           ? "bg-gradient-primary text-white" 
                           : "text-muted-foreground"
                       )}
-                      onClick={() => setTripType("oneway")}
+                      onClick={() => {
+                        setTripType("oneway");
+                        setIsRoundTrip(false);
+                      }}
                     >
                       One way
                     </Button>
@@ -218,7 +234,10 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                           ? "bg-gradient-primary text-white" 
                           : "text-muted-foreground"
                       )}
-                      onClick={() => setTripType("roundtrip")}
+                      onClick={() => {
+                        setTripType("roundtrip");
+                        setIsRoundTrip(true);
+                      }}
                     >
                       Round Trip
                     </Button>
@@ -233,7 +252,10 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                           ? "bg-gradient-primary text-white" 
                           : "text-muted-foreground"
                       )}
-                      onClick={() => setTripType("pickup")}
+                      onClick={() => {
+                        setTripType("pickup");
+                        setIsRoundTrip(false);
+                      }}
                     >
                       Pick-up From Airport
                     </Button>
@@ -245,13 +267,28 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                           ? "bg-gradient-primary text-white" 
                           : "text-muted-foreground"
                       )}
-                      onClick={() => setTripType("drop")}
+                      onClick={() => {
+                        setTripType("drop");
+                        setIsRoundTrip(false);
+                      }}
                     >
                       Drop To Airport
                     </Button>
                   </>
                 )}
               </div>
+
+              {/* Round Trip Checkbox for Airport */}
+              {serviceType === "airport" && (
+                <div className="mt-4 flex items-center space-x-2">
+                  <Checkbox
+                    id="roundTrip"
+                    checked={isRoundTrip}
+                    onCheckedChange={(checked) => setIsRoundTrip(checked as boolean)}
+                  />
+                  <Label htmlFor="roundTrip" className="text-sm">Round Trip</Label>
+                </div>
+              )}
             </div>
           )}
 
@@ -350,6 +387,68 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                 </PopoverContent>
               </Popover>
             </div>
+
+            {/* Return Date & Time for Round Trip Outstation */}
+            {serviceType === "outstation" && isRoundTrip && (
+              <div className="grid grid-cols-2 gap-3 mt-4">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="h-12 justify-start glass-hover"
+                    >
+                      <CalendarIcon className="w-5 h-5 mr-3 text-primary" />
+                      {returnDate ? format(returnDate, "MMM dd") : "Return Date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={returnDate}
+                      onSelect={setReturnDate}
+                      disabled={(date) => date < new Date() || (selectedDate && date <= selectedDate)}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="h-12 justify-start glass-hover"
+                    >
+                      <Clock className="w-5 h-5 mr-3 text-accent" />
+                      {returnTime || "Return Time"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-0" align="start">
+                    <div className="grid grid-cols-3 gap-1 p-4 max-h-60 overflow-y-auto">
+                      {[
+                        "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+                        "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
+                        "15:00", "15:30", "16:00", "16:30", "17:00", "17:30",
+                        "18:00", "18:30", "19:00", "19:30", "20:00", "20:30"
+                      ].map((time) => (
+                        <Button
+                          key={time}
+                          variant={returnTime === time ? "default" : "ghost"}
+                          size="sm"
+                          className={cn(
+                            "text-sm",
+                            returnTime === time ? "bg-gradient-primary" : ""
+                          )}
+                          onClick={() => setReturnTime(time)}
+                        >
+                          {time}
+                        </Button>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
           </div>
 
           {/* Guest Selection */}
@@ -366,17 +465,43 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
+
+          {/* Special Instructions */}
+          <div className="mb-6">
+            <Label htmlFor="instructions" className="text-sm font-medium text-foreground">
+              Special Instructions (Optional)
+            </Label>
+            <textarea
+              id="instructions"
+              placeholder="Add any special requests or instructions..."
+              value={specialInstructions}
+              onChange={(e) => setSpecialInstructions(e.target.value)}
+              className="w-full mt-2 p-3 h-20 rounded-lg glass border border-glass-border text-foreground placeholder-muted-foreground resize-none"
+            />
+          </div>
           {/* Search Car Button */}
-          {pickupLocation && (serviceType === "car_rental" ? hours : dropoffLocation) && (
-            <div className="mt-6">
-              <Button 
-                onClick={onNext}
-                className="w-full h-12 bg-gradient-primary text-lg font-semibold"
-              >
-                Search Car
-              </Button>
-            </div>
-          )}
+          <div className="mt-6">
+            {(() => {
+              const isFormValid = pickupLocation && 
+                (serviceType === "car_rental" ? hours : dropoffLocation) &&
+                selectedDate && selectedTime &&
+                (!isRoundTrip || !returnDate || !returnTime || serviceType !== "outstation" || (returnDate && returnTime));
+              
+              return (
+                <Button 
+                  onClick={onNext}
+                  disabled={!isFormValid}
+                  className={`w-full h-12 text-lg font-semibold transition-all duration-300 ${
+                    isFormValid 
+                      ? 'bg-gradient-primary hover:scale-[1.02] micro-bounce' 
+                      : 'bg-muted text-muted-foreground cursor-not-allowed'
+                  }`}
+                >
+                  {isFormValid ? "Search Cars" : "Please fill all required fields"}
+                </Button>
+              );
+            })()}
+          </div>
         </Card>
 
       {/* Modals */}
