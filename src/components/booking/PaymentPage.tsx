@@ -16,7 +16,7 @@ import {
   Shield,
   CheckCircle
 } from "lucide-react";
-import { BookingData } from "@/pages/Booking";
+import { BookingData } from "@/stores/bookingStore";
 import { BookingSummary } from "./BookingSummary";
 
 interface PaymentPageProps {
@@ -89,6 +89,10 @@ export const PaymentPage = ({ bookingData, onNext, onBack }: PaymentPageProps) =
           user_id: user.id,
           pickup_address: bookingData.pickupLocation,
           dropoff_address: bookingData.dropoffLocation,
+          pickup_latitude: bookingData.pickupLatitude,
+          pickup_longitude: bookingData.pickupLongitude,
+          dropoff_latitude: bookingData.dropoffLatitude,
+          dropoff_longitude: bookingData.dropoffLongitude,
           fare_amount: bookingData.selectedFare.price,
           status: 'pending',
           payment_status: 'pending',
@@ -98,9 +102,10 @@ export const PaymentPage = ({ bookingData, onNext, onBack }: PaymentPageProps) =
           is_round_trip: bookingData.isRoundTrip || false,
           return_scheduled_time: bookingData.returnDateTime || null,
           trip_type: bookingData.tripType,
-          vehicle_type: bookingData.carType,
+          vehicle_type: bookingData.carType || bookingData.vehicleType,
           special_instructions: bookingData.specialInstructions,
           package_hours: bookingData.packageSelection ? parseInt(bookingData.packageSelection) : null,
+          distance_km: bookingData.distanceKm,
         })
         .select()
         .single();

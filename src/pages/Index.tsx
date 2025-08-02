@@ -22,7 +22,7 @@ import { ThankYouPage } from "@/components/booking/ThankYouPage";
 import { PaymentPage } from "@/components/booking/PaymentPage";
 import { FareCalculation } from "@/components/booking/FareCalculation";
 import { EnhancedBookingForm } from "@/components/booking/EnhancedBookingForm";
-import { BookingData } from "./Booking";
+import { BookingData } from "@/stores/bookingStore";
 
 const Index = () => {
   const [isDarkMode, setIsDarkMode] = useState(true);

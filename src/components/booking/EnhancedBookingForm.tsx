@@ -30,7 +30,7 @@ import {
   Navigation2,
   TimerReset
 } from "lucide-react";
-import { BookingData } from "@/pages/Booking";
+import { BookingData } from "@/stores/bookingStore";
 
 interface BookingFormProps {
   bookingData: BookingData;
@@ -489,7 +489,31 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
               
               return (
                 <Button 
-                  onClick={onNext}
+                  onClick={() => {
+                    // Save all booking data before proceeding
+                    updateBookingData({
+                      serviceType,
+                      pickupLocation,
+                      dropoffLocation: serviceType === "car_rental" ? undefined : dropoffLocation,
+                      scheduledDateTime: selectedDate && selectedTime ? 
+                        new Date(`${selectedDate.toISOString().split('T')[0]}T${selectedTime}`).toISOString() : undefined,
+                      returnDateTime: isRoundTrip && returnDate && returnTime ? 
+                        new Date(`${returnDate.toISOString().split('T')[0]}T${returnTime}`).toISOString() : undefined,
+                      passengers,
+                      packageSelection: serviceType === "car_rental" ? hours : undefined,
+                      isRoundTrip,
+                      tripType,
+                      specialInstructions: specialInstructions,
+                      pickupLatitude: pickupCoords?.lat,
+                      pickupLongitude: pickupCoords?.lng,
+                      dropoffLatitude: dropoffCoords?.lat,
+                      dropoffLongitude: dropoffCoords?.lng,
+                      vehicleType: "",
+                      distanceKm: 0,
+                      durationMinutes: 0
+                    });
+                    onNext();
+                  }}
                   disabled={!isFormValid}
                   className={`w-full h-12 text-lg font-semibold transition-all duration-300 ${
                     isFormValid 

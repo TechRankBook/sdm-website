@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Car, Users, Clock } from "lucide-react";
 import { useFareCalculation } from "@/hooks/useFareCalculation";
-import { BookingData } from "@/pages/Booking";
+import { BookingData } from "@/stores/bookingStore";
 
 interface VehicleSelectionProps {
   bookingData: BookingData;
@@ -76,10 +76,13 @@ export const VehicleSelection = ({
   const handleVehicleSelection = (vehicleType: string, fareData: any) => {
     updateBookingData({
       carType: vehicleType,
+      vehicleType: vehicleType,
       selectedFare: {
         type: vehicleType,
         price: fareData?.totalFare || 0
-      }
+      },
+      distanceKm: routeData?.distanceKm || 0,
+      durationMinutes: routeData?.durationMinutes || 0
     });
     onNext();
   };

@@ -49,12 +49,23 @@ export const useFareCalculation = ({
         throw new Error('Service type not found');
       }
 
-      // Get pricing rules
+      // Get vehicle type ID
+      const { data: vehicleTypes, error: vehicleTypeError } = await supabase
+        .from('vehicle_types')
+        .select('id')
+        .eq('name', vehicleType.toLowerCase())
+        .single();
+
+      if (vehicleTypeError || !vehicleTypes) {
+        throw new Error('Vehicle type not found');
+      }
+
+      // Get pricing rules using vehicle_type_id instead of vehicle_type string
       const { data: pricingRules, error: pricingError } = await supabase
         .from('pricing_rules')
         .select('*')
         .eq('service_type_id', serviceTypes.id)
-        .eq('vehicle_type', vehicleType)
+        .eq('vehicle_type_id', vehicleTypes.id)
         .eq('is_active', true)
         .single();
 

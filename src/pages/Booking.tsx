@@ -1,42 +1,24 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { EnhancedBookingForm } from "@/components/booking/EnhancedBookingForm";
 import { VehicleSelection } from "@/components/booking/VehicleSelection";
 import { PaymentPage } from "@/components/booking/PaymentPage";
 import { ThankYouPage } from "@/components/booking/ThankYouPage";
-import { ArrowBigLeft, HomeIcon } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useBookingStore, type BookingData } from "@/stores/bookingStore";
 
-export interface BookingData {
-  serviceType: string;
-  pickupLocation: string;
-  dropoffLocation?: string;
-  scheduledDateTime?: string;
-  passengers?: number;
-  packageSelection?: string;
-  carType?: string;
-  selectedFare?: {
-    type: string;
-    price: number;
-  };
-  isRoundTrip?: boolean;
-  returnDateTime?: string;
-  tripType?: string;
-  specialInstructions?: string;
-}
+export type { BookingData };
 
 const Booking = () => {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [bookingData, setBookingData] = useState<BookingData>({
-    serviceType: "city_ride",
-    pickupLocation: "",
-    dropoffLocation: "",
-    scheduledDateTime: "",
-    passengers: 1,
-    packageSelection: "",
-    carType: "",
-    selectedFare: undefined
-  });
+  const { 
+    bookingData, 
+    currentStep, 
+    setBookingData, 
+    setCurrentStep, 
+    nextStep, 
+    prevStep 
+  } = useBookingStore();
+  
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
@@ -48,15 +30,14 @@ const Booking = () => {
     const time = searchParams.get('time');
 
     if (pickup || destination || service) {
-      setBookingData(prev => ({
-        ...prev,
+      setBookingData({
         pickupLocation: pickup || "",
         dropoffLocation: destination || "",
         serviceType: service === "city" ? "city_ride" : 
                    service === "airport" ? "airport" :
                    service === "rental" ? "car_rental" :
-                   service === "outstation" ? "outstation" : prev.serviceType
-      }));
+                   service === "outstation" ? "outstation" : bookingData.serviceType
+      });
     }
 
     // Handle Stripe payment success/cancel
@@ -80,17 +61,7 @@ const Booking = () => {
     }
   }, [searchParams, toast]);
 
-  const updateBookingData = (data: Partial<BookingData>) => {
-    setBookingData(prev => ({ ...prev, ...data }));
-  };
-
-  const nextStep = () => {
-    setCurrentStep(prev => prev + 1);
-  };
-
-  const prevStep = () => {
-    setCurrentStep(prev => prev - 1);
-  };
+  const updateBookingData = setBookingData;
 
   const renderStep = () => {
     switch (currentStep) {
@@ -132,7 +103,7 @@ const Booking = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-hero">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Header with Step Indication */}
         <div className="text-center mb-8">

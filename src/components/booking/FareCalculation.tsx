@@ -11,7 +11,7 @@ import {
   Shield,
   Users
 } from "lucide-react";
-import { BookingData } from "@/pages/Booking";
+import { BookingData } from "@/stores/bookingStore";
 
 interface FareCalculationProps {
   bookingData: BookingData;
