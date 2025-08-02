@@ -1747,7 +1747,7 @@ export type Database = {
           service_type_id: string
           surge_multiplier: number | null
           updated_at: string
-          vehicle_type: string
+          vehicle_type_id: string | null
           waiting_charges_per_minute: number | null
         }
         Insert: {
@@ -1766,7 +1766,7 @@ export type Database = {
           service_type_id: string
           surge_multiplier?: number | null
           updated_at?: string
-          vehicle_type: string
+          vehicle_type_id?: string | null
           waiting_charges_per_minute?: number | null
         }
         Update: {
@@ -1785,7 +1785,7 @@ export type Database = {
           service_type_id?: string
           surge_multiplier?: number | null
           updated_at?: string
-          vehicle_type?: string
+          vehicle_type_id?: string | null
           waiting_charges_per_minute?: number | null
         }
         Relationships: [
@@ -1794,6 +1794,13 @@ export type Database = {
             columns: ["service_type_id"]
             isOneToOne: false
             referencedRelation: "service_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pricing_rules_vehicle_type_id_fkey"
+            columns: ["vehicle_type_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_types"
             referencedColumns: ["id"]
           },
         ]
@@ -2710,8 +2717,8 @@ export type Database = {
           pollution_certificate_url: string | null
           registration_document_url: string | null
           status: Database["public"]["Enums"]["vehicle_status_enum"] | null
-          type: Database["public"]["Enums"]["vehicle_type_enum"] | null
           updated_at: string | null
+          vehicle_type_id: string | null
           vendor_id: string | null
           year: number | null
         }
@@ -2734,8 +2741,8 @@ export type Database = {
           pollution_certificate_url?: string | null
           registration_document_url?: string | null
           status?: Database["public"]["Enums"]["vehicle_status_enum"] | null
-          type?: Database["public"]["Enums"]["vehicle_type_enum"] | null
           updated_at?: string | null
+          vehicle_type_id?: string | null
           vendor_id?: string | null
           year?: number | null
         }
@@ -2758,8 +2765,8 @@ export type Database = {
           pollution_certificate_url?: string | null
           registration_document_url?: string | null
           status?: Database["public"]["Enums"]["vehicle_status_enum"] | null
-          type?: Database["public"]["Enums"]["vehicle_type_enum"] | null
           updated_at?: string | null
+          vehicle_type_id?: string | null
           vendor_id?: string | null
           year?: number | null
         }
@@ -2769,6 +2776,13 @@ export type Database = {
             columns: ["assigned_driver_id"]
             isOneToOne: false
             referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicles_vehicle_type_id_fkey"
+            columns: ["vehicle_type_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_types"
             referencedColumns: ["id"]
           },
           {
