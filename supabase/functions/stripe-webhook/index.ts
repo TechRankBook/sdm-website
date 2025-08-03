@@ -103,13 +103,16 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       return;
     }
 
+    // Get the payment method from metadata or determine from payment intent
+    const paymentMethodType = session.metadata?.payment_method || 'card';
+    
     // Update booking status to confirmed and payment status to paid
     const { error: bookingError } = await supabase
       .from('bookings')
       .update({
         status: 'accepted',
         payment_status: 'paid',
-        payment_method: 'stripe',
+        payment_method: paymentMethodType,
         updated_at: new Date().toISOString()
       })
       .eq('id', bookingId);

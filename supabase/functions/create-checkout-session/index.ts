@@ -44,8 +44,8 @@ serve(async (req) => {
     if (!user?.email) throw new Error('User not authenticated or email not available');
     logStep('User authenticated', { userId: user.id, email: user.email });
 
-    const { bookingData, bookingId } = await req.json();
-    logStep('Request data received', { bookingId, serviceType: bookingData.serviceType });
+    const { bookingData, bookingId, paymentMethod = 'stripe' } = await req.json();
+    logStep('Request data received', { bookingId, serviceType: bookingData.serviceType, paymentMethod });
 
     if (!bookingData.selectedFare) {
       throw new Error('No fare selected');
@@ -75,7 +75,22 @@ serve(async (req) => {
 
     const origin = req.headers.get('origin') || 'http://localhost:3000';
     
-    // Create checkout session
+    // Update booking with payment method before creating session
+    const supabaseServiceRole = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      { auth: { persistSession: false } }
+    );
+
+    await supabaseServiceRole
+      .from('bookings')
+      .update({ 
+        payment_method: paymentMethod === 'stripe' ? 'card' : paymentMethod,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', bookingId);
+
+    // Create checkout session with Indian payment methods support
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       line_items: [
@@ -93,6 +108,7 @@ serve(async (req) => {
         },
       ],
       mode: 'payment',
+      payment_method_types: ['card', 'upi'], // Enable UPI and cards
       success_url: `${origin}/booking?session_id={CHECKOUT_SESSION_ID}&success=true`,
       cancel_url: `${origin}/booking?canceled=true`,
       metadata: {
@@ -102,11 +118,13 @@ serve(async (req) => {
         vehicle_type: bookingData.selectedFare.type,
         total_fare: totalFare.toString(),
         advance_payment: advancePayment.toString(),
+        payment_method: paymentMethod,
       },
       payment_intent_data: {
         metadata: {
           booking_id: bookingId,
           user_id: user.id,
+          payment_method: paymentMethod,
         },
       },
       customer_update: {

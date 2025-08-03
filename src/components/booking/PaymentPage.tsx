@@ -119,6 +119,7 @@ export const PaymentPage = ({ bookingData, onNext, onBack }: PaymentPageProps) =
         body: {
           bookingData,
           bookingId: booking.id,
+          paymentMethod: paymentMethod,
         },
       });
 
@@ -127,8 +128,8 @@ export const PaymentPage = ({ bookingData, onNext, onBack }: PaymentPageProps) =
       if (error) throw error;
 
       // Redirect to Stripe checkout
-      if (data.url) {
-        window.open(data.url, '_blank');
+      if (data?.url) {
+        window.location.href = data.url; // Use location.href instead of window.open for better UX
       } else {
         throw new Error('No checkout URL received');
       }
