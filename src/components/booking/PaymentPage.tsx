@@ -119,7 +119,7 @@ export const PaymentPage = ({ bookingData, onNext, onBack }: PaymentPageProps) =
         body: {
           bookingData,
           bookingId: booking.id,
-          paymentMethod: paymentMethod,
+          paymentMethod: paymentMethod === 'card' ? 'card' : paymentMethod === 'upi' ? 'upi' : 'wallet',
         },
       });
 

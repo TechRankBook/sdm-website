@@ -108,7 +108,7 @@ serve(async (req) => {
         },
       ],
       mode: 'payment',
-      payment_method_types: ['card', 'upi'], // Enable UPI and cards
+      payment_method_types: ['card'], // Enable cards for Indian users
       success_url: `${origin}/booking?session_id={CHECKOUT_SESSION_ID}&success=true`,
       cancel_url: `${origin}/booking?canceled=true`,
       metadata: {

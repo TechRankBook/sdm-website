@@ -46,18 +46,16 @@ const Booking = () => {
     const canceled = searchParams.get('canceled');
 
     if (success === 'true' && sessionId) {
-      toast({
-        title: "Payment Successful! 🎉",
-        description: "Your booking has been confirmed. You'll receive driver details shortly.",
-      });
-      setCurrentStep(3); // Go to thank you page
+      // Redirect to thank you page
+      setCurrentStep(4);
+      return;
     } else if (canceled === 'true') {
       toast({
         title: "Payment Canceled",
         description: "Your payment was canceled. You can try again.",
         variant: "destructive",
       });
-      setCurrentStep(2); // Go back to payment page
+      setCurrentStep(3); // Go back to payment page
     }
   }, [searchParams, toast]);
 

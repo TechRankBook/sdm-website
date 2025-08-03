@@ -1,155 +1,249 @@
-import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import { useSearchParams, Link } from "react-router-dom";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 import { 
-  CheckCircle,
+  CheckCircle, 
+  Clock, 
+  MapPin, 
   Car,
-  MapPin,
-  Phone,
-  MessageCircle,
-  Home,
-  Calendar,
-  Clock
+  CreditCard,
+  ArrowRight,
+  Home 
 } from "lucide-react";
-import { Link } from "react-router-dom";
 
 export const ThankYouPage = () => {
-  const bookingId = "SDM" + Math.random().toString(36).substr(2, 8).toUpperCase();
-  const estimatedArrival = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes from now
+  const [searchParams] = useSearchParams();
+  const [booking, setBooking] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+
+  const sessionId = searchParams.get('session_id');
+  const success = searchParams.get('success');
+
+  useEffect(() => {
+    const fetchBookingDetails = async () => {
+      if (!sessionId || !success) {
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // Get the latest booking for this user that was just paid
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('User not authenticated');
+
+        const { data: bookings, error } = await supabase
+          .from('bookings')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('payment_status', 'paid')
+          .order('created_at', { ascending: false })
+          .limit(1);
+
+        if (error) throw error;
+
+        if (bookings && bookings.length > 0) {
+          setBooking(bookings[0]);
+          toast({
+            title: "Payment Successful!",
+            description: "Your booking has been confirmed. You'll receive SMS updates.",
+          });
+        }
+      } catch (error: any) {
+        console.error('Error fetching booking:', error);
+        toast({
+          title: "Error",
+          description: "Failed to fetch booking details",
+          variant: "destructive",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBookingDetails();
+  }, [sessionId, success, toast]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Processing your payment...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!success || !booking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="glass max-w-md w-full p-6 text-center">
+          <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-destructive text-2xl">✗</span>
+          </div>
+          <h1 className="text-xl font-bold text-foreground mb-2">Payment Failed</h1>
+          <p className="text-muted-foreground mb-6">
+            Something went wrong with your payment. Please try again.
+          </p>
+          <Button 
+            onClick={() => window.location.href = '/booking'} 
+            className="w-full"
+          >
+            Try Again
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
+  const advanceAmount = Math.ceil(booking.fare_amount * 0.2);
+  const remainingAmount = booking.fare_amount - advanceAmount;
 
   return (
-    <div className="max-w-2xl mx-auto text-center">
-      <Card className="glass p-8">
-        {/* Success Icon */}
-        <div className="flex justify-center mb-6">
-          <div className="w-20 h-20 rounded-full bg-gradient-primary flex items-center justify-center">
-            <CheckCircle className="w-12 h-12 text-white" />
+    <div className="min-h-screen bg-background p-4">
+      <div className="max-w-2xl mx-auto space-y-6">
+        {/* Success Header */}
+        <Card className="glass p-6 text-center">
+          <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="w-10 h-10 text-green-500" />
           </div>
-        </div>
-
-        {/* Success Message */}
-        <h1 className="text-3xl font-bold text-foreground mb-4">Booking Confirmed!</h1>
-        <p className="text-lg text-muted-foreground mb-8">
-          Your ride has been successfully booked. Your driver will arrive shortly.
-        </p>
+          <h1 className="text-2xl font-bold text-foreground mb-2">
+            Payment Successful!
+          </h1>
+          <p className="text-muted-foreground">
+            Your booking has been confirmed. We'll send you SMS updates about your ride.
+          </p>
+          <Badge className="bg-green-500/10 text-green-500 border-green-500/20 mt-4">
+            Booking ID: {booking.id.slice(0, 8)}
+          </Badge>
+        </Card>
 
         {/* Booking Details */}
-        <Card className="glass-hover p-6 mb-8 text-left">
-          <h2 className="text-lg font-semibold text-foreground mb-4 text-center">Booking Details</h2>
+        <Card className="glass p-6">
+          <h2 className="text-lg font-semibold text-foreground mb-4">Trip Details</h2>
           
           <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Booking ID</span>
-              <Badge className="bg-gradient-primary text-white font-mono">{bookingId}</Badge>
-            </div>
-            
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Vehicle Type</span>
-              <span className="text-foreground font-medium">Sedan</span>
-            </div>
-            
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Estimated Arrival</span>
-              <div className="flex items-center gap-2 text-foreground font-medium">
-                <Clock className="w-4 h-4" />
-                {estimatedArrival.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            <div className="flex items-start gap-3">
+              <MapPin className="w-5 h-5 text-primary mt-0.5" />
+              <div className="flex-1">
+                <p className="text-sm text-muted-foreground">From</p>
+                <p className="text-foreground font-medium">{booking.pickup_address}</p>
               </div>
             </div>
-            
-            <div className="flex justify-between items-center">
-              <span className="text-muted-foreground">Status</span>
-              <Badge className="bg-green-500 text-white">Driver Assigned</Badge>
+
+            {booking.dropoff_address && (
+              <>
+                <div className="flex items-center justify-center">
+                  <ArrowRight className="w-4 h-4 text-muted-foreground" />
+                </div>
+                <div className="flex items-start gap-3">
+                  <MapPin className="w-5 h-5 text-primary mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm text-muted-foreground">To</p>
+                    <p className="text-foreground font-medium">{booking.dropoff_address}</p>
+                  </div>
+                </div>
+              </>
+            )}
+
+            <div className="flex items-center gap-3">
+              <Car className="w-5 h-5 text-primary" />
+              <div>
+                <p className="text-sm text-muted-foreground">Vehicle Type</p>
+                <p className="text-foreground font-medium capitalize">{booking.vehicle_type || 'Standard'}</p>
+              </div>
             </div>
+
+            {booking.scheduled_time && (
+              <div className="flex items-center gap-3">
+                <Clock className="w-5 h-5 text-primary" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Scheduled Time</p>
+                  <p className="text-foreground font-medium">
+                    {new Date(booking.scheduled_time).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
         </Card>
 
-        {/* Driver Information (Simulated) */}
-        <Card className="glass-hover p-6 mb-8 text-left">
-          <h2 className="text-lg font-semibold text-foreground mb-4 text-center">Your Driver</h2>
-          
-          <div className="flex items-center gap-4 mb-4">
-            <div className="w-12 h-12 rounded-full bg-gradient-primary flex items-center justify-center">
-              <span className="text-white font-bold">RK</span>
-            </div>
-            <div>
-              <h3 className="font-semibold text-foreground">Raj Kumar</h3>
-              <p className="text-sm text-muted-foreground">4.8 ⭐ • 1,250+ trips</p>
-            </div>
-          </div>
+        {/* Payment Summary */}
+        <Card className="glass p-6">
+          <h2 className="text-lg font-semibold text-foreground mb-4">Payment Summary</h2>
           
           <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <Car className="w-4 h-4 text-primary" />
-              <span className="text-foreground">White Tata Nexon EV • DL 01 AB 1234</span>
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Total Fare</span>
+              <span className="text-foreground font-medium">₹{booking.fare_amount}</span>
             </div>
             
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="flex-1">
-                <Phone className="w-4 h-4 mr-2" />
-                Call Driver
-              </Button>
-              <Button variant="outline" size="sm" className="flex-1">
-                <MessageCircle className="w-4 h-4 mr-2" />
-                Message
-              </Button>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-green-500" />
+                <span className="text-green-500 font-medium">Paid Now</span>
+              </div>
+              <span className="text-green-500 font-bold">₹{advanceAmount}</span>
+            </div>
+            
+            <div className="flex justify-between items-center">
+              <span className="text-muted-foreground">Remaining (Pay after ride)</span>
+              <span className="text-foreground">₹{remainingAmount}</span>
+            </div>
+            
+            <div className="border-t border-border pt-3">
+              <div className="flex justify-between items-center">
+                <span className="text-foreground font-medium">Payment Method</span>
+                <Badge variant="outline" className="capitalize">
+                  {booking.payment_method || 'Card'}
+                </Badge>
+              </div>
             </div>
           </div>
         </Card>
 
-        {/* Live Tracking */}
-        <Card className="glass-hover p-6 mb-8">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <MapPin className="w-5 h-5 text-primary" />
-            <h2 className="text-lg font-semibold text-foreground">Live Tracking</h2>
-          </div>
-          
-          <div className="h-40 bg-muted rounded-lg flex items-center justify-center mb-4">
-            <div className="text-center text-muted-foreground">
-              <MapPin className="w-8 h-8 mx-auto mb-2" />
-              <p>Live map will appear here</p>
-              <p className="text-sm">Driver is 2.3 km away</p>
+        {/* Next Steps */}
+        <Card className="glass p-6">
+          <h2 className="text-lg font-semibold text-foreground mb-4">What's Next?</h2>
+          <div className="space-y-3 text-sm text-muted-foreground">
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-2 bg-primary rounded-full"></div>
+              <span>You'll receive SMS notifications with driver details</span>
             </div>
-          </div>
-          
-          <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
-            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-            <span>Tracking your driver in real-time</span>
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-2 bg-primary rounded-full"></div>
+              <span>Driver will contact you before pickup</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="w-2 h-2 bg-primary rounded-full"></div>
+              <span>Pay remaining amount after ride completion</span>
+            </div>
           </div>
         </Card>
 
         {/* Action Buttons */}
-        <div className="space-y-4">
+        <div className="flex gap-4">
           <Button 
-            className="w-full h-12 bg-gradient-primary text-lg font-semibold"
-            asChild
+            variant="outline" 
+            onClick={() => window.location.href = '/'}
+            className="flex-1"
           >
-            <Link to="/mobile-app">
-              Download App for Better Experience
-            </Link>
+            <Home className="w-4 h-4 mr-2" />
+            Back to Home
           </Button>
-          
-          <Button variant="outline" className="w-full h-12" asChild>
-            <Link to="/">
-              <Home className="w-5 h-5 mr-2" />
-              Back to Home
-            </Link>
+          <Button 
+            onClick={() => window.location.href = '/booking'}
+            className="flex-1"
+          >
+            Book Another Ride
           </Button>
         </div>
-
-        {/* Additional Information */}
-        <Card className="glass-hover p-4 mt-8">
-          <div className="flex items-center gap-2 mb-2">
-            <Calendar className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-foreground">What's Next?</span>
-          </div>
-          <p className="text-xs text-muted-foreground text-left">
-            • Your driver will call you before arrival<br/>
-            • Track your ride in real-time<br/>
-            • Pay the remaining amount after ride completion<br/>
-            • Rate your experience to help us improve
-          </p>
-        </Card>
-      </Card>
+      </div>
     </div>
   );
 };
