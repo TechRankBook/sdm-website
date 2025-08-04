@@ -17,6 +17,8 @@ import Booking from "./pages/Booking";
 import Auth from "./pages/Auth";
 import AuthCallback from "./pages/AuthCallback";
 import NotFound from "./pages/NotFound";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import RefundPolicy from "./pages/RefundPolicy";
 
 const queryClient = new QueryClient();
 
@@ -30,7 +32,7 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
-            <Route path="/" element={<AuthGuard><Index /></AuthGuard>} />
+            <Route path="/" element={<Index />} />
             <Route path="/services" element={<AuthGuard><Services /></AuthGuard>} />
             <Route path="/fleet" element={<AuthGuard><Fleet /></AuthGuard>} />
             <Route path="/mobile-app" element={<AuthGuard><MobileApp /></AuthGuard>} />
@@ -39,6 +41,10 @@ const App = () => (
             <Route path="/about" element={<AuthGuard><About /></AuthGuard>} />
             <Route path="/terms" element={<AuthGuard><Terms /></AuthGuard>} />
             <Route path="/booking" element={<AuthGuard><Booking /></AuthGuard>} />
+            <Route path="/privacy-policy" element={<AuthGuard><PrivacyPolicy /></AuthGuard>} />
+            <Route path="/refund-policy" element={<AuthGuard><RefundPolicy /></AuthGuard>} />
+            {/* ADD ALL CUSTOM ROUTES ABOVE THIS LINE */}
+
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
