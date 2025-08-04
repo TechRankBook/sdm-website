@@ -33,16 +33,16 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route path="/" element={<Index />} />
-            <Route path="/services" element={<AuthGuard><Services /></AuthGuard>} />
-            <Route path="/fleet" element={<AuthGuard><Fleet /></AuthGuard>} />
-            <Route path="/mobile-app" element={<AuthGuard><MobileApp /></AuthGuard>} />
-            <Route path="/how-it-works" element={<AuthGuard><HowItWorks /></AuthGuard>} />
-            <Route path="/contact" element={<AuthGuard><Contact /></AuthGuard>} />
-            <Route path="/about" element={<AuthGuard><About /></AuthGuard>} />
-            <Route path="/terms" element={<AuthGuard><Terms /></AuthGuard>} />
+            <Route path="/services" element={<Services />} />
+            <Route path="/fleet" element={<Fleet />} />
+            <Route path="/mobile-app" element={<MobileApp />} />
+            <Route path="/how-it-works" element={<HowItWorks />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/terms" element={<Terms />} />
             <Route path="/booking" element={<AuthGuard><Booking /></AuthGuard>} />
-            <Route path="/privacy-policy" element={<AuthGuard><PrivacyPolicy /></AuthGuard>} />
-            <Route path="/refund-policy" element={<AuthGuard><RefundPolicy /></AuthGuard>} />
+            <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+            <Route path="/refund-policy" element={<RefundPolicy />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THIS LINE */}
 
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
