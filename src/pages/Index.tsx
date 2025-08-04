@@ -253,10 +253,10 @@ const Index = () => {
               Powering the future of sustainable transportation
             </p>
             <div className="flex justify-center gap-6 text-sm text-muted-foreground">
-              <a href="#" className="hover:text-primary transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-primary transition-colors">Terms of Service</a>
-              <a href="#" className="hover:text-primary transition-colors">Support</a>
-              <a href="#" className="hover:text-primary transition-colors">Careers</a>
+              <a href="/privacy_policy" className="hover:text-primary transition-colors">Privacy Policy</a>
+              <a href="/terms" className="hover:text-primary transition-colors">Terms of Service</a>
+              <a href="/refund_policy" className="hover:text-primary transition-colors">Refund Policy</a>
+              <a href="/contact" className="hover:text-primary transition-colors">Contact Us</a>
             </div>
             <p className="text-xs text-muted-foreground mt-6">
               © 2025 SDM E-Mobility. All rights reserved.
