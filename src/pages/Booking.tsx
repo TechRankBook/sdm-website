@@ -1,4 +1,6 @@
 import { useEffect } from "react";
+import { Header } from "@/components/Header";
+import { useState } from "react";
 import { EnhancedBookingForm } from "@/components/booking/EnhancedBookingForm";
 import { VehicleSelection } from "@/components/booking/VehicleSelection";
 import { PaymentPage } from "@/components/booking/PaymentPage";
@@ -10,6 +12,7 @@ import { useBookingStore, type BookingData } from "@/stores/bookingStore";
 export type { BookingData };
 
 const Booking = () => {
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const { 
     bookingData, 
     currentStep, 
@@ -23,6 +26,22 @@ const Booking = () => {
   const { toast } = useToast();
 
   useEffect(() => {
+    const isDark = document.documentElement.classList.contains('dark');
+    setIsDarkMode(isDark);
+  }, []);
+
+  const toggleDarkMode = () => {
+    document.documentElement.classList.toggle('dark');
+    setIsDarkMode(!isDarkMode);
+  };
+
+  useEffect(() => {
+    // Check if user came from home page with saved booking data
+    // If booking data exists and we're on step 1, move to step 2 (vehicle selection)
+    if (bookingData.pickupLocation && bookingData.dropoffLocation && currentStep === 1) {
+      setCurrentStep(2);
+    }
+
     // Handle pre-filled data from home page
     const pickup = searchParams.get('pickup');
     const destination = searchParams.get('destination');
@@ -57,7 +76,7 @@ const Booking = () => {
       });
       setCurrentStep(3); // Go back to payment page
     }
-  }, [searchParams, toast]);
+  }, [searchParams, toast, bookingData.pickupLocation, bookingData.dropoffLocation, currentStep]);
 
   const updateBookingData = setBookingData;
 
@@ -102,7 +121,8 @@ const Booking = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+      <Header isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
+      <div className="container mx-auto px-4 pt-24 pb-8">
         {/* Header with Step Indication */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">

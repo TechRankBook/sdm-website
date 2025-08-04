@@ -22,11 +22,15 @@ import { ThankYouPage } from "@/components/booking/ThankYouPage";
 import { PaymentPage } from "@/components/booking/PaymentPage";
 import { FareCalculation } from "@/components/booking/FareCalculation";
 import { EnhancedBookingForm } from "@/components/booking/EnhancedBookingForm";
-import { BookingData } from "@/stores/bookingStore";
+import { BookingData, useBookingStore } from "@/stores/bookingStore";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const [isDarkMode, setIsDarkMode] = useState(true);
-  // Removed driver functionality - rider-only platform
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { bookingData, setBookingData, currentStep, setCurrentStep, nextStep, prevStep } = useBookingStore();
 
   useEffect(() => {
     const isDark = document.documentElement.classList.contains('dark');
@@ -72,63 +76,25 @@ const Index = () => {
     { value: "24/7", label: "Available" }
   ];
 
-  const [currentStep, setCurrentStep] = useState(1);
-    const [bookingData, setBookingData] = useState<BookingData>({
-      serviceType: "city_ride",
-      pickupLocation: "",
-      dropoffLocation: "",
-      scheduledDateTime: "",
-      passengers: 1,
-      packageSelection: "",
-      carType: "",
-      selectedFare: undefined
-    });
+  const handleBookingNext = () => {
+    if (!user) {
+      // Redirect to login, booking data is already saved in store
+      navigate('/auth');
+      return;
+    }
+    // If user is authenticated, proceed to booking page
+    navigate('/booking');
+  };
   
-    const updateBookingData = (data: Partial<BookingData>) => {
-      setBookingData(prev => ({ ...prev, ...data }));
-    };
-  
-    const nextStep = () => {
-      setCurrentStep(prev => prev + 1);
-    };
-  
-    const prevStep = () => {
-      setCurrentStep(prev => prev - 1);
-    };
-  
-    const renderStep = () => {
-      switch (currentStep) {
-        case 1:
-          return (
-            <EnhancedBookingForm
-              bookingData={bookingData}
-              updateBookingData={updateBookingData}
-              onNext={nextStep}
-            />
-          );
-        case 2:
-          return (
-            <FareCalculation
-              bookingData={bookingData}
-              updateBookingData={updateBookingData}
-              onNext={nextStep}
-              onBack={prevStep}
-            />
-          );
-        case 3:
-          return (
-            <PaymentPage
-              bookingData={bookingData}
-              onNext={nextStep}
-              onBack={prevStep}
-            />
-          );
-        case 4:
-          return <ThankYouPage />;
-        default:
-          return null;
-      }
-    };
+  const renderBookingForm = () => {
+    return (
+      <EnhancedBookingForm
+        bookingData={bookingData}
+        updateBookingData={setBookingData}
+        onNext={handleBookingNext}
+      />
+    );
+  };
 
   return (
     <div className="min-h-screen">
@@ -189,8 +155,8 @@ const Index = () => {
             {/* Booking Interface - Rider Only */}
             <div className="fade-in" style={{ animationDelay: "0.3s" }}>
               <div className="flex justify-center">
-          {renderStep()}
-        </div>
+                {renderBookingForm()}
+              </div>
             </div>
           </div>
         </div>

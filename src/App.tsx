@@ -19,6 +19,9 @@ import AuthCallback from "./pages/AuthCallback";
 import NotFound from "./pages/NotFound";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
 import RefundPolicy from "./pages/RefundPolicy";
+import Profile from "./pages/Profile";
+import TripHistory from "./pages/TripHistory";
+import RideTracking from "./pages/RideTracking";
 
 const queryClient = new QueryClient();
 
@@ -41,6 +44,9 @@ const App = () => (
             <Route path="/about" element={<About />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/booking" element={<AuthGuard><Booking /></AuthGuard>} />
+            <Route path="/profile" element={<AuthGuard><Profile /></AuthGuard>} />
+            <Route path="/trip-history" element={<AuthGuard><TripHistory /></AuthGuard>} />
+            <Route path="/tracking" element={<AuthGuard><RideTracking /></AuthGuard>} />
             <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             <Route path="/refund-policy" element={<RefundPolicy />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THIS LINE */}
