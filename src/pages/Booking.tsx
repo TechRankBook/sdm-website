@@ -3,7 +3,7 @@ import { Header } from "@/components/Header";
 import { useState } from "react";
 import { EnhancedBookingForm } from "@/components/booking/EnhancedBookingForm";
 import { VehicleSelection } from "@/components/booking/VehicleSelection";
-import { PaymentPage } from "@/components/booking/PaymentPage";
+import { RazorpayPaymentPage } from "@/components/booking/RazorpayPaymentPage";
 import { ThankYouPage } from "@/components/booking/ThankYouPage";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -59,16 +59,15 @@ const Booking = () => {
       });
     }
 
-    // Handle Stripe payment success/cancel
-    const sessionId = searchParams.get('session_id');
-    const success = searchParams.get('success');
-    const canceled = searchParams.get('canceled');
+    // Handle payment success/cancel from URL params
+    const paymentSuccess = searchParams.get('payment_success');
+    const paymentCanceled = searchParams.get('payment_canceled');
 
-    if (success === 'true' && sessionId) {
+    if (paymentSuccess === 'true') {
       // Redirect to thank you page
       setCurrentStep(4);
       return;
-    } else if (canceled === 'true') {
+    } else if (paymentCanceled === 'true') {
       toast({
         title: "Payment Canceled",
         description: "Your payment was canceled. You can try again.",
@@ -106,7 +105,7 @@ const Booking = () => {
         );
       case 3:
         return (
-          <PaymentPage
+          <RazorpayPaymentPage
             bookingData={bookingData}
             onNext={nextStep}
             onBack={prevStep}

@@ -21,12 +21,11 @@ export const ThankYouPage = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const sessionId = searchParams.get('session_id');
-  const success = searchParams.get('success');
+  const paymentSuccess = searchParams.get('payment_success');
 
   useEffect(() => {
     const fetchBookingDetails = async () => {
-      if (!sessionId || !success) {
+      if (!paymentSuccess) {
         setLoading(false);
         return;
       }
@@ -66,7 +65,7 @@ export const ThankYouPage = () => {
     };
 
     fetchBookingDetails();
-  }, [sessionId, success, toast]);
+  }, [paymentSuccess, toast]);
 
   if (loading) {
     return (
@@ -79,7 +78,7 @@ export const ThankYouPage = () => {
     );
   }
 
-  if (!success || !booking) {
+  if (!paymentSuccess || !booking) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="glass max-w-md w-full p-6 text-center">

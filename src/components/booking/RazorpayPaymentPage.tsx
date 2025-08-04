@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+// Declare Razorpay types
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
 import { 
   ArrowLeft,
   CreditCard,
@@ -19,15 +25,30 @@ import {
 import { BookingData } from "@/stores/bookingStore";
 import { BookingSummary } from "./BookingSummary";
 
-interface PaymentPageProps {
+interface RazorpayPaymentPageProps {
   bookingData: BookingData;
   onNext: () => void;
   onBack: () => void;
 }
 
-export const PaymentPage = ({ bookingData, onNext, onBack }: PaymentPageProps) => {
+export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPaymentPageProps) => {
   const [paymentMethod, setPaymentMethod] = useState("upi");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+
+  // Load Razorpay script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => setRazorpayLoaded(true);
+    document.body.appendChild(script);
+    
+    return () => {
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
+  }, []);
 
   const totalFare = bookingData.selectedFare?.price || 0;
   const advancePayment = Math.ceil(totalFare * 0.2);
@@ -61,6 +82,15 @@ export const PaymentPage = ({ bookingData, onNext, onBack }: PaymentPageProps) =
       toast({
         title: "Error",
         description: "No fare selected. Please go back and select a vehicle.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!razorpayLoaded || !window.Razorpay) {
+      toast({
+        title: "Error",
+        description: "Payment system not loaded. Please refresh and try again.",
         variant: "destructive",
       });
       return;
@@ -114,25 +144,91 @@ export const PaymentPage = ({ bookingData, onNext, onBack }: PaymentPageProps) =
 
       console.log('Booking created:', booking);
 
-      // Create Stripe checkout session
-      const { data, error } = await supabase.functions.invoke('create-checkout-session', {
+      // Create Razorpay order
+      const { data, error } = await supabase.functions.invoke('create-razorpay-order', {
         body: {
           bookingData,
           bookingId: booking.id,
-          paymentMethod: paymentMethod === 'card' ? 'card' : paymentMethod === 'upi' ? 'upi' : 'wallet',
+          paymentMethod: paymentMethod,
         },
       });
 
-      console.log('Stripe session response:', { data, error });
+      console.log('Razorpay order response:', { data, error });
 
       if (error) throw error;
 
-      // Redirect to Stripe checkout
-      if (data?.url) {
-        window.location.href = data.url; // Use location.href instead of window.open for better UX
-      } else {
-        throw new Error('No checkout URL received');
-      }
+      // Configure Razorpay options
+      const options = {
+        key: data.key_id,
+        amount: data.amount,
+        currency: data.currency,
+        name: "SDM E-Mobility",
+        description: `${bookingData.selectedFare.type} - ${bookingData.serviceType.charAt(0).toUpperCase() + bookingData.serviceType.slice(1)} Ride`,
+        order_id: data.order_id,
+        handler: async (response: any) => {
+          try {
+            console.log('Payment successful:', response);
+            
+            // Verify payment
+            const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                booking_id: booking.id,
+              },
+            });
+
+            if (verifyError) throw verifyError;
+
+            toast({
+              title: "Payment Successful!",
+              description: "Your booking has been confirmed.",
+            });
+
+            // Move to thank you page
+            onNext();
+          } catch (verifyErr: any) {
+            console.error('Payment verification error:', verifyErr);
+            toast({
+              title: "Payment Verification Failed",
+              description: verifyErr?.message || "Failed to verify payment. Please contact support.",
+              variant: "destructive",
+            });
+          }
+        },
+        prefill: {
+          name: data.user_name,
+          email: data.user_email,
+          contact: data.user_phone,
+        },
+        notes: {
+          booking_id: booking.id,
+          service_type: bookingData.serviceType,
+        },
+        theme: {
+          color: "#6366f1",
+        },
+        modal: {
+          ondismiss: () => {
+            setIsProcessing(false);
+            toast({
+              title: "Payment Cancelled",
+              description: "You can try again when ready.",
+              variant: "destructive",
+            });
+          },
+        },
+        method: {
+          upi: paymentMethod === 'upi',
+          card: paymentMethod === 'card',
+          wallet: paymentMethod === 'wallet',
+        },
+      };
+
+      const razorpayInstance = new window.Razorpay(options);
+      razorpayInstance.open();
+
     } catch (error: any) {
       console.error('Payment error:', error);
       toast({
@@ -140,7 +236,6 @@ export const PaymentPage = ({ bookingData, onNext, onBack }: PaymentPageProps) =
         description: error?.message || "Failed to process payment. Please try again.",
         variant: "destructive",
       });
-    } finally {
       setIsProcessing(false);
     }
   };
@@ -213,68 +308,21 @@ export const PaymentPage = ({ bookingData, onNext, onBack }: PaymentPageProps) =
           </RadioGroup>
         </div>
 
-        {/* Payment Details Form */}
-        {paymentMethod === "card" && (
-          <Card className="glass-hover p-4 mb-6">
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="cardNumber" className="text-sm">Card Number</Label>
-                <Input
-                  id="cardNumber"
-                  placeholder="1234 5678 9012 3456"
-                  className="glass-hover mt-1 h-10"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="expiry" className="text-sm">Expiry Date</Label>
-                  <Input
-                    id="expiry"
-                    placeholder="MM/YY"
-                    className="glass-hover mt-1 h-10"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="cvv" className="text-sm">CVV</Label>
-                  <Input
-                    id="cvv"
-                    placeholder="123"
-                    className="glass-hover mt-1 h-10"
-                  />
-                </div>
-              </div>
-            </div>
-          </Card>
-        )}
-
-        {paymentMethod === "upi" && (
-          <Card className="glass-hover p-4 mb-6">
-            <div>
-              <Label htmlFor="upiId" className="text-sm">UPI ID</Label>
-              <Input
-                id="upiId"
-                placeholder="username@paytm"
-                className="glass-hover mt-1 h-10"
-              />
-            </div>
-          </Card>
-        )}
-
         {/* Security Notice */}
         <Card className="glass-hover p-4 mb-6">
           <div className="flex items-center gap-2 mb-2">
             <Shield className="w-4 h-4 text-primary" />
-            <span className="text-sm font-medium text-foreground">Secure Payment</span>
+            <span className="text-sm font-medium text-foreground">Secure Payment by Razorpay</span>
           </div>
           <p className="text-xs text-muted-foreground leading-relaxed">
-            Your payment information is encrypted and secure. We use industry-standard security measures.
+            Your payment information is encrypted and secure. Powered by Razorpay's industry-standard security.
           </p>
         </Card>
 
         {/* Confirm Payment Button */}
         <Button
           onClick={handlePayment}
-          disabled={isProcessing}
+          disabled={isProcessing || !razorpayLoaded}
           className="w-full h-12 bg-gradient-primary text-lg font-semibold micro-bounce"
         >
           {isProcessing ? (
