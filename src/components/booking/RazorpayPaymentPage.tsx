@@ -186,7 +186,8 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
               description: "Your booking has been confirmed.",
             });
 
-            // Move to thank you page
+            // Redirect to thank you page with booking ID
+            window.location.href = `/booking?booking_id=${booking.id}`;
             onNext();
           } catch (verifyErr: any) {
             console.error('Payment verification error:', verifyErr);

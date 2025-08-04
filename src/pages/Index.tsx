@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import heroImage from "@/assets/hero-image.jpg";
 import { ThankYouPage } from "@/components/booking/ThankYouPage";
-import { PaymentPage } from "@/components/booking/PaymentPage";
+// Removed PaymentPage import as it's been replaced with RazorpayPaymentPage
 import { FareCalculation } from "@/components/booking/FareCalculation";
 import { EnhancedBookingForm } from "@/components/booking/EnhancedBookingForm";
 import { BookingData, useBookingStore } from "@/stores/bookingStore";

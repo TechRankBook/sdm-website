@@ -1614,8 +1614,8 @@ export type Database = {
           currency: string | null
           gateway_response: Json | null
           id: string
+          razorpay_payment_id: string | null
           status: Database["public"]["Enums"]["payment_status_enum"] | null
-          stripe_payment_intent_id: string | null
           transaction_id: string | null
           updated_at: string | null
           user_id: string | null
@@ -1627,8 +1627,8 @@ export type Database = {
           currency?: string | null
           gateway_response?: Json | null
           id?: string
+          razorpay_payment_id?: string | null
           status?: Database["public"]["Enums"]["payment_status_enum"] | null
-          stripe_payment_intent_id?: string | null
           transaction_id?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -1640,8 +1640,8 @@ export type Database = {
           currency?: string | null
           gateway_response?: Json | null
           id?: string
+          razorpay_payment_id?: string | null
           status?: Database["public"]["Enums"]["payment_status_enum"] | null
-          stripe_payment_intent_id?: string | null
           transaction_id?: string | null
           updated_at?: string | null
           user_id?: string | null

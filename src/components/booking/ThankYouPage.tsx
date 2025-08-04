@@ -21,11 +21,11 @@ export const ThankYouPage = () => {
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const paymentSuccess = searchParams.get('payment_success');
+  const bookingId = searchParams.get('booking_id');
 
   useEffect(() => {
     const fetchBookingDetails = async () => {
-      if (!paymentSuccess) {
+      if (!bookingId) {
         setLoading(false);
         return;
       }
@@ -38,15 +38,14 @@ export const ThankYouPage = () => {
         const { data: bookings, error } = await supabase
           .from('bookings')
           .select('*')
-          .eq('user_id', user.id)
+          .eq('id', bookingId)
           .eq('payment_status', 'paid')
-          .order('created_at', { ascending: false })
-          .limit(1);
+          .single();
 
         if (error) throw error;
 
-        if (bookings && bookings.length > 0) {
-          setBooking(bookings[0]);
+        if (bookings) {
+          setBooking(bookings);
           toast({
             title: "Payment Successful!",
             description: "Your booking has been confirmed. You'll receive SMS updates.",
@@ -65,7 +64,7 @@ export const ThankYouPage = () => {
     };
 
     fetchBookingDetails();
-  }, [paymentSuccess, toast]);
+  }, [bookingId, toast]);
 
   if (loading) {
     return (
@@ -78,7 +77,7 @@ export const ThankYouPage = () => {
     );
   }
 
-  if (!paymentSuccess || !booking) {
+  if (!bookingId || !booking) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="glass max-w-md w-full p-6 text-center">
