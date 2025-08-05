@@ -196,13 +196,17 @@ const Auth = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <form onSubmit={handlePhoneSubmit} className="space-y-4">
-              <div>
+              <div className="flex">
+                <span className="flex items-center rounded-l-md border border-r-0 border-input bg-muted pl-3 pr-2 text-sm text-muted-foreground">
+                  +91
+                </span>
                 <Input
                   type="tel"
-                  placeholder="Enter phone number"
+                  placeholder="Enter 10-digit phone number"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="text-center text-lg"
+                  className="flex-1 rounded-l-none text-lg"
+                  maxLength={10}
                 />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
@@ -298,13 +302,17 @@ const Auth = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <form onSubmit={handleGooglePhoneVerification} className="space-y-4">
-              <div>
+              <div className="flex">
+                <span className="flex items-center rounded-l-md border border-r-0 border-input bg-muted pl-3 pr-2 text-sm text-muted-foreground">
+                  +91
+                </span>
                 <Input
                   type="tel"
-                  placeholder="Enter phone number"
+                  placeholder="Enter 10-digit phone number"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="text-center text-lg"
+                  className="flex-1 rounded-l-none text-lg"
+                  maxLength={10}
                 />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
