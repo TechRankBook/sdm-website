@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from 'react-router-dom';
 // Declare Razorpay types
 declare global {
   interface Window {
@@ -36,6 +37,7 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
   const [paymentAmount, setPaymentAmount] = useState("partial"); // "partial" or "full"
   const [isProcessing, setIsProcessing] = useState(false);
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+  const navigate = useNavigate();
 
   // Load Razorpay script
   useEffect(() => {
@@ -170,7 +172,7 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
         order_id: data.order_id,
         handler: async (response: any) => {
           try {
-            console.log('Payment successful:', response);
+            console.log('Payment partaly successful:', response);
             
             // Verify payment
             const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
@@ -217,7 +219,8 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
             }
 
             // Redirect to thank you page with booking ID
-            window.location.href = `/booking?step=4&booking_id=${booking.id}`;
+            // window.location.href = `/booking?step=4&booking_id=${booking.id}`;
+            navigate(/booking?step=4&booking_id=${booking.id});
             onNext();
           } catch (verifyErr: any) {
             console.error('Payment verification error:', verifyErr);
