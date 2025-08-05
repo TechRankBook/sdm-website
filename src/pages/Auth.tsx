@@ -27,7 +27,7 @@ const Auth = () => {
   useEffect(() => {
     // If user is authenticated and phone is verified, redirect to home
     if (user && isPhoneVerified) {
-      navigate('/booking');
+      navigate('/');
     }
     // If user is authenticated but phone not verified, show phone verification step
     else if (user && !isPhoneVerified) {
@@ -301,7 +301,7 @@ const Auth = () => {
               <div>
                 <Input
                   type="tel"
-                  placeholder="Enter phone number"
+                  placeholder="+91 |   Enter phone number"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
                   className="text-center text-lg"
