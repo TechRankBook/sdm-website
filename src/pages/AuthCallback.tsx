@@ -22,7 +22,7 @@ const AuthCallback = () => {
           if (bookingData.pickupLocation && bookingData.dropoffLocation) {
             navigate('/booking');
           } else {
-            navigate('/');
+            navigate('/booking');
           }
         } else {
           // User signed in with Google but needs phone verification

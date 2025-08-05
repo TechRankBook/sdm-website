@@ -27,7 +27,7 @@ const Auth = () => {
   useEffect(() => {
     // If user is authenticated and phone is verified, redirect to home
     if (user && isPhoneVerified) {
-      navigate('/');
+      navigate('/booking');
     }
     // If user is authenticated but phone not verified, show phone verification step
     else if (user && !isPhoneVerified) {
