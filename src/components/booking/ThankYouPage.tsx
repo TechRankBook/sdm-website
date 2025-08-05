@@ -19,6 +19,7 @@ export const ThankYouPage = () => {
   const [searchParams] = useSearchParams();
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [actualPaidAmount, setActualPaidAmount] = useState(0);
   const { toast } = useToast();
 
   const bookingId = searchParams.get('booking_id');
@@ -100,13 +101,13 @@ export const ThankYouPage = () => {
   }
 
   // Calculate payment amounts based on what was actually paid
-  const partialAmount = Math.ceil(booking.fare_amount * 0.25);
-  // Check payments table to see actual amount paid
-  const [actualPaidAmount, setActualPaidAmount] = useState(partialAmount);
-  const remainingAmount = booking.fare_amount - actualPaidAmount;
+  const partialAmount = Math.ceil(booking?.fare_amount * 0.25 || 0);
+  const remainingAmount = (booking?.fare_amount || 0) - actualPaidAmount;
 
   useEffect(() => {
     const fetchPaymentAmount = async () => {
+      if (!booking?.id) return;
+      
       try {
         const { data: payment } = await supabase
           .from('payments')
@@ -117,15 +118,18 @@ export const ThankYouPage = () => {
         
         if (payment) {
           setActualPaidAmount(payment.amount);
+        } else {
+          // If no payment record found, use partial amount as default
+          setActualPaidAmount(Math.ceil(booking.fare_amount * 0.25));
         }
       } catch (error) {
         console.error('Error fetching payment amount:', error);
+        // Fallback to partial amount
+        setActualPaidAmount(Math.ceil(booking.fare_amount * 0.25));
       }
     };
     
-    if (booking) {
-      fetchPaymentAmount();
-    }
+    fetchPaymentAmount();
   }, [booking]);
 
   const advanceAmount = actualPaidAmount;
