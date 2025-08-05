@@ -199,7 +199,7 @@ const Auth = () => {
               <div>
                 <Input
                   type="tel"
-                  placeholder="+91 |   Enter phone number"
+                  placeholder="+91 |    Enter phone number"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
                   className="text-center text-lg"
