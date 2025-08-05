@@ -220,7 +220,7 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
 
             // Redirect to thank you page with booking ID
             // window.location.href = `/booking?step=4&booking_id=${booking.id}`;
-            navigate(/booking?step=4&booking_id=${booking.id});
+            navigate('/booking?step=4&booking_id=${booking.id}');
             onNext();
           } catch (verifyErr: any) {
             console.error('Payment verification error:', verifyErr);
