@@ -99,8 +99,36 @@ export const ThankYouPage = () => {
     );
   }
 
-  const advanceAmount = Math.ceil(booking.fare_amount * 0.2);
-  const remainingAmount = booking.fare_amount - advanceAmount;
+  // Calculate payment amounts based on what was actually paid
+  const partialAmount = Math.ceil(booking.fare_amount * 0.25);
+  // Check payments table to see actual amount paid
+  const [actualPaidAmount, setActualPaidAmount] = useState(partialAmount);
+  const remainingAmount = booking.fare_amount - actualPaidAmount;
+
+  useEffect(() => {
+    const fetchPaymentAmount = async () => {
+      try {
+        const { data: payment } = await supabase
+          .from('payments')
+          .select('amount')
+          .eq('booking_id', booking.id)
+          .eq('status', 'paid')
+          .single();
+        
+        if (payment) {
+          setActualPaidAmount(payment.amount);
+        }
+      } catch (error) {
+        console.error('Error fetching payment amount:', error);
+      }
+    };
+    
+    if (booking) {
+      fetchPaymentAmount();
+    }
+  }, [booking]);
+
+  const advanceAmount = actualPaidAmount;
 
   return (
     <div className="min-h-screen bg-background p-4">

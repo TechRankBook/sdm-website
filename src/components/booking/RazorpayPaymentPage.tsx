@@ -33,6 +33,7 @@ interface RazorpayPaymentPageProps {
 
 export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPaymentPageProps) => {
   const [paymentMethod, setPaymentMethod] = useState("upi");
+  const [paymentAmount, setPaymentAmount] = useState("partial"); // "partial" or "full"
   const [isProcessing, setIsProcessing] = useState(false);
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
 
@@ -51,8 +52,9 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
   }, []);
 
   const totalFare = bookingData.selectedFare?.price || 0;
-  const advancePayment = Math.ceil(totalFare * 0.2);
-  const remainingAmount = totalFare - advancePayment;
+  const partialPayment = Math.ceil(totalFare * 0.25); // 25% instead of 20%
+  const currentPaymentAmount = paymentAmount === "full" ? totalFare : partialPayment;
+  const remainingAmount = paymentAmount === "full" ? 0 : totalFare - partialPayment;
 
   const paymentMethods = [
     {
@@ -150,6 +152,7 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
           bookingData,
           bookingId: booking.id,
           paymentMethod: paymentMethod,
+          paymentAmount: currentPaymentAmount,
         },
       });
 
@@ -186,8 +189,35 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
               description: "Your booking has been confirmed.",
             });
 
+            // Send booking notification
+            try {
+              await fetch('https://gmualcoqyztvtsqhjlzb.supabase.co/functions/v1/booking-notifications', {
+                method: 'POST',
+                headers: { 
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
+                },
+                body: JSON.stringify({
+                  type: 'booking.confirmed',
+                  data: {
+                    booking: {
+                      id: booking.id,
+                      user_id: booking.user_id,
+                      pickup_address: booking.pickup_address,
+                      dropoff_address: booking.dropoff_address,
+                      fare_amount: booking.fare_amount,
+                      scheduled_time: booking.scheduled_time
+                    }
+                  }
+                })
+              });
+            } catch (notificationError) {
+              console.error('Failed to send notification:', notificationError);
+              // Don't block the flow if notification fails
+            }
+
             // Redirect to thank you page with booking ID
-            window.location.href = `/booking?booking_id=${booking.id}`;
+            window.location.href = `/booking?step=4&booking_id=${booking.id}`;
             onNext();
           } catch (verifyErr: any) {
             console.error('Payment verification error:', verifyErr);
@@ -218,6 +248,29 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
               description: "You can try again when ready.",
               variant: "destructive",
             });
+          },
+          // Enable mobile optimization
+          backdrop_close: false,
+          confirm_close: true,
+          escape: true,
+        },
+        // Improve mobile compatibility
+        config: {
+          display: {
+            blocks: {
+              banks: {
+                name: 'Most Used Methods',
+                instruments: [
+                  { method: 'upi' },
+                  { method: 'card' },
+                  { method: 'wallet' },
+                ],
+              },
+            },
+            sequence: ['block.banks'],
+            preferences: {
+              show_default_blocks: true,
+            },
           },
         },
         method: {
@@ -261,28 +314,43 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
         {/* Booking Summary */}
         <BookingSummary bookingData={bookingData} />
 
-        {/* Payment Breakdown */}
+        {/* Payment Amount Selection */}
         <Card className="glass-hover p-4 mb-6">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Payment Breakdown</h2>
+          <h2 className="text-lg font-semibold text-foreground mb-4">Choose Payment Amount</h2>
           
-          <div className="space-y-3">
-            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-foreground">Advance Payment (20%)</span>
-                <Badge className="bg-gradient-primary text-white text-xs">PAY NOW</Badge>
+          <RadioGroup value={paymentAmount} onValueChange={setPaymentAmount} className="space-y-3 mb-4">
+            <Card className="glass-hover p-3">
+              <div className="flex items-center space-x-3">
+                <RadioGroupItem value="partial" id="partial" />
+                <Label htmlFor="partial" className="flex items-center justify-between cursor-pointer flex-1">
+                  <div>
+                    <p className="font-medium text-foreground text-sm">Partial Payment (25%)</p>
+                    <p className="text-xs text-muted-foreground">Pay remaining after ride</p>
+                  </div>
+                  <span className="text-primary font-bold text-lg">₹{partialPayment}</span>
+                </Label>
               </div>
-              <span className="text-primary font-bold text-lg">₹{advancePayment}</span>
-            </div>
+            </Card>
             
-            <div className="flex justify-between text-sm">
-              <span className="text-muted-foreground">Remaining Amount</span>
-              <span className="text-muted-foreground">₹{remainingAmount}</span>
+            <Card className="glass-hover p-3">
+              <div className="flex items-center space-x-3">
+                <RadioGroupItem value="full" id="full" />
+                <Label htmlFor="full" className="flex items-center justify-between cursor-pointer flex-1">
+                  <div>
+                    <p className="font-medium text-foreground text-sm">Full Payment</p>
+                    <p className="text-xs text-muted-foreground">Pay complete fare now</p>
+                  </div>
+                  <span className="text-primary font-bold text-lg">₹{totalFare}</span>
+                </Label>
+              </div>
+            </Card>
+          </RadioGroup>
+
+          {paymentAmount === "partial" && remainingAmount > 0 && (
+            <div className="text-xs text-muted-foreground">
+              Remaining ₹{remainingAmount} will be collected after ride completion
             </div>
-            
-            <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-              Remaining amount will be collected after ride completion
-            </p>
-          </div>
+          )}
         </Card>
 
         {/* Payment Method Selection */}
@@ -334,7 +402,7 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
           ) : (
             <div className="flex items-center gap-2">
               <CheckCircle className="w-5 h-5" />
-              Pay ₹{advancePayment} Now
+              Pay ₹{currentPaymentAmount} Now
             </div>
           )}
         </Button>

@@ -36,6 +36,15 @@ const Booking = () => {
   };
 
   useEffect(() => {
+    // Handle step navigation from URL
+    const step = searchParams.get('step');
+    const bookingId = searchParams.get('booking_id');
+    
+    if (step === '4' && bookingId) {
+      setCurrentStep(4);
+      return;
+    }
+
     // Check if user came from home page with saved booking data
     // If booking data exists and we're on step 1, move to step 2 (vehicle selection)
     if (bookingData.pickupLocation && bookingData.dropoffLocation && currentStep === 1) {

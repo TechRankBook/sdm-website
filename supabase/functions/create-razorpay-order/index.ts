@@ -43,22 +43,22 @@ serve(async (req) => {
     if (!user?.email) throw new Error('User not authenticated or email not available');
     logStep('User authenticated', { userId: user.id, email: user.email });
 
-    const { bookingData, bookingId, paymentMethod = 'razorpay' } = await req.json();
+    const { bookingData, bookingId, paymentMethod = 'razorpay', paymentAmount } = await req.json();
     logStep('Request data received', { bookingId, serviceType: bookingData.serviceType, paymentMethod });
 
     if (!bookingData.selectedFare) {
       throw new Error('No fare selected');
     }
 
-    // Calculate advance payment (20% of total fare)
+    // Use the payment amount from frontend (either partial 25% or full)
     const totalFare = bookingData.selectedFare.price;
-    const advancePayment = Math.ceil(totalFare * 0.2);
+    const actualPaymentAmount = paymentAmount || Math.ceil(totalFare * 0.25);
     
-    logStep('Fare calculation', { totalFare, advancePayment });
+    logStep('Fare calculation', { totalFare, actualPaymentAmount });
 
     // Create Razorpay order
     const orderData = {
-      amount: advancePayment * 100, // Amount in paise
+      amount: actualPaymentAmount * 100, // Amount in paise
       currency: 'INR',
       receipt: `rcpt_${bookingId.slice(-32)}`, // Truncate to fit 40 char limit
       payment_capture: 1,
@@ -68,7 +68,7 @@ serve(async (req) => {
         service_type: bookingData.serviceType,
         vehicle_type: bookingData.selectedFare.type,
         total_fare: totalFare.toString(),
-        advance_payment: advancePayment.toString(),
+        payment_amount: actualPaymentAmount.toString(),
       }
     };
 
@@ -110,7 +110,7 @@ serve(async (req) => {
       .insert({
         booking_id: bookingId,
         user_id: user.id,
-        amount: advancePayment,
+        amount: actualPaymentAmount,
         currency: 'INR',
         status: 'pending',
         transaction_id: order.id,
