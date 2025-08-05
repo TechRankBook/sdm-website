@@ -27,7 +27,7 @@ const Auth = () => {
   useEffect(() => {
     // If user is authenticated and phone is verified, redirect to home
     if (user && isPhoneVerified) {
-      navigate('/');
+      navigate('/booking');
     }
     // If user is authenticated but phone not verified, show phone verification step
     else if (user && !isPhoneVerified) {
@@ -298,17 +298,13 @@ const Auth = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <form onSubmit={handleGooglePhoneVerification} className="space-y-4">
-              <div className="flex">
-                <span className="flex items-center rounded-l-md border border-r-0 border-input bg-muted pl-3 pr-2 text-sm text-muted-foreground">
-                  +91
-                </span>
+              <div>
                 <Input
                   type="tel"
-                  placeholder="Enter 10-digit phone number"
+                  placeholder="Enter phone number"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="flex-1 rounded-l-none text-lg"
-                  maxLength={10}
+                  className="text-center text-lg"
                 />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
