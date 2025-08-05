@@ -60,7 +60,7 @@ serve(async (req) => {
     const orderData = {
       amount: advancePayment * 100, // Amount in paise
       currency: 'INR',
-      receipt: `receipt_${bookingId}`,
+      receipt: `rcpt_${bookingId.slice(-32)}`, // Truncate to fit 40 char limit
       payment_capture: 1,
       notes: {
         booking_id: bookingId,

@@ -61,12 +61,15 @@ export const useFareCalculation = ({
       }
 
       // Get pricing rules using vehicle_type_id instead of vehicle_type string
+      // Use order by effective_from DESC and limit 1 to handle multiple rules
       const { data: pricingRules, error: pricingError } = await supabase
         .from('pricing_rules')
         .select('*')
         .eq('service_type_id', serviceTypes.id)
         .eq('vehicle_type_id', vehicleTypes.id)
         .eq('is_active', true)
+        .order('effective_from', { ascending: false })
+        .limit(1)
         .single();
 
       if (pricingError || !pricingRules) {

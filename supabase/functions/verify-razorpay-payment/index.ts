@@ -81,6 +81,7 @@ serve(async (req) => {
       .from('payments')
       .update({
         status: 'paid',
+        razorpay_payment_id: razorpay_payment_id,
         transaction_id: razorpay_payment_id,
         gateway_response: {
           razorpay_order_id,
