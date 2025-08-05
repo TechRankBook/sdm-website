@@ -171,8 +171,9 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
         description: `${bookingData.selectedFare.type} - ${bookingData.serviceType.charAt(0).toUpperCase() + bookingData.serviceType.slice(1)} Ride`,
         order_id: data.order_id,
         handler: async (response: any) => {
+          setIsProcessing(false);
           try {
-            console.log('Payment partaly successful:', response);
+            console.log('Payment successful:', response);
             
             // Verify payment
             const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
@@ -186,20 +187,12 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
 
             if (verifyError) throw verifyError;
 
-            toast({
-              title: "Payment Successful!",
-              description: "Your booking has been confirmed.",
-            });
+            console.log('Payment verified successfully:', verifyData);
 
             // Send booking notification
             try {
-              await fetch('https://gmualcoqyztvtsqhjlzb.supabase.co/functions/v1/booking-notifications', {
-                method: 'POST',
-                headers: { 
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${(await supabase.auth.getSession()).data.session?.access_token}`
-                },
-                body: JSON.stringify({
+              await supabase.functions.invoke('booking-notifications', {
+                body: {
                   type: 'booking.confirmed',
                   data: {
                     booking: {
@@ -211,17 +204,25 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
                       scheduled_time: booking.scheduled_time
                     }
                   }
-                })
+                }
               });
             } catch (notificationError) {
               console.error('Failed to send notification:', notificationError);
               // Don't block the flow if notification fails
             }
 
+            // Show success message
+            toast({
+              title: "Payment Successful!",
+              description: "Your booking has been confirmed.",
+            });
+
             // Redirect to thank you page with booking ID
-            // window.location.href = `/booking?step=4&booking_id=${booking.id}`;
-            navigate('/booking?step=4&booking_id=${booking.id}');
-            onNext();
+            setTimeout(() => {
+              navigate(`/booking?step=4&booking_id=${booking.id}&payment_success=true`);
+              onNext();
+            }, 1000);
+
           } catch (verifyErr: any) {
             console.error('Payment verification error:', verifyErr);
             toast({
@@ -246,11 +247,8 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
         modal: {
           ondismiss: () => {
             setIsProcessing(false);
-            toast({
-              title: "Payment Cancelled",
-              description: "You can try again when ready.",
-              variant: "destructive",
-            });
+            // Don't show error if payment was successful
+            // Let the handler manage success/failure states
           },
           // Enable mobile optimization
           backdrop_close: false,
@@ -284,6 +282,18 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
       };
 
       const razorpayInstance = new window.Razorpay(options);
+      
+      // Add global error handler for payment failures
+      razorpayInstance.on('payment.failed', (response: any) => {
+        setIsProcessing(false);
+        console.error('Payment failed:', response);
+        toast({
+          title: "Payment Failed",
+          description: response.error?.description || "Payment could not be completed. Please try again.",
+          variant: "destructive",
+        });
+      });
+      
       razorpayInstance.open();
 
     } catch (error: any) {
