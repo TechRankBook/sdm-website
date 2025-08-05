@@ -85,7 +85,7 @@ const Auth = () => {
         title: "Verification Successful",
         description: "Welcome to SDM E-Mobility! You're now signed in.",
       });
-      navigate('/');
+      navigate('/booking');
     } else {
       console.error('OTP verification failed:', result.error);
       toast({
@@ -164,7 +164,7 @@ const Auth = () => {
         title: "Phone Verified Successfully",
         description: "Your phone number has been verified. Welcome to SDM E-Mobility!",
       });
-      navigate('/');
+      navigate('/booking');
     } else {
       console.error('Phone verification failed:', result.error);
       toast({
