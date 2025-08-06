@@ -4,7 +4,7 @@ import { useState } from "react";
 import { EnhancedBookingForm } from "@/components/booking/EnhancedBookingForm";
 import { VehicleSelection } from "@/components/booking/VehicleSelection";
 import { RazorpayPaymentPage } from "@/components/booking/RazorpayPaymentPage";
-import { ThankYouPage } from "@/components/booking/ThankYouPage";
+import { ImprovedThankYouPage } from "@/components/booking/ImprovedThankYouPage";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useBookingStore, type BookingData } from "@/stores/bookingStore";
@@ -121,7 +121,7 @@ const Booking = () => {
           />
         );
       case 4:
-        return <ThankYouPage />;
+        return <ImprovedThankYouPage />;
       default:
         return null;
     }

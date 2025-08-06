@@ -217,11 +217,9 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
               description: "Your booking has been confirmed.",
             });
 
-            // Redirect to thank you page with booking ID
-            setTimeout(() => {
-              navigate(`/booking?step=4&booking_id=${booking.id}&payment_success=true`);
-              onNext();
-            }, 1000);
+            // Navigate to thank you page immediately
+            navigate(`/booking?step=4&booking_id=${booking.id}&payment_success=true`);
+            onNext();
 
           } catch (verifyErr: any) {
             console.error('Payment verification error:', verifyErr);
@@ -246,14 +244,15 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
         },
         modal: {
           ondismiss: () => {
-            setIsProcessing(false);
-            // Don't show error if payment was successful
-            // Let the handler manage success/failure states
+            // Only set processing to false after a short delay to avoid premature failure messages
+            setTimeout(() => {
+              setIsProcessing(false);
+            }, 500);
           },
           // Enable mobile optimization
           backdrop_close: false,
-          confirm_close: true,
-          escape: true,
+          confirm_close: false, // Prevent accidental dismissal
+          escape: false,
         },
         // Improve mobile compatibility
         config: {
@@ -285,13 +284,15 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
       
       // Add global error handler for payment failures
       razorpayInstance.on('payment.failed', (response: any) => {
-        setIsProcessing(false);
-        console.error('Payment failed:', response);
-        toast({
-          title: "Payment Failed",
-          description: response.error?.description || "Payment could not be completed. Please try again.",
-          variant: "destructive",
-        });
+        setTimeout(() => {
+          setIsProcessing(false);
+          console.error('Payment failed:', response);
+          toast({
+            title: "Payment Failed", 
+            description: response.error?.description || "Payment could not be completed. Please try again.",
+            variant: "destructive",
+          });
+        }, 100);
       });
       
       razorpayInstance.open();
