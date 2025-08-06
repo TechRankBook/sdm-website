@@ -39,23 +39,44 @@ const Booking = () => {
     // Handle step navigation from URL
     const step = searchParams.get('step');
     const bookingId = searchParams.get('booking_id');
+    const paymentSuccess = searchParams.get('payment_success');
+    const paymentCanceled = searchParams.get('payment_canceled');
     
+    // If user is coming to booking page with payment success, show thank you page
     if (step === '4' && bookingId) {
       setCurrentStep(4);
       return;
     }
+    
+    // If payment was successful, redirect to thank you page
+    if (paymentSuccess === 'true' && bookingId) {
+      setCurrentStep(4);
+      return;
+    } 
+    
+    // If payment was canceled, stay on payment page with message
+    if (paymentCanceled === 'true') {
+      toast({
+        title: "Payment Canceled",
+        description: "Your payment was canceled. You can try again.",
+        variant: "destructive",
+      });
+      setCurrentStep(3);
+      return;
+    }
 
-    // Check if user came from home page with saved booking data
-    // If booking data exists and we're on step 1, move to step 2 (vehicle selection)
-    if (bookingData.pickupLocation && bookingData.dropoffLocation && currentStep === 1) {
-      setCurrentStep(1);
+    // If user comes to booking page without payment parameters, start fresh
+    if (!paymentSuccess && !paymentCanceled && !step && !bookingId) {
+      // Reset to step 1 for fresh booking
+      if (currentStep > 1) {
+        setCurrentStep(1);
+      }
     }
 
     // Handle pre-filled data from home page
     const pickup = searchParams.get('pickup');
     const destination = searchParams.get('destination');
     const service = searchParams.get('service');
-    const time = searchParams.get('time');
 
     if (pickup || destination || service) {
       setBookingData({
@@ -67,24 +88,7 @@ const Booking = () => {
                    service === "outstation" ? "outstation" : bookingData.serviceType
       });
     }
-
-    // Handle payment success/cancel from URL params
-    const paymentSuccess = searchParams.get('payment_success');
-    const paymentCanceled = searchParams.get('payment_canceled');
-
-    if (paymentSuccess === 'true') {
-      // Redirect to thank you page
-      setCurrentStep(4);
-      return;
-    } else if (paymentCanceled === 'true') {
-      toast({
-        title: "Payment Canceled",
-        description: "Your payment was canceled. You can try again.",
-        variant: "destructive",
-      });
-      setCurrentStep(3); // Go back to payment page
-    }
-  }, [searchParams, toast, bookingData.pickupLocation, bookingData.dropoffLocation, currentStep]);
+  }, [searchParams, toast, currentStep, setCurrentStep, setBookingData]);
 
   const updateBookingData = setBookingData;
 

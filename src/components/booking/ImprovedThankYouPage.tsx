@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useBookingStore } from "@/stores/bookingStore";
 import { 
   CheckCircle, 
   Clock, 
@@ -32,6 +33,7 @@ export const ImprovedThankYouPage = () => {
   const [actualPaidAmount, setActualPaidAmount] = useState(0);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { resetBookingData } = useBookingStore();
 
   const bookingId = searchParams.get('booking_id');
   const paymentSuccess = searchParams.get('payment_success');
@@ -271,7 +273,10 @@ export const ImprovedThankYouPage = () => {
             Back to Home
           </Button>
           <Button 
-            onClick={() => navigate('/booking')}
+            onClick={() => {
+              resetBookingData();
+              navigate('/booking', { replace: true });
+            }}
             className="flex-1"
           >
             Book Another Ride
