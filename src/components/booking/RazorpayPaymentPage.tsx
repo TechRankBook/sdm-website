@@ -192,12 +192,12 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
             // Send booking notification
             try {
               await fetch('https://gmualcoqyztvtsqhjlzb.supabase.co/functions/v1/booking-notifications', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({
-    type: 'booking.confirmed',
-    data: {
-      booking: {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+              type: 'booking.confirmed',
+              data: {
+                booking: {
                       id: booking.id,
                       user_id: booking.user_id,
                       pickup_address: booking.pickup_address,
@@ -205,9 +205,9 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
                       fare_amount: booking.fare_amount,
                       scheduled_time: booking.scheduled_time
                     }
-    }
-  })
-});
+                  }
+                })
+              });
             } catch (notificationError) {
               console.error('Failed to send notification:', notificationError);
               // Don't block the flow if notification fails
