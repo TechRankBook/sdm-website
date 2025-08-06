@@ -7,6 +7,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Calendar, MapPin, Clock, Car, Star, IndianRupee } from "lucide-react";
+import { TripDetailsModal } from "@/components/trip/TripDetailsModal";
+import { ReviewModal } from "@/components/review/ReviewModal";
 
 interface Booking {
   id: string;
@@ -19,6 +21,10 @@ interface Booking {
   start_time: string;
   end_time: string;
   vehicle_type: string;
+  driver_id: string;
+  driver?: {
+    full_name: string;
+  };
 }
 
 const TripHistory = () => {
@@ -26,6 +32,19 @@ const TripHistory = () => {
   const { user } = useAuth();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedBookingId, setSelectedBookingId] = useState<string | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [reviewModalData, setReviewModalData] = useState<{
+    isOpen: boolean;
+    bookingId: string;
+    driverId: string;
+    driverName: string;
+  }>({
+    isOpen: false,
+    bookingId: "",
+    driverId: "",
+    driverName: ""
+  });
 
   useEffect(() => {
     const isDark = document.documentElement.classList.contains('dark');
@@ -50,7 +69,27 @@ const TripHistory = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setBookings(data || []);
+      
+      // For each booking, fetch driver details if driver_id exists
+      const bookingsWithDrivers = await Promise.all(
+        (data || []).map(async (booking) => {
+          if (booking.driver_id) {
+            const { data: driverData } = await supabase
+              .from('users')
+              .select('full_name')
+              .eq('id', booking.driver_id)
+              .single();
+            
+            return {
+              ...booking,
+              driver: driverData
+            };
+          }
+          return booking;
+        })
+      );
+      
+      setBookings(bookingsWithDrivers);
     } catch (error) {
       console.error('Error fetching trip history:', error);
       toast.error('Failed to load trip history');
@@ -82,6 +121,30 @@ const TripHistory = () => {
       hour: '2-digit',
       minute: '2-digit'
     });
+  };
+
+  const handleViewDetails = (bookingId: string) => {
+    setSelectedBookingId(bookingId);
+    setIsDetailsModalOpen(true);
+  };
+
+  const handleRateTrip = (booking: Booking) => {
+    if (!booking.driver_id || !booking.driver?.full_name) {
+      toast.error('Driver information not available');
+      return;
+    }
+    
+    setReviewModalData({
+      isOpen: true,
+      bookingId: booking.id,
+      driverId: booking.driver_id,
+      driverName: booking.driver.full_name
+    });
+  };
+
+  const handleReviewSubmitted = () => {
+    // Optionally refresh the trip history to update UI
+    fetchTripHistory();
   };
 
   if (loading) {
@@ -178,13 +241,21 @@ const TripHistory = () => {
                         Trip ID: {booking.id.slice(0, 8)}...
                       </div>
                       <div className="flex gap-2">
-                        {booking.status === 'completed' && (
-                          <Button variant="outline" size="sm">
+                        {booking.status === 'completed' && booking.driver_id && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => handleRateTrip(booking)}
+                          >
                             <Star className="w-4 h-4 mr-1" />
                             Rate Trip
                           </Button>
                         )}
-                        <Button variant="outline" size="sm">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleViewDetails(booking.id)}
+                        >
                           View Details
                         </Button>
                       </div>
@@ -196,6 +267,28 @@ const TripHistory = () => {
           )}
         </div>
       </div>
+
+      {/* Trip Details Modal */}
+      {selectedBookingId && (
+        <TripDetailsModal
+          isOpen={isDetailsModalOpen}
+          onClose={() => {
+            setIsDetailsModalOpen(false);
+            setSelectedBookingId(null);
+          }}
+          bookingId={selectedBookingId}
+        />
+      )}
+
+      {/* Review Modal */}
+      <ReviewModal
+        isOpen={reviewModalData.isOpen}
+        onClose={() => setReviewModalData(prev => ({ ...prev, isOpen: false }))}
+        bookingId={reviewModalData.bookingId}
+        driverId={reviewModalData.driverId}
+        driverName={reviewModalData.driverName}
+        onReviewSubmitted={handleReviewSubmitted}
+      />
     </div>
   );
 };

@@ -8,6 +8,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { User, Phone, Mail, MapPin, Calendar } from "lucide-react";
+import { ProfileImageUpload } from "@/components/profile/ProfileImageUpload";
+import { SavedAddresses } from "@/components/profile/SavedAddresses";
 
 const Profile = () => {
   const [isDarkMode, setIsDarkMode] = useState(true);
@@ -19,6 +21,7 @@ const Profile = () => {
     phone_no: "",
     dob: "",
     preferred_payment_method: "",
+    profile_picture_url: "",
   });
 
   useEffect(() => {
@@ -61,6 +64,7 @@ const Profile = () => {
         phone_no: userData?.phone_no || "",
         dob: customerData?.dob || "",
         preferred_payment_method: customerData?.preferred_payment_method || "",
+        profile_picture_url: userData?.profile_picture_url || "",
       });
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -104,6 +108,10 @@ const Profile = () => {
     }
   };
 
+  const handleImageUpdate = (url: string) => {
+    setProfileData(prev => ({ ...prev, profile_picture_url: url }));
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Header isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
@@ -123,6 +131,15 @@ const Profile = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
+              {/* Profile Image Upload */}
+              <div className="flex justify-center">
+                <ProfileImageUpload
+                  userId={user?.id || ""}
+                  currentImageUrl={profileData.profile_picture_url}
+                  userName={profileData.full_name}
+                  onImageUpdate={handleImageUpdate}
+                />
+              </div>
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="full_name">Full Name</Label>
@@ -191,6 +208,9 @@ const Profile = () => {
               </Button>
             </CardContent>
           </Card>
+
+          {/* Saved Addresses Section */}
+          <SavedAddresses userId={user?.id || ""} />
         </div>
       </div>
     </div>
