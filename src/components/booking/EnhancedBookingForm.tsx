@@ -50,24 +50,126 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
   const [dropoffLocation, setDropoffLocation] = useState(bookingData.dropoffLocation || "");
   const [scheduledDateTime, setScheduledDateTime] = useState(bookingData.scheduledDateTime || "");
   const [passengers, setPassengers] = useState(bookingData.passengers || 2);
-  const [hours, setHours] = useState("");
-  const [tripType, setTripType] = useState("oneway");
-  const [selectedDate, setSelectedDate] = useState<Date>();
-  const [selectedTime, setSelectedTime] = useState<string>("");
-  const [isRoundTrip, setIsRoundTrip] = useState(false);
-  const [returnDate, setReturnDate] = useState<Date>();
-  const [returnTime, setReturnTime] = useState<string>("");
-  const [specialInstructions, setSpecialInstructions] = useState("");
+  const [hours, setHours] = useState(bookingData.packageSelection || "");
+  const [tripType, setTripType] = useState(bookingData.tripType || "oneway");
+  const [selectedDate, setSelectedDate] = useState<Date>(() => {
+    if (bookingData.scheduledDateTime) {
+      return new Date(bookingData.scheduledDateTime);
+    }
+    return undefined;
+  });
+  const [selectedTime, setSelectedTime] = useState<string>(() => {
+    if (bookingData.scheduledDateTime) {
+      const date = new Date(bookingData.scheduledDateTime);
+      return date.toTimeString().slice(0, 5);
+    }
+    return "";
+  });
+  const [isRoundTrip, setIsRoundTrip] = useState(bookingData.isRoundTrip || false);
+  const [returnDate, setReturnDate] = useState<Date>(() => {
+    if (bookingData.returnDateTime) {
+      return new Date(bookingData.returnDateTime);
+    }
+    return undefined;
+  });
+  const [returnTime, setReturnTime] = useState<string>(() => {
+    if (bookingData.returnDateTime) {
+      const date = new Date(bookingData.returnDateTime);
+      return date.toTimeString().slice(0, 5);
+    }
+    return "";
+  });
+  const [specialInstructions, setSpecialInstructions] = useState(bookingData.specialInstructions || "");
   
   // Location coordinates
-  const [pickupCoords, setPickupCoords] = useState<LocationData | null>(null);
-  const [dropoffCoords, setDropoffCoords] = useState<LocationData | null>(null);
+  const [pickupCoords, setPickupCoords] = useState<LocationData | null>(() => {
+    if (bookingData.pickupLatitude && bookingData.pickupLongitude) {
+      return {
+        lat: bookingData.pickupLatitude,
+        lng: bookingData.pickupLongitude,
+        address: bookingData.pickupLocation
+      };
+    }
+    return null;
+  });
+  const [dropoffCoords, setDropoffCoords] = useState<LocationData | null>(() => {
+    if (bookingData.dropoffLatitude && bookingData.dropoffLongitude) {
+      return {
+        lat: bookingData.dropoffLatitude,
+        lng: bookingData.dropoffLongitude,
+        address: bookingData.dropoffLocation || ""
+      };
+    }
+    return null;
+  });
   const [routeData, setRouteData] = useState<{
     distance: string;
     duration: string;
     distanceKm: number;
     durationMinutes: number;
-  } | null>(null);
+  } | null>(() => {
+    if (bookingData.distanceKm && bookingData.durationMinutes) {
+      return {
+        distance: `${bookingData.distanceKm.toFixed(1)} km`,
+        duration: `${Math.round(bookingData.durationMinutes)} min`,
+        distanceKm: bookingData.distanceKm,
+        durationMinutes: bookingData.durationMinutes
+      };
+    }
+    return null;
+  });
+
+  // Sync local state with booking data whenever it changes
+  useEffect(() => {
+    setServiceType(bookingData.serviceType);
+    setPickupLocation(bookingData.pickupLocation);
+    setDropoffLocation(bookingData.dropoffLocation || "");
+    setPassengers(bookingData.passengers || 2);
+    setHours(bookingData.packageSelection || "");
+    setTripType(bookingData.tripType || "oneway");
+    setIsRoundTrip(bookingData.isRoundTrip || false);
+    setSpecialInstructions(bookingData.specialInstructions || "");
+    
+    // Set dates and times
+    if (bookingData.scheduledDateTime) {
+      const scheduledDate = new Date(bookingData.scheduledDateTime);
+      setSelectedDate(scheduledDate);
+      setSelectedTime(scheduledDate.toTimeString().slice(0, 5));
+    }
+    
+    if (bookingData.returnDateTime) {
+      const returnDate = new Date(bookingData.returnDateTime);
+      setReturnDate(returnDate);
+      setReturnTime(returnDate.toTimeString().slice(0, 5));
+    }
+    
+    // Set coordinates
+    if (bookingData.pickupLatitude && bookingData.pickupLongitude) {
+      setPickupCoords({
+        lat: bookingData.pickupLatitude,
+        lng: bookingData.pickupLongitude,
+        address: bookingData.pickupLocation
+      });
+    }
+    
+    if (bookingData.dropoffLatitude && bookingData.dropoffLongitude) {
+      setDropoffCoords({
+        lat: bookingData.dropoffLatitude,
+        lng: bookingData.dropoffLongitude,
+        address: bookingData.dropoffLocation || ""
+      });
+    }
+    
+    // Set route data
+    if (bookingData.distanceKm && bookingData.durationMinutes) {
+      setRouteData({
+        distance: `${bookingData.distanceKm.toFixed(1)} km`,
+        duration: `${Math.round(bookingData.durationMinutes)} min`,
+        distanceKm: bookingData.distanceKm,
+        durationMinutes: bookingData.durationMinutes
+      });
+    }
+  }, [bookingData]);
 
   // Modal states
   const [showGuestModal, setShowGuestModal] = useState(false);
