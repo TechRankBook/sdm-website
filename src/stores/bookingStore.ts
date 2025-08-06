@@ -91,7 +91,10 @@ export const useBookingStore = create<BookingStore>()(
         setCurrentStep: (step) => set({ currentStep: step }),
 
         nextStep: () =>
-          set((state) => ({ currentStep: state.currentStep + 1 })),
+          set((state) => {
+            console.log("🔄 nextStep called - current step:", state.currentStep, "moving to:", state.currentStep + 1);
+            return { currentStep: state.currentStep + 1 };
+          }),
 
         prevStep: () =>
           set((state) => ({ currentStep: Math.max(1, state.currentStep - 1) })),
