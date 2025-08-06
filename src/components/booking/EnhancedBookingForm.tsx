@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
@@ -236,94 +236,71 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
     });
   };
 
-  const isFormValid = () => {
-    console.log("🔍 Validating form...");
-    
+  const isFormValid = useCallback(() => {
+    // Remove excessive logging that was causing performance issues
     const hasPickup = pickupLocation.trim() !== "";
-    console.log("✅ Pickup location:", pickupLocation, "Valid:", hasPickup);
-    
-    let hasDestination = false;
-    if (serviceType === "car_rental") {
-      hasDestination = hours !== "";
-      console.log("✅ Car rental hours:", hours, "Valid:", hasDestination);
-    } else {
-      hasDestination = dropoffLocation.trim() !== "";
-      console.log("✅ Dropoff location:", dropoffLocation, "Valid:", hasDestination);
-    }
-    
+    const hasDestination = serviceType === "car_rental" ? hours !== "" : dropoffLocation.trim() !== "";
     const hasDateTime = selectedDate && selectedTime;
-    console.log("✅ DateTime - Date:", selectedDate, "Time:", selectedTime, "Valid:", hasDateTime);
-    
     const hasValidReturn = !isRoundTrip || serviceType !== "outstation" || (returnDate && returnTime);
-    console.log("✅ Return trip - Round trip:", isRoundTrip, "Service:", serviceType, "Return date:", returnDate, "Return time:", returnTime, "Valid:", hasValidReturn);
     
-    const isValid = hasPickup && hasDestination && hasDateTime && hasValidReturn;
-    console.log("🎯 Form validation result:", isValid);
+    return hasPickup && hasDestination && hasDateTime && hasValidReturn;
+  }, [pickupLocation, serviceType, hours, dropoffLocation, selectedDate, selectedTime, isRoundTrip, returnDate, returnTime]);
+
+  const handleSearchCars = useCallback(() => {
+    console.log("🚗 Search Cars clicked! Starting submission...");
     
-    return isValid;
-  };
+    try {
+      if (!isFormValid()) {
+        console.log("❌ Form validation failed");
+        return;
+      }
 
-  const handleSearchCars = () => {
-    console.log("🚗 Search Cars clicked!");
-    console.log("📋 Current form state:", {
-      serviceType,
-      pickupLocation,
-      dropoffLocation,
-      selectedDate,
-      selectedTime,
-      passengers,
-      hours,
-      isRoundTrip,
-      returnDate,
-      returnTime
-    });
+      console.log("✅ Form validation passed - preparing data...");
 
-    if (!isFormValid()) {
-      console.log("❌ Form validation failed - stopping submission");
-      return;
+      const dateTime = selectedDate && selectedTime 
+        ? new Date(`${selectedDate.toISOString().split('T')[0]}T${selectedTime}`).toISOString()
+        : "";
+      
+      const returnDateTime = isRoundTrip && returnDate && returnTime
+        ? new Date(`${returnDate.toISOString().split('T')[0]}T${returnTime}`).toISOString()
+        : "";
+
+      const bookingDataToUpdate = {
+        serviceType,
+        pickupLocation,
+        dropoffLocation: serviceType === "car_rental" ? undefined : dropoffLocation,
+        scheduledDateTime: dateTime,
+        returnDateTime,
+        passengers,
+        packageSelection: serviceType === "car_rental" ? hours : undefined,
+        isRoundTrip,
+        tripType,
+        specialInstructions,
+        pickupLatitude: pickupCoords?.lat,
+        pickupLongitude: pickupCoords?.lng,
+        dropoffLatitude: dropoffCoords?.lat,
+        dropoffLongitude: dropoffCoords?.lng,
+        distanceKm: routeData?.distanceKm || 0,
+        durationMinutes: routeData?.durationMinutes || 0
+      };
+
+      console.log("📦 Updating booking data:", bookingDataToUpdate);
+      
+      updateBookingData(bookingDataToUpdate);
+
+      console.log("➡️ Calling onNext() to proceed...");
+      onNext();
+      
+      console.log("✅ Navigation completed successfully!");
+      
+    } catch (error) {
+      console.error("💥 Error in handleSearchCars:", error);
     }
-
-    console.log("✅ Form validation passed - preparing data...");
-
-    const dateTime = selectedDate && selectedTime 
-      ? new Date(`${selectedDate.toISOString().split('T')[0]}T${selectedTime}`).toISOString()
-      : "";
-    
-    const returnDateTime = isRoundTrip && returnDate && returnTime
-      ? new Date(`${returnDate.toISOString().split('T')[0]}T${returnTime}`).toISOString()
-      : "";
-
-    const bookingDataToUpdate = {
-      serviceType,
-      pickupLocation,
-      dropoffLocation: serviceType === "car_rental" ? undefined : dropoffLocation,
-      scheduledDateTime: dateTime,
-      returnDateTime,
-      passengers,
-      packageSelection: serviceType === "car_rental" ? hours : undefined,
-      isRoundTrip,
-      tripType,
-      specialInstructions,
-      pickupLatitude: pickupCoords?.lat,
-      pickupLongitude: pickupCoords?.lng,
-      dropoffLatitude: dropoffCoords?.lat,
-      dropoffLongitude: dropoffCoords?.lng,
-      distanceKm: routeData?.distanceKm || 0,
-      durationMinutes: routeData?.durationMinutes || 0
-    };
-
-    console.log("📦 Updating booking data:", bookingDataToUpdate);
-    
-    // Update booking data with all current form values
-    updateBookingData(bookingDataToUpdate);
-
-    console.log("➡️ Calling onNext() to proceed to vehicle selection...");
-    
-    // Proceed to next step
-    onNext();
-    
-    console.log("✅ handleSearchCars completed!");
-  };
+  }, [
+    isFormValid, selectedDate, selectedTime, isRoundTrip, returnDate, returnTime,
+    serviceType, pickupLocation, dropoffLocation, passengers, hours, tripType,
+    specialInstructions, pickupCoords, dropoffCoords, routeData, updateBookingData, onNext
+  ]);
 
   const handleVehicleSelection = (vehicleType: string, fareData: any) => {
     const dateTime = selectedDate && selectedTime 
