@@ -36,6 +36,8 @@ const Booking = () => {
   };
 
   useEffect(() => {
+    console.log("🔍 useEffect triggered - searchParams:", searchParams.toString(), "currentStep:", currentStep);
+    
     // Handle step navigation from URL
     const step = searchParams.get('step');
     const bookingId = searchParams.get('booking_id');
@@ -44,12 +46,14 @@ const Booking = () => {
     
     // If user is coming to booking page with payment success, show thank you page
     if (step === '4' && bookingId) {
+      console.log("📍 Setting step to 4 for payment success");
       setCurrentStep(4);
       return;
     }
     
     // If payment was successful, redirect to thank you page
     if (paymentSuccess === 'true' && bookingId) {
+      console.log("📍 Setting step to 4 for payment success");
       setCurrentStep(4);
       return;
     } 
@@ -61,16 +65,9 @@ const Booking = () => {
         description: "Your payment was canceled. You can try again.",
         variant: "destructive",
       });
+      console.log("📍 Setting step to 3 for payment canceled");
       setCurrentStep(3);
       return;
-    }
-
-    // If user comes to booking page without payment parameters, start fresh
-    if (!paymentSuccess && !paymentCanceled && !step && !bookingId) {
-      // Reset to step 1 for fresh booking
-      if (currentStep > 1) {
-        setCurrentStep(1);
-      }
     }
 
     // Handle pre-filled data from home page
@@ -79,6 +76,7 @@ const Booking = () => {
     const service = searchParams.get('service');
 
     if (pickup || destination || service) {
+      console.log("📍 Pre-filling form data from URL params");
       setBookingData({
         pickupLocation: pickup || "",
         dropoffLocation: destination || "",
@@ -88,13 +86,26 @@ const Booking = () => {
                    service === "outstation" ? "outstation" : bookingData.serviceType
       });
     }
-  }, [searchParams, toast, currentStep, setCurrentStep, setBookingData]);
+
+    // Only reset to step 1 if we're at the beginning of a fresh booking session
+    // AND there are no URL parameters indicating we should be elsewhere
+    // AND we're currently on step 1 (don't reset mid-flow)
+    if (!paymentSuccess && !paymentCanceled && !step && !bookingId && !pickup && !destination && !service) {
+      if (currentStep === 1) {
+        console.log("📍 Fresh booking session - staying on step 1");
+      } else {
+        console.log("📍 User is mid-booking flow - NOT resetting step. Current step:", currentStep);
+      }
+    }
+  }, [searchParams, toast, setCurrentStep, setBookingData, bookingData.serviceType]);
 
   const updateBookingData = setBookingData;
 
   const renderStep = () => {
+    console.log("🎬 Rendering step:", currentStep);
     switch (currentStep) {
       case 1:
+        console.log("📝 Rendering EnhancedBookingForm (step 1)");
         return (
           <div className="w-full max-w-lg mx-auto">
             <EnhancedBookingForm
@@ -105,6 +116,7 @@ const Booking = () => {
           </div>
         );
       case 2:
+        console.log("🚗 Rendering VehicleSelection (step 2)");
         return (
           <div className="w-full max-w-lg mx-auto">
             <VehicleSelection
@@ -117,6 +129,7 @@ const Booking = () => {
           </div>
         );
       case 3:
+        console.log("💳 Rendering RazorpayPaymentPage (step 3)");
         return (
           <RazorpayPaymentPage
             bookingData={bookingData}
@@ -125,8 +138,10 @@ const Booking = () => {
           />
         );
       case 4:
+        console.log("🎉 Rendering ImprovedThankYouPage (step 4)");
         return <ImprovedThankYouPage />;
       default:
+        console.log("❓ Unknown step:", currentStep);
         return null;
     }
   };
