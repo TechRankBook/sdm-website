@@ -236,6 +236,50 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
     });
   };
 
+  const isFormValid = () => {
+    const hasPickup = pickupLocation.trim() !== "";
+    const hasDestination = serviceType === "car_rental" ? hours !== "" : dropoffLocation.trim() !== "";
+    const hasDateTime = selectedDate && selectedTime;
+    const hasValidReturn = !isRoundTrip || serviceType !== "outstation" || (returnDate && returnTime);
+    
+    return hasPickup && hasDestination && hasDateTime && hasValidReturn;
+  };
+
+  const handleSearchCars = () => {
+    if (!isFormValid()) return;
+
+    const dateTime = selectedDate && selectedTime 
+      ? new Date(`${selectedDate.toISOString().split('T')[0]}T${selectedTime}`).toISOString()
+      : "";
+    
+    const returnDateTime = isRoundTrip && returnDate && returnTime
+      ? new Date(`${returnDate.toISOString().split('T')[0]}T${returnTime}`).toISOString()
+      : "";
+
+    // Update booking data with all current form values
+    updateBookingData({
+      serviceType,
+      pickupLocation,
+      dropoffLocation: serviceType === "car_rental" ? undefined : dropoffLocation,
+      scheduledDateTime: dateTime,
+      returnDateTime,
+      passengers,
+      packageSelection: serviceType === "car_rental" ? hours : undefined,
+      isRoundTrip,
+      tripType,
+      specialInstructions,
+      pickupLatitude: pickupCoords?.lat,
+      pickupLongitude: pickupCoords?.lng,
+      dropoffLatitude: dropoffCoords?.lat,
+      dropoffLongitude: dropoffCoords?.lng,
+      distanceKm: routeData?.distanceKm || 0,
+      durationMinutes: routeData?.durationMinutes || 0
+    });
+
+    // Proceed to next step
+    onNext();
+  };
+
   const handleVehicleSelection = (vehicleType: string, fareData: any) => {
     const dateTime = selectedDate && selectedTime 
       ? `${format(selectedDate, "yyyy-MM-dd")} ${selectedTime}`
@@ -583,50 +627,17 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
           </div> */}
           {/* Search Car Button */}
           <div className="mt-6">
-            {(() => {
-              const isFormValid = pickupLocation && 
-                (serviceType === "car_rental" ? hours : dropoffLocation) &&
-                selectedDate && selectedTime &&
-                (!isRoundTrip || !returnDate || !returnTime || serviceType !== "outstation" || (returnDate && returnTime));
-              
-              return (
-                <Button 
-                  onClick={() => {
-                    // Save all booking data before proceeding
-                    updateBookingData({
-                      serviceType,
-                      pickupLocation,
-                      dropoffLocation: serviceType === "car_rental" ? undefined : dropoffLocation,
-                      scheduledDateTime: selectedDate && selectedTime ? 
-                        new Date(`${selectedDate.toISOString().split('T')[0]}T${selectedTime}`).toISOString() : undefined,
-                      returnDateTime: isRoundTrip && returnDate && returnTime ? 
-                        new Date(`${returnDate.toISOString().split('T')[0]}T${returnTime}`).toISOString() : undefined,
-                      passengers,
-                      packageSelection: serviceType === "car_rental" ? hours : undefined,
-                      isRoundTrip,
-                      tripType,
-                      specialInstructions: specialInstructions,
-                      pickupLatitude: pickupCoords?.lat,
-                      pickupLongitude: pickupCoords?.lng,
-                      dropoffLatitude: dropoffCoords?.lat,
-                      dropoffLongitude: dropoffCoords?.lng,
-                      vehicleType: "",
-                      distanceKm: 0,
-                      durationMinutes: 0
-                    });
-                    onNext();
-                  }}
-                  disabled={!isFormValid}
-                  className={`w-full h-12 text-lg font-semibold transition-all duration-300 ${
-                    isFormValid 
-                      ? 'bg-gradient-primary hover:scale-[1.02] micro-bounce' 
-                      : 'bg-muted text-muted-foreground cursor-not-allowed'
-                  }`}
-                >
-                  {isFormValid ? "Search Cars" : "Please fill all required fields"}
-                </Button>
-              );
-            })()}
+            <Button 
+              onClick={handleSearchCars}
+              disabled={!isFormValid()}
+              className={`w-full h-12 text-lg font-semibold transition-all duration-300 ${
+                isFormValid() 
+                  ? 'bg-gradient-primary hover:scale-[1.02] micro-bounce' 
+                  : 'bg-muted text-muted-foreground cursor-not-allowed'
+              }`}
+            >
+              {isFormValid() ? "Search Cars" : "Please fill all required fields"}
+            </Button>
           </div>
         </Card>
 
