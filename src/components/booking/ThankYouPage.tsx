@@ -19,7 +19,7 @@ export const ThankYouPage = () => {
   const [searchParams] = useSearchParams();
   const [booking, setBooking] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [actualPaidAmount, setActualPaidAmount] = useState(0);
+  const [showFailur,setShowFailur] = useState(false);
   const { toast } = useToast();
 
   const bookingId = searchParams.get('booking_id');
@@ -27,6 +27,7 @@ export const ThankYouPage = () => {
   useEffect(() => {
     const fetchBookingDetails = async () => {
       if (!bookingId) {
+        setShowFailur(true);
         setLoading(false);
         return;
       }
@@ -34,6 +35,7 @@ export const ThankYouPage = () => {
       try {
         // Get the latest booking for this user that was just paid
         const { data: { user } } = await supabase.auth.getUser();
+        
         if (!user) throw new Error('User not authenticated');
 
         const { data: bookings, error } = await supabase
@@ -59,8 +61,10 @@ export const ThankYouPage = () => {
           description: "Failed to fetch booking details",
           variant: "destructive",
         });
+        setShowFailur(true);
       } finally {
         setLoading(false);
+        
       }
     };
 
@@ -78,7 +82,7 @@ export const ThankYouPage = () => {
     );
   }
 
-  if (!bookingId || !booking) {
+  if (showFailur) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="glass max-w-md w-full p-6 text-center">
@@ -100,39 +104,7 @@ export const ThankYouPage = () => {
     );
   }
 
-  // Calculate payment amounts based on what was actually paid
-  const partialAmount = Math.ceil(booking?.fare_amount * 0.25 || 0);
-  const remainingAmount = (booking?.fare_amount || 0) - actualPaidAmount;
-
-  useEffect(() => {
-    const fetchPaymentAmount = async () => {
-      if (!booking?.id) return;
-      
-      try {
-        const { data: payment } = await supabase
-          .from('payments')
-          .select('amount')
-          .eq('booking_id', booking.id)
-          .eq('status', 'paid')
-          .single();
-        
-        if (payment) {
-          setActualPaidAmount(payment.amount);
-        } else {
-          // If no payment record found, use partial amount as default
-          setActualPaidAmount(Math.ceil(booking.fare_amount * 0.25));
-        }
-      } catch (error) {
-        console.error('Error fetching payment amount:', error);
-        // Fallback to partial amount
-        setActualPaidAmount(Math.ceil(booking.fare_amount * 0.25));
-      }
-    };
-    
-    fetchPaymentAmount();
-  }, [booking]);
-
-  const advanceAmount = actualPaidAmount;
+  
 
   return (
     <div className="min-h-screen bg-background p-4">
@@ -149,7 +121,7 @@ export const ThankYouPage = () => {
             Your booking has been confirmed. We'll send you SMS updates about your ride.
           </p>
           <Badge className="bg-green-500/10 text-green-500 border-green-500/20 mt-4">
-            Booking ID: {booking.id.slice(0, 8)}
+            Booking ID: {booking.id.slice(-8)}
           </Badge>
         </Card>
 
@@ -218,12 +190,12 @@ export const ThankYouPage = () => {
                 <CreditCard className="w-4 h-4 text-green-500" />
                 <span className="text-green-500 font-medium">Paid Now</span>
               </div>
-              <span className="text-green-500 font-bold">₹{advanceAmount}</span>
+              <span className="text-green-500 font-bold">₹{booking.advance_amount}</span>
             </div>
             
             <div className="flex justify-between items-center">
               <span className="text-muted-foreground">Remaining (Pay after ride)</span>
-              <span className="text-foreground">₹{remainingAmount}</span>
+              <span className="text-foreground">₹{booking.remaining_amount}</span>
             </div>
             
             <div className="border-t border-border pt-3">
