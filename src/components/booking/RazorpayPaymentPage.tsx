@@ -140,6 +140,8 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
           special_instructions: bookingData.specialInstructions,
           package_hours: bookingData.packageSelection ? parseInt(bookingData.packageSelection) : null,
           distance_km: bookingData.distanceKm,
+          advance_amount:currentPaymentAmount,
+          remianing_amount:remainingAmount
         })
         .select()
         .single();
@@ -203,7 +205,10 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
                       pickup_address: booking.pickup_address,
                       dropoff_address: booking.dropoff_address,
                       fare_amount: booking.fare_amount,
-                      scheduled_time: booking.scheduled_time
+                      scheduled_time: booking.scheduled_time,
+                      vehicle_type: booking.vehicle_type,
+                      advance_amount:booking.advance_amount,
+                      remaining_amount:booking.remaining_amount
                     }
                   }
                 })
