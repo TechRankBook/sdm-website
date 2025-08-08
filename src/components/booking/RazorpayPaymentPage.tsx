@@ -141,7 +141,7 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
           package_hours: bookingData.packageSelection ? parseInt(bookingData.packageSelection) : null,
           distance_km: bookingData.distanceKm,
           advance_amount:currentPaymentAmount,
-          remianing_amount:remainingAmount
+          remaining_amount:remainingAmount
         })
         .select()
         .single();
