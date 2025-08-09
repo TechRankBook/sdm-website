@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { GooglePlacesInput } from "./GooglePlacesInput";
 import { GoogleMaps } from "./GoogleMaps";
@@ -28,7 +29,9 @@ import {
   Zap,
   MapPin,
   Navigation2,
-  TimerReset
+  TimerReset,
+  PawPrint,
+  MessageSquare
 } from "lucide-react";
 import { BookingData } from "@/stores/bookingStore";
 
@@ -79,7 +82,11 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
     }
     return "";
   });
+  const [luggageCount, setLuggageCount] = useState(0);
+  const [hasPet, setHasPet] = useState(false);
+  const [additionalInstructions, setAdditionalInstructions] = useState("");
   const [specialInstructions, setSpecialInstructions] = useState(bookingData.specialInstructions || "");
+  const [showSpecialInstructions, setShowSpecialInstructions] = useState(false);
   
   // Location coordinates
   const [pickupCoords, setPickupCoords] = useState<LocationData | null>(() => {
@@ -128,7 +135,36 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
     setHours(bookingData.packageSelection || "");
     setTripType(bookingData.tripType || "oneway");
     setIsRoundTrip(bookingData.isRoundTrip || false);
-    setSpecialInstructions(bookingData.specialInstructions || "");
+    // Parse existing special instructions
+    if (bookingData.specialInstructions) {
+      const instructions = bookingData.specialInstructions;
+      
+      // Extract luggage count
+      const luggageMatch = instructions.match(/(\d+) luggage item/);
+      if (luggageMatch) {
+        setLuggageCount(parseInt(luggageMatch[1]));
+      }
+      
+      // Check for pet
+      setHasPet(instructions.includes("Traveling with pet"));
+      
+      // Extract additional instructions
+      let additionalText = instructions;
+      additionalText = additionalText.replace(/\d+ luggage item(s)?(,\s*)?/, "");
+      additionalText = additionalText.replace(/Traveling with pet(,\s*)?/, "");
+      setAdditionalInstructions(additionalText.trim());
+      
+      setSpecialInstructions(bookingData.specialInstructions);
+      
+      // Show special instructions section if there are any
+      setShowSpecialInstructions(true);
+    } else {
+      setLuggageCount(0);
+      setHasPet(false);
+      setAdditionalInstructions("");
+      setSpecialInstructions("");
+      setShowSpecialInstructions(false);
+    }
     
     // Set dates and times
     if (bookingData.scheduledDateTime) {
@@ -265,6 +301,9 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
         ? new Date(`${returnDate.toISOString().split('T')[0]}T${returnTime}`).toISOString()
         : "";
 
+      // Make sure special instructions are up to date
+      updateSpecialInstructions();
+      
       const bookingDataToUpdate = {
         serviceType,
         pickupLocation,
@@ -311,6 +350,9 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
       ? `${format(returnDate, "yyyy-MM-dd")} ${returnTime}`
       : "";
       
+    // Make sure special instructions are up to date
+    updateSpecialInstructions();
+    
     updateBookingData({
       serviceType,
       pickupLocation,
@@ -338,6 +380,38 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
   };
 
   const canAddStops = serviceType !== "car_rental";
+  
+  // Function to update special instructions
+  const updateSpecialInstructions = () => {
+    // If special instructions section is hidden, clear the instructions
+    if (!showSpecialInstructions) {
+      setSpecialInstructions("");
+      return "";
+    }
+    
+    const parts = [];
+    
+    if (luggageCount > 0) {
+      parts.push(`${luggageCount} luggage item${luggageCount !== 1 ? 's' : ''}`);
+    }
+    
+    if (hasPet) {
+      parts.push("Traveling with pet");
+    }
+    
+    if (additionalInstructions.trim()) {
+      parts.push(additionalInstructions.trim());
+    }
+    
+    const combined = parts.join(", ");
+    setSpecialInstructions(combined);
+    return combined;
+  };
+  
+  // Update special instructions whenever any of the fields change
+  useEffect(() => {
+    updateSpecialInstructions();
+  }, [luggageCount, hasPet, additionalInstructions, showSpecialInstructions]);
 
   return (
     <>
@@ -634,19 +708,122 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
             </Button>
           </div>
 
-          {/* Special Instructions */}
-           <div className="mb-6">
-            <Label htmlFor="instructions" className="text-sm font-medium text-foreground">
-              Special Instructions (Optional)
-            </Label>
-            <textarea
-              id="instructions"
-              placeholder="Add any special requests or instructions..."
-              value={specialInstructions}
-              onChange={(e) => setSpecialInstructions(e.target.value)}
-              className="w-full mt-2 p-3 h-10 rounded-lg glass border border-glass-border text-foreground placeholder-muted-foreground resize-none"
-            />
-          </div> 
+          {/* Special Instructions Toggle */}
+          <div className="mb-6">
+            <div className="flex items-center space-x-2 mb-3">
+              <Checkbox 
+                id="show-special-instructions" 
+                checked={showSpecialInstructions}
+                onCheckedChange={(checked) => {
+                  setShowSpecialInstructions(checked === true);
+                  if (checked === false) {
+                    // Clear special instructions when hiding the section
+                    setLuggageCount(0);
+                    setHasPet(false);
+                    setAdditionalInstructions("");
+                    setSpecialInstructions("");
+                  }
+                }}
+              />
+              <Label 
+                htmlFor="show-special-instructions" 
+                className="text-sm font-medium text-foreground cursor-pointer"
+              >
+                Add Special Instructions
+              </Label>
+            </div>
+            
+            {/* Collapsible Special Instructions Section */}
+            {showSpecialInstructions && (
+              <div className="mt-4 p-4 rounded-lg glass-hover border border-glass-border animate-in fade-in-50 duration-300">
+                {/* Luggage Counter */}
+                <div className="flex items-center justify-between mb-4 p-3 rounded-lg glass-hover">
+                  <div className="flex items-center gap-2">
+                    <Luggage className="w-5 h-5 text-primary" />
+                    <span className="text-sm">Luggage Items</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 rounded-full"
+                      onClick={() => {
+                        const newCount = Math.max(0, luggageCount - 1);
+                        setLuggageCount(newCount);
+                        setTimeout(updateSpecialInstructions, 0);
+                      }}
+                      disabled={luggageCount === 0}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <span className="w-8 text-center">{luggageCount}</span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 rounded-full"
+                      onClick={() => {
+                        const newCount = Math.min(3, luggageCount + 1);
+                        setLuggageCount(newCount);
+                        setTimeout(updateSpecialInstructions, 0);
+                      }}
+                      disabled={luggageCount === 3}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* Pet Toggle */}
+                <div className="flex items-center justify-between mb-4 p-3 rounded-lg glass-hover">
+                  <div className="flex items-center gap-2">
+                    <PawPrint className="w-5 h-5 text-primary" />
+                    <span className="text-sm">Traveling with Pet</span>
+                  </div>
+                  <Switch 
+                    checked={hasPet} 
+                    onCheckedChange={(checked) => {
+                      setHasPet(checked);
+                      setTimeout(updateSpecialInstructions, 0);
+                    }}
+                  />
+                </div>
+                
+                {/* Additional Instructions */}
+                <div className="mb-2">
+                  <div className="flex items-center gap-2 mb-2">
+                    <MessageSquare className="w-5 h-5 text-primary" />
+                    <Label htmlFor="additionalInstructions" className="text-sm">
+                      Additional Requirements
+                    </Label>
+                  </div>
+                  <textarea
+                    id="additionalInstructions"
+                    placeholder="Any other special requests or requirements..."
+                    value={additionalInstructions}
+                    onChange={(e) => {
+                      setAdditionalInstructions(e.target.value);
+                      setTimeout(updateSpecialInstructions, 0);
+                    }}
+                    className="w-full p-3 h-20 rounded-lg glass border border-glass-border text-foreground placeholder-muted-foreground resize-none"
+                  />
+                </div>
+                
+                {/* Preview of combined instructions */}
+                {(luggageCount > 0 || hasPet || additionalInstructions.trim()) && (
+                  <div className="mt-3 text-xs text-muted-foreground p-2 bg-muted/30 rounded">
+                    <span className="font-medium">Will be saved as: </span>
+                    {luggageCount > 0 && <span>{luggageCount} luggage item{luggageCount !== 1 ? 's' : ''}</span>}
+                    {luggageCount > 0 && (hasPet || additionalInstructions.trim()) && <span>, </span>}
+                    {hasPet && <span>Traveling with pet</span>}
+                    {hasPet && additionalInstructions.trim() && <span>, </span>}
+                    {additionalInstructions.trim() && <span>{additionalInstructions}</span>}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           {/* Search Car Button */}
           <div className="mt-6">
             <Button 
