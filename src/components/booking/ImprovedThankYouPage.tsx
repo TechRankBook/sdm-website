@@ -151,7 +151,7 @@ export const ImprovedThankYouPage = () => {
             Your ride has been booked successfully. We'll send you SMS updates about your ride.
           </p>
           <Badge className="bg-green-500/10 text-green-500 border-green-500/20 mt-4">
-            Booking ID: {booking.id.slice(-8)}
+            Trip ID: {booking.id.slice(-8)}
           </Badge>
         </Card>
 
