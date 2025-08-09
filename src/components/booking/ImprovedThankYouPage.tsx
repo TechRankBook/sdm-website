@@ -78,7 +78,6 @@ export const ImprovedThankYouPage = () => {
             setShowFailurePage(false);
           } else {
             // Fallback to 25% if no payment record
-            setShowFailurePage(true);
             setActualPaidAmount(Math.ceil(bookingData.fare_amount * 0.25));
           }
 
