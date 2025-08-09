@@ -635,7 +635,7 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
           </div>
 
           {/* Special Instructions */}
-          {/* <div className="mb-6">
+           <div className="mb-6">
             <Label htmlFor="instructions" className="text-sm font-medium text-foreground">
               Special Instructions (Optional)
             </Label>
@@ -644,9 +644,9 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
               placeholder="Add any special requests or instructions..."
               value={specialInstructions}
               onChange={(e) => setSpecialInstructions(e.target.value)}
-              className="w-full mt-2 p-3 h-20 rounded-lg glass border border-glass-border text-foreground placeholder-muted-foreground resize-none"
+              className="w-full mt-2 p-3 h-10 rounded-lg glass border border-glass-border text-foreground placeholder-muted-foreground resize-none"
             />
-          </div> */}
+          </div> 
           {/* Search Car Button */}
           <div className="mt-6">
             <Button 
