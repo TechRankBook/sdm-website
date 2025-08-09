@@ -571,7 +571,7 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
             )}
 
             {/* Date & Time Selection */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -632,7 +632,7 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
 
             {/* Return Date & Time for Round Trip Outstation */}
             {serviceType === "outstation" && isRoundTrip && (
-              <div className="grid grid-cols-2 gap-3 mt-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button

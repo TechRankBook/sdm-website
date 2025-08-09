@@ -131,7 +131,7 @@ const Index = () => {
               </div>
 
               <div className="flex flex-wrap gap-4">
-                <Button size="lg" className="bg-gradient-primary micro-bounce">
+                <Button size="lg" className="bg-gradient-primary micro-bounce" onClick={() => navigate('/booking')}>
                   <Play className="w-5 h-5 mr-2" />
                   Book Your Ride
                 </Button>
@@ -154,8 +154,10 @@ const Index = () => {
 
             {/* Booking Interface - Rider Only */}
             <div className="fade-in" style={{ animationDelay: "0.3s" }}>
-              <div className="flex justify-center">
-                {renderBookingForm()}
+              <div className="flex justify-center w-full">
+                <div className="w-full max-w-md sm:max-w-lg lg:max-w-xl">
+                  {renderBookingForm()}
+                </div>
               </div>
             </div>
           </div>
@@ -200,7 +202,7 @@ const Index = () => {
               Join millions of riders who've already made the switch to sustainable mobility
             </p>
             <div className="flex justify-center">
-              <Button size="lg" className="bg-gradient-primary micro-bounce">
+              <Button size="lg" className="bg-gradient-primary micro-bounce" onClick={() => navigate('/booking')}>
                 <Zap className="w-5 h-5 mr-2" />
                 Start Riding Today
                 <ArrowRight className="w-5 h-5 ml-2" />
