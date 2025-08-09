@@ -30,6 +30,7 @@ export const ImprovedThankYouPage = () => {
   const [searchParams] = useSearchParams();
   const [booking, setBooking] = useState<BookingDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showFailurePage, setShowFailurePage] = useState(false);
   const [actualPaidAmount, setActualPaidAmount] = useState(0);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -42,6 +43,7 @@ export const ImprovedThankYouPage = () => {
     const fetchBookingDetails = async () => {
       if (!bookingId) {
         setLoading(false);
+        setShowFailurePage(true);
         return;
       }
 
@@ -76,6 +78,7 @@ export const ImprovedThankYouPage = () => {
             setActualPaidAmount(payment.amount);
           } else {
             // Fallback to 25% if no payment record
+            setShowFailurePage(true);
             setActualPaidAmount(Math.ceil(bookingData.fare_amount * 0.25));
           }
 
@@ -93,6 +96,7 @@ export const ImprovedThankYouPage = () => {
           description: "Failed to fetch booking details",
           variant: "destructive",
         });
+        setShowFailurePage(true);
       } finally {
         setLoading(false);
       }
@@ -112,7 +116,7 @@ export const ImprovedThankYouPage = () => {
     );
   }
 
-  if (!bookingId || !booking) {
+  if (showFailurePage) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="glass max-w-md w-full p-6 text-center">
@@ -124,7 +128,7 @@ export const ImprovedThankYouPage = () => {
             Unable to find your booking details. Please try again.
           </p>
           <Button 
-            onClick={() => navigate('/booking')} 
+            onClick={() =>{resetBookingData(); navigate('/booking')}} 
             className="w-full"
           >
             Book New Ride
@@ -151,7 +155,7 @@ export const ImprovedThankYouPage = () => {
             Your ride has been booked successfully. We'll send you SMS updates about your ride.
           </p>
           <Badge className="bg-green-500/10 text-green-500 border-green-500/20 mt-4">
-            Booking ID: {booking.id.slice(0, 8)}
+            Booking ID: {booking.id.slice(-8)}
           </Badge>
         </Card>
 
@@ -266,7 +270,7 @@ export const ImprovedThankYouPage = () => {
         <div className="flex gap-4">
           <Button 
             variant="outline" 
-            onClick={() => navigate('/')}
+            onClick={() => {resetBookingData(); navigate('/')}}
             className="flex-1"
           >
             <Home className="w-4 h-4 mr-2" />
