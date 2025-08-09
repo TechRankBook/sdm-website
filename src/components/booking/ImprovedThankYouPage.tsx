@@ -30,7 +30,6 @@ export const ImprovedThankYouPage = () => {
   const [searchParams] = useSearchParams();
   const [booking, setBooking] = useState<BookingDetails | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showFailurePage, setShowFailurePage] = useState(false);
   const [actualPaidAmount, setActualPaidAmount] = useState(0);
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -75,7 +74,6 @@ export const ImprovedThankYouPage = () => {
 
           if (payment) {
             setActualPaidAmount(payment.amount);
-            setShowFailurePage(false);
           } else {
             // Fallback to 25% if no payment record
             setActualPaidAmount(Math.ceil(bookingData.fare_amount * 0.25));
@@ -86,7 +84,6 @@ export const ImprovedThankYouPage = () => {
               title: "Payment Successful!",
               description: "Your booking has been confirmed. You'll receive SMS updates.",
             });
-            setShowFailurePage(false);
           }
         }
       } catch (error: any) {
@@ -96,15 +93,13 @@ export const ImprovedThankYouPage = () => {
           description: "Failed to fetch booking details",
           variant: "destructive",
         });
-        setShowFailurePage(true);
       } finally {
         setLoading(false);
-        setShowFailurePage(false);
       }
     };
 
     fetchBookingDetails();
-  }, [bookingId, paymentSuccess, toast,showFailurePage]);
+  }, [bookingId, paymentSuccess, toast]);
 
   if (loading) {
     return (
@@ -117,7 +112,7 @@ export const ImprovedThankYouPage = () => {
     );
   }
 
-  if (showFailurePage) {
+  if (!booking) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="glass max-w-md w-full p-6 text-center">
