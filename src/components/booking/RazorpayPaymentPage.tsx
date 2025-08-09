@@ -222,8 +222,8 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
                       fare_amount: booking.fare_amount,
                       scheduled_time: booking.scheduled_time,
                       vehicle_type: booking.vehicle_type,
-                      advance_amount: booking.advance_amount,
-                      remaining_amount: booking.remaining_amount
+                      advance_amount: currentPaymentAmount,
+                      remaining_amount: remainingAmount
                     }
                   }
                 })
