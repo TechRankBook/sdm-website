@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useBookingStore } from "@/stores/bookingStore";
+import { useBookingStore, BookingData } from "@/stores/bookingStore";
 import { 
   CheckCircle, 
   Clock, 
@@ -13,7 +13,8 @@ import {
   Car,
   CreditCard,
   ArrowRight,
-  Home 
+  Home,
+  AlertTriangle
 } from "lucide-react";
 
 interface BookingDetails {
@@ -24,21 +25,75 @@ interface BookingDetails {
   scheduled_time?: string;
   fare_amount: number;
   payment_method?: string;
+  advance_amount?: number;
+  remaining_amount?: number;
 }
+
+// Helper function to create a fallback booking from store data
+const createFallbackBooking = (bookingId: string, storeData: BookingData): BookingDetails => {
+  const totalFare = storeData.selectedFare?.price || 0;
+  const advanceAmount = Math.ceil(totalFare * 0.25); // 25% advance
+  
+  return {
+    id: bookingId,
+    pickup_address: storeData.pickupLocation || "Unknown location",
+    dropoff_address: storeData.dropoffLocation,
+    vehicle_type: storeData.vehicleType || storeData.carType,
+    scheduled_time: storeData.scheduledDateTime,
+    fare_amount: totalFare,
+    payment_method: "razorpay",
+    advance_amount: advanceAmount,
+    remaining_amount: totalFare - advanceAmount
+  };
+};
 
 export const ImprovedThankYouPage = () => {
   const [searchParams] = useSearchParams();
   const [booking, setBooking] = useState<BookingDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [actualPaidAmount, setActualPaidAmount] = useState(0);
+  const [usingFallbackData, setUsingFallbackData] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { resetBookingData } = useBookingStore();
+  const { resetBookingData, bookingData } = useBookingStore();
 
   const bookingId = searchParams.get('booking_id');
   const paymentSuccess = searchParams.get('payment_success');
+  
+  // Check sessionStorage for booking data immediately
+  useEffect(() => {
+    try {
+      const storedBooking = sessionStorage.getItem('current_booking');
+      if (storedBooking && bookingId) {
+        const parsedBooking = JSON.parse(storedBooking) as BookingDetails;
+        
+        // Verify this is the correct booking
+        if (parsedBooking.id === bookingId) {
+          console.log('Found booking data in sessionStorage');
+          setBooking(parsedBooking);
+          setActualPaidAmount(parsedBooking.advance_amount || Math.ceil(parsedBooking.fare_amount * 0.25));
+          setLoading(false);
+          
+          // Clear the sessionStorage to avoid using stale data in the future
+          sessionStorage.removeItem('current_booking');
+        }
+      }
+    } catch (error) {
+      console.error('Error reading from sessionStorage:', error);
+    }
+  }, [bookingId]);
 
   useEffect(() => {
+    // Skip database fetch if we already have booking data from sessionStorage
+    if (booking) {
+      return;
+    }
+    
+    let retryCount = 0;
+    const maxRetries = 5;
+    const retryDelay = 1000; // 1 second
+    let retryTimeout: NodeJS.Timeout;
+    
     const fetchBookingDetails = async () => {
       if (!bookingId) {
         setLoading(false);
@@ -46,6 +101,8 @@ export const ImprovedThankYouPage = () => {
       }
 
       try {
+        console.log(`Attempting to fetch booking (attempt ${retryCount + 1}/${maxRetries + 1})...`);
+        
         // Get the latest booking that was just paid
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
@@ -59,9 +116,19 @@ export const ImprovedThankYouPage = () => {
           .eq('user_id', user.id)
           .single();
 
-        if (error) throw error;
+        if (error) {
+          // If this is a "not found" error and we haven't exceeded max retries
+          if (error.code === 'PGRST116' && retryCount < maxRetries) {
+            console.log(`Booking not found yet, will retry in ${retryDelay}ms...`);
+            retryCount++;
+            retryTimeout = setTimeout(fetchBookingDetails, retryDelay);
+            return;
+          }
+          throw error;
+        }
 
         if (bookingData) {
+          console.log('Booking data found:', bookingData.id);
           setBooking(bookingData);
           
           // Fetch payment amount
@@ -88,31 +155,79 @@ export const ImprovedThankYouPage = () => {
         }
       } catch (error: any) {
         console.error('Error fetching booking:', error);
-        toast({
-          title: "Error",
-          description: "Failed to fetch booking details",
-          variant: "destructive",
-        });
+        
+        // Only show error toast if we've exhausted all retries
+        if (retryCount >= maxRetries) {
+          toast({
+            title: "Error",
+            description: "Failed to fetch booking details. Please check your trip history.",
+            variant: "destructive",
+          });
+        } else if (paymentSuccess === 'true') {
+          // If payment was successful but we can't find the booking yet, retry
+          retryCount++;
+          console.log(`Will retry in ${retryDelay}ms (attempt ${retryCount}/${maxRetries + 1})...`);
+          retryTimeout = setTimeout(fetchBookingDetails, retryDelay);
+          return;
+        }
       } finally {
-        setLoading(false);
+        // If we've exhausted all retries and still don't have booking data,
+        // but we have a booking ID and payment was successful, use fallback data
+        if (retryCount >= maxRetries && !booking && bookingId && paymentSuccess === 'true' && bookingData.selectedFare) {
+          console.log('Using fallback booking data from store');
+          const fallbackBooking = createFallbackBooking(bookingId, bookingData);
+          setBooking(fallbackBooking);
+          setActualPaidAmount(fallbackBooking.advance_amount || Math.ceil(fallbackBooking.fare_amount * 0.25));
+          setUsingFallbackData(true);
+          setLoading(false);
+          
+          toast({
+            title: "Booking Confirmed",
+            description: "Your payment was successful. We're showing estimated details while we finalize your booking.",
+          });
+        } 
+        // Only set loading to false if we're not going to retry
+        else if (retryCount >= maxRetries || booking) {
+          setLoading(false);
+        }
       }
     };
 
     fetchBookingDetails();
-  }, [bookingId, paymentSuccess, toast]);
+    
+    // Cleanup function to clear any pending timeouts
+    return () => {
+      if (retryTimeout) {
+        clearTimeout(retryTimeout);
+      }
+    };
+  }, [bookingId, paymentSuccess, toast, booking, bookingData]);
 
   if (loading) {
+    // Show a more informative loading state, especially if payment was successful
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading booking details...</p>
+        <div className="text-center max-w-md w-full p-6">
+          <div className="w-12 h-12 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          {paymentSuccess === 'true' ? (
+            <>
+              <h2 className="text-xl font-bold text-foreground mb-2">Processing Your Booking</h2>
+              <p className="text-muted-foreground">
+                Your payment was successful! We're finalizing your booking details. This may take a few moments...
+              </p>
+            </>
+          ) : (
+            <p className="text-muted-foreground">Loading booking details...</p>
+          )}
         </div>
       </div>
     );
   }
 
-  if (!booking) {
+  // If payment was successful but booking data isn't loaded yet, 
+  // continue showing the loading state instead of "Not Found"
+  if (!booking && paymentSuccess !== 'true') {
+    // Only show "Not Found" if payment wasn't successful
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="glass max-w-md w-full p-6 text-center">
@@ -124,7 +239,7 @@ export const ImprovedThankYouPage = () => {
             Unable to find your booking details. Please try again.
           </p>
           <Button 
-            onClick={() =>{resetBookingData(); navigate('/booking')}} 
+            onClick={() => {resetBookingData(); navigate('/booking')}} 
             className="w-full"
           >
             Book New Ride
@@ -132,6 +247,15 @@ export const ImprovedThankYouPage = () => {
         </Card>
       </div>
     );
+  }
+  
+  // If payment was successful but booking isn't loaded yet, create a temporary booking
+  if (!booking && paymentSuccess === 'true' && bookingId) {
+    // Create a temporary booking from store data
+    const tempBooking = createFallbackBooking(bookingId, bookingData);
+    setBooking(tempBooking);
+    setActualPaidAmount(tempBooking.advance_amount || Math.ceil(tempBooking.fare_amount * 0.25));
+    setUsingFallbackData(true);
   }
 
   const remainingAmount = booking.fare_amount - actualPaidAmount;
@@ -154,6 +278,24 @@ export const ImprovedThankYouPage = () => {
             Trip ID: {booking.id.slice(-8)}
           </Badge>
         </Card>
+        
+        {/* Warning banner for fallback data */}
+        {usingFallbackData && (
+          <Card className="glass p-4 border border-yellow-500/50 bg-yellow-500/10">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-yellow-500 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-medium text-yellow-500">
+                  Showing estimated booking details
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Your payment was successful, but we're still processing your booking. 
+                  Some details may update shortly. Please check your trip history for the most accurate information.
+                </p>
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* Trip Details */}
         <Card className="glass p-6">

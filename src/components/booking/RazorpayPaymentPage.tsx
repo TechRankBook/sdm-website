@@ -14,7 +14,7 @@ declare global {
     Razorpay: any;
   }
 }
-import { 
+import {
   ArrowLeft,
   CreditCard,
   Smartphone,
@@ -45,7 +45,7 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
     script.src = 'https://checkout.razorpay.com/v1/checkout.js';
     script.onload = () => setRazorpayLoaded(true);
     document.body.appendChild(script);
-    
+
     return () => {
       if (document.body.contains(script)) {
         document.body.removeChild(script);
@@ -101,7 +101,7 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
     }
 
     setIsProcessing(true);
-    
+
     try {
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
@@ -140,8 +140,8 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
           special_instructions: bookingData.specialInstructions,
           package_hours: bookingData.packageSelection ? parseInt(bookingData.packageSelection) : null,
           distance_km: bookingData.distanceKm,
-          advance_amount:currentPaymentAmount,
-          remaining_amount:remainingAmount
+          advance_amount: currentPaymentAmount,
+          remaining_amount: remainingAmount
         })
         .select()
         .single();
@@ -149,6 +149,20 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
       if (bookingError) throw bookingError;
 
       console.log('Booking created:', booking);
+
+      // Verify the booking was actually created by fetching it again
+      const { data: verifyBooking, error: verifyError } = await supabase
+        .from('bookings')
+        .select('id')
+        .eq('id', booking.id)
+        .single();
+
+      if (verifyError || !verifyBooking) {
+        console.error('Booking verification failed:', verifyError);
+        throw new Error('Booking was created but could not be verified. Please try again.');
+      }
+
+      console.log('Booking verified:', verifyBooking.id);
 
       // Create Razorpay order
       const { data, error } = await supabase.functions.invoke('create-razorpay-order', {
@@ -176,7 +190,7 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
           setIsProcessing(false);
           try {
             console.log('Payment successful:', response);
-            
+
             // Verify payment
             const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
               body: {
@@ -192,7 +206,7 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
             console.log('Payment verified successfully:', verifyData);
 
             // Send booking notification
-          try {
+            try {
               // AWAIT THE FETCH CALL
               const notificationResponse = await fetch('https://gmualcoqyztvtsqhjlzb.supabase.co/functions/v1/booking-notifications', {
                 method: 'POST',
@@ -214,7 +228,7 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
                   }
                 })
               });
-              
+
               if (!notificationResponse.ok) {
                 console.error('Notification function responded with an error:', notificationResponse.status);
               }
@@ -230,7 +244,30 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
               description: "Your booking has been confirmed.",
             });
 
+            // Store the booking data in sessionStorage to ensure it's available immediately
+            // on the thank you page, avoiding the need to fetch from the database
+            try {
+              const bookingForStorage = {
+                id: booking.id,
+                pickup_address: booking.pickup_address,
+                dropoff_address: booking.dropoff_address,
+                vehicle_type: booking.vehicle_type || bookingData.carType || bookingData.vehicleType,
+                scheduled_time: booking.scheduled_time,
+                fare_amount: booking.fare_amount,
+                payment_method: 'razorpay',
+                advance_amount: currentPaymentAmount,
+                remaining_amount: remainingAmount
+              };
+              
+              // Store the booking data in sessionStorage
+              sessionStorage.setItem('current_booking', JSON.stringify(bookingForStorage));
+              console.log('Booking data stored in sessionStorage');
+            } catch (storageError) {
+              console.error('Failed to store booking in sessionStorage:', storageError);
+            }
+
             // Navigate to thank you page immediately
+            console.log('Navigating to thank you page with booking ID:', booking.id);
             navigate(`/booking?step=4&booking_id=${booking.id}&payment_success=true`);
             onNext();
 
@@ -294,20 +331,20 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
       };
 
       const razorpayInstance = new window.Razorpay(options);
-      
+
       // Add global error handler for payment failures
       razorpayInstance.on('payment.failed', (response: any) => {
         setTimeout(() => {
           setIsProcessing(false);
           console.error('Payment failed:', response);
           toast({
-            title: "Payment Failed", 
+            title: "Payment Failed",
             description: response.error?.description || "Payment could not be completed. Please try again.",
             variant: "destructive",
           });
         }, 100);
       });
-      
+
       razorpayInstance.open();
 
     } catch (error: any) {
@@ -344,7 +381,7 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
         {/* Payment Amount Selection */}
         <Card className="glass-hover p-4 mb-6">
           <h2 className="text-lg font-semibold text-foreground mb-4">Choose Payment Amount</h2>
-          
+
           <RadioGroup value={paymentAmount} onValueChange={setPaymentAmount} className="space-y-3 mb-4">
             <Card className="glass-hover p-3">
               <div className="flex items-center space-x-3">
@@ -358,7 +395,7 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
                 </Label>
               </div>
             </Card>
-            
+
             <Card className="glass-hover p-3">
               <div className="flex items-center space-x-3">
                 <RadioGroupItem value="full" id="full" />
@@ -383,7 +420,7 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
         {/* Payment Method Selection */}
         <div className="mb-6">
           <h2 className="text-lg font-semibold text-foreground mb-4">Select Payment Method</h2>
-          
+
           <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-3">
             {paymentMethods.map((method) => (
               <Card key={method.id} className="glass-hover p-3">

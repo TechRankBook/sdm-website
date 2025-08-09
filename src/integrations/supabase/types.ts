@@ -528,6 +528,8 @@ export type Database = {
           vehicle_type: string | null
           waiting_time_minutes: number | null
           zone_pricing_id: string | null
+          advance_amount: number | null
+          remaining_amount: number | null
         }
         Insert: {
           cancellation_reason?: string | null
