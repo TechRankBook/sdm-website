@@ -104,7 +104,7 @@ export const ImprovedThankYouPage = () => {
     };
 
     fetchBookingDetails();
-  }, [bookingId, paymentSuccess, toast]);
+  }, [bookingId, paymentSuccess, toast,showFailurePage]);
 
   if (loading) {
     return (
