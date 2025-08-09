@@ -43,7 +43,6 @@ export const ImprovedThankYouPage = () => {
     const fetchBookingDetails = async () => {
       if (!bookingId) {
         setLoading(false);
-        setShowFailurePage(true);
         return;
       }
 
@@ -76,6 +75,7 @@ export const ImprovedThankYouPage = () => {
 
           if (payment) {
             setActualPaidAmount(payment.amount);
+            setShowFailurePage(false);
           } else {
             // Fallback to 25% if no payment record
             setShowFailurePage(true);
@@ -87,6 +87,7 @@ export const ImprovedThankYouPage = () => {
               title: "Payment Successful!",
               description: "Your booking has been confirmed. You'll receive SMS updates.",
             });
+            setShowFailurePage(false);
           }
         }
       } catch (error: any) {
@@ -99,6 +100,7 @@ export const ImprovedThankYouPage = () => {
         setShowFailurePage(true);
       } finally {
         setLoading(false);
+        setShowFailurePage(false);
       }
     };
 
