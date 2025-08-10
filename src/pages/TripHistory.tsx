@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { Calendar, MapPin, Clock, Car, Star, IndianRupee } from "lucide-react";
 import { TripDetailsModal } from "@/components/trip/TripDetailsModal";
 import { ReviewModal } from "@/components/review/ReviewModal";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 interface Booking {
   id: string;
@@ -45,6 +47,10 @@ const TripHistory = () => {
     driverId: "",
     driverName: ""
   });
+
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [cancelBookingId, setCancelBookingId] = useState<string | null>(null);
+  const [cancelReason, setCancelReason] = useState("");
 
   useEffect(() => {
     const isDark = document.documentElement.classList.contains('dark');

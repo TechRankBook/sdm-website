@@ -12,6 +12,11 @@ interface GoogleMapsProps {
   dropoff?: Location;
   height?: string;
   onRouteUpdate?: (distance: string, duration: string, distanceValue: number, durationValue: number) => void;
+  // New interactive picking options
+  interactive?: boolean;
+  activeMarker?: 'pickup' | 'dropoff';
+  onPickupChange?: (loc: Location) => void;
+  onDropoffChange?: (loc: Location) => void;
 }
 
 declare global {
@@ -20,13 +25,14 @@ declare global {
   }
 }
 
-export const GoogleMaps = ({ pickup, dropoff, height = "300px", onRouteUpdate }: GoogleMapsProps) => {
+export const GoogleMaps = ({ pickup, dropoff, height = "300px", onRouteUpdate, interactive = false, activeMarker = 'pickup', onPickupChange, onDropoffChange }: GoogleMapsProps) => {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstance = useRef<any>(null);
   const directionsService = useRef<any>(null);
   const directionsRenderer = useRef<any>(null);
   const pickupMarker = useRef<any>(null);
   const dropoffMarker = useRef<any>(null);
+  const geocoder = useRef<any>(null);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
@@ -85,6 +91,7 @@ export const GoogleMaps = ({ pickup, dropoff, height = "300px", onRouteUpdate }:
         }
       });
       directionsRenderer.current.setMap(mapInstance.current);
+      geocoder.current = new window.google.maps.Geocoder();
     };
 
     loadGoogleMaps();
@@ -107,6 +114,7 @@ export const GoogleMaps = ({ pickup, dropoff, height = "300px", onRouteUpdate }:
         position: pickup,
         map: mapInstance.current,
         title: pickup.address || 'Pickup Location',
+        draggable: interactive,
         icon: {
           url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
             <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -118,26 +126,45 @@ export const GoogleMaps = ({ pickup, dropoff, height = "300px", onRouteUpdate }:
           anchor: new window.google.maps.Point(16, 16)
         }
       });
+
+      if (interactive && onPickupChange) {
+        pickupMarker.current.addListener('dragend', async (e: any) => {
+          const lat = e.latLng.lat();
+          const lng = e.latLng.lng();
+          const address = await reverseGeocode(lat, lng);
+          onPickupChange({ lat, lng, address });
+        });
+      }
     }
 
-    // Add dropoff marker
-    if (dropoff) {
-      dropoffMarker.current = new window.google.maps.Marker({
-        position: dropoff,
-        map: mapInstance.current,
-        title: dropoff.address || 'Dropoff Location',
-        icon: {
-          url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="16" cy="16" r="14" fill="#ef4444" stroke="white" stroke-width="4"/>
-              <circle cx="16" cy="16" r="6" fill="white"/>
-            </svg>
-          `),
-          scaledSize: new window.google.maps.Size(32, 32),
-          anchor: new window.google.maps.Point(16, 16)
-        }
+  // Add dropoff marker
+  if (dropoff) {
+    dropoffMarker.current = new window.google.maps.Marker({
+      position: dropoff,
+      map: mapInstance.current,
+      title: dropoff.address || 'Dropoff Location',
+      draggable: interactive,
+      icon: {
+        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="16" cy="16" r="14" fill="#ef4444" stroke="white" stroke-width="4"/>
+            <circle cx="16" cy="16" r="6" fill="white"/>
+          </svg>
+        `),
+        scaledSize: new window.google.maps.Size(32, 32),
+        anchor: new window.google.maps.Point(16, 16)
+      }
+    });
+
+    if (interactive && onDropoffChange) {
+      dropoffMarker.current.addListener('dragend', async (e: any) => {
+        const lat = e.latLng.lat();
+        const lng = e.latLng.lng();
+        const address = await reverseGeocode(lat, lng);
+        onDropoffChange({ lat, lng, address });
       });
     }
+  }
 
     // Calculate and display route if both locations are available
     if (pickup && dropoff && directionsService.current && directionsRenderer.current) {
@@ -181,6 +208,37 @@ export const GoogleMaps = ({ pickup, dropoff, height = "300px", onRouteUpdate }:
       }
     });
   };
+
+  function reverseGeocode(lat: number, lng: number): Promise<string> {
+    return new Promise((resolve) => {
+      if (!geocoder.current) return resolve('');
+      geocoder.current.geocode({ location: { lat, lng } }, (results: any, status: string) => {
+        if (status === 'OK' && results?.[0]) {
+          resolve(results[0].formatted_address);
+        } else {
+          resolve('');
+        }
+      });
+    });
+  }
+
+  // Map click to select locations
+  useEffect(() => {
+    if (!isLoaded || !mapInstance.current || !interactive) return;
+    const g = window.google;
+    g.maps.event.clearListeners(mapInstance.current, 'click');
+    mapInstance.current.addListener('click', async (e: any) => {
+      const lat = e.latLng.lat();
+      const lng = e.latLng.lng();
+      const address = await reverseGeocode(lat, lng);
+      const loc = { lat, lng, address };
+      if (activeMarker === 'pickup') {
+        onPickupChange?.(loc);
+      } else {
+        onDropoffChange?.(loc);
+      }
+    });
+  }, [isLoaded, interactive, activeMarker, onPickupChange, onDropoffChange]);
 
   return (
     <Card className="glass overflow-hidden">
