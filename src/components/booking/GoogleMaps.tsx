@@ -34,27 +34,36 @@ export const GoogleMaps = ({ pickup, dropoff, height = "300px", onRouteUpdate, i
   const pickupMarker = useRef<any>(null);
   const dropoffMarker = useRef<any>(null);
   const geocoder = useRef<any>(null);
+  const classesRef = useRef<{ Marker?: any } | null>(null);
   const { ready, error } = useGoogleMapsLoader();
 
   useEffect(() => {
     let isMounted = true;
 
-    const initializeMap = () => {
+    const initializeMap = async () => {
       if (!isMounted) return;
       if (!mapRef.current || !window.google) return;
 
+      const g = window.google;
+      // Import modular classes
+      const { Map, Marker } = await g.maps.importLibrary('maps');
+      const { DirectionsService, DirectionsRenderer } = await g.maps.importLibrary('routes');
+      const { Geocoder } = await g.maps.importLibrary('geocoding');
+
+      classesRef.current = { Marker };
+
       // Default center (Bangalore)
       const defaultCenter = { lat: 12.9716, lng: 77.5946 };
-      
-      mapInstance.current = new window.google.maps.Map(mapRef.current, {
+
+      mapInstance.current = new Map(mapRef.current, {
         zoom: 13,
         center: pickup || defaultCenter,
         styles: [
           {
-            featureType: "poi",
-            elementType: "labels",
-            stylers: [{ visibility: "off" }]
-          }
+            featureType: 'poi',
+            elementType: 'labels',
+            stylers: [{ visibility: 'off' }],
+          },
         ],
         disableDefaultUI: false,
         zoomControl: true,
@@ -62,20 +71,20 @@ export const GoogleMaps = ({ pickup, dropoff, height = "300px", onRouteUpdate, i
         scaleControl: true,
         streetViewControl: false,
         rotateControl: false,
-        fullscreenControl: true
+        fullscreenControl: true,
       });
 
-      directionsService.current = new window.google.maps.DirectionsService();
-      directionsRenderer.current = new window.google.maps.DirectionsRenderer({
+      directionsService.current = new DirectionsService();
+      directionsRenderer.current = new DirectionsRenderer({
         suppressMarkers: false,
         polylineOptions: {
           strokeColor: '#6366f1',
           strokeWeight: 4,
-          strokeOpacity: 0.8
-        }
+          strokeOpacity: 0.8,
+        },
+        map: mapInstance.current,
       });
-      directionsRenderer.current.setMap(mapInstance.current);
-      geocoder.current = new window.google.maps.Geocoder();
+      geocoder.current = new Geocoder();
     };
 
     if (ready && !error && !mapInstance.current) {
@@ -100,59 +109,71 @@ export const GoogleMaps = ({ pickup, dropoff, height = "300px", onRouteUpdate, i
 
     // Add pickup marker
     if (pickup) {
-      pickupMarker.current = new window.google.maps.Marker({
-        position: pickup,
-        map: mapInstance.current,
-        title: pickup.address || 'Pickup Location',
-        draggable: interactive,
-        icon: {
+      const MarkerClass = classesRef.current?.Marker || window.google?.maps?.Marker;
+      if (MarkerClass) {
+        const icon: any = {
           url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
             <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
               <circle cx="16" cy="16" r="14" fill="#22c55e" stroke="white" stroke-width="4"/>
               <circle cx="16" cy="16" r="6" fill="white"/>
             </svg>
           `),
-          scaledSize: new window.google.maps.Size(32, 32),
-          anchor: new window.google.maps.Point(16, 16)
+        };
+        if (window.google?.maps?.Size && window.google?.maps?.Point) {
+          icon.scaledSize = new window.google.maps.Size(32, 32);
+          icon.anchor = new window.google.maps.Point(16, 16);
         }
-      });
-
-      if (interactive && onPickupChange) {
-        pickupMarker.current.addListener('dragend', async (e: any) => {
-          const lat = e.latLng.lat();
-          const lng = e.latLng.lng();
-          const address = await reverseGeocode(lat, lng);
-          onPickupChange({ lat, lng, address });
+        pickupMarker.current = new MarkerClass({
+          position: pickup,
+          map: mapInstance.current,
+          title: pickup.address || 'Pickup Location',
+          draggable: interactive,
+          icon,
         });
+
+        if (interactive && onPickupChange) {
+          pickupMarker.current.addListener('dragend', async (e: any) => {
+            const lat = e.latLng.lat();
+            const lng = e.latLng.lng();
+            const address = await reverseGeocode(lat, lng);
+            onPickupChange({ lat, lng, address });
+          });
+        }
       }
     }
 
     // Add dropoff marker
     if (dropoff) {
-      dropoffMarker.current = new window.google.maps.Marker({
-        position: dropoff,
-        map: mapInstance.current,
-        title: dropoff.address || 'Dropoff Location',
-        draggable: interactive,
-        icon: {
+      const MarkerClass = classesRef.current?.Marker || window.google?.maps?.Marker;
+      if (MarkerClass) {
+        const icon: any = {
           url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
             <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
               <circle cx="16" cy="16" r="14" fill="#ef4444" stroke="white" stroke-width="4"/>
               <circle cx="16" cy="16" r="6" fill="white"/>
             </svg>
           `),
-          scaledSize: new window.google.maps.Size(32, 32),
-          anchor: new window.google.maps.Point(16, 16)
+        };
+        if (window.google?.maps?.Size && window.google?.maps?.Point) {
+          icon.scaledSize = new window.google.maps.Size(32, 32);
+          icon.anchor = new window.google.maps.Point(16, 16);
         }
-      });
-
-      if (interactive && onDropoffChange) {
-        dropoffMarker.current.addListener('dragend', async (e: any) => {
-          const lat = e.latLng.lat();
-          const lng = e.latLng.lng();
-          const address = await reverseGeocode(lat, lng);
-          onDropoffChange({ lat, lng, address });
+        dropoffMarker.current = new MarkerClass({
+          position: dropoff,
+          map: mapInstance.current,
+          title: dropoff.address || 'Dropoff Location',
+          draggable: interactive,
+          icon,
         });
+
+        if (interactive && onDropoffChange) {
+          dropoffMarker.current.addListener('dragend', async (e: any) => {
+            const lat = e.latLng.lat();
+            const lng = e.latLng.lng();
+            const address = await reverseGeocode(lat, lng);
+            onDropoffChange({ lat, lng, address });
+          });
+        }
       }
     }
 
@@ -171,11 +192,11 @@ export const GoogleMaps = ({ pickup, dropoff, height = "300px", onRouteUpdate, i
     if (!directionsService.current || !directionsRenderer.current) return;
 
     const request = {
-      origin: new window.google.maps.LatLng(origin.lat, origin.lng),
-      destination: new window.google.maps.LatLng(destination.lat, destination.lng),
-      travelMode: window.google.maps.TravelMode.DRIVING,
+      origin: { lat: origin.lat, lng: origin.lng },
+      destination: { lat: destination.lat, lng: destination.lng },
+      travelMode: 'DRIVING' as any,
       avoidHighways: false,
-      avoidTolls: false
+      avoidTolls: false,
     };
 
     directionsService.current.route(request, (result: any, status: string) => {
