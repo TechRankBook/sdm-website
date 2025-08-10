@@ -1,6 +1,8 @@
 // Shared Google Maps JS API loader to ensure reliable initialization across components
 // Handles cases where the script exists but isn't loaded yet, and avoids duplicate inserts.
 
+import { useEffect, useState } from 'react';
+
 let googleMapsLoadingPromise: Promise<any> | null = null;
 
 declare global {
@@ -9,10 +11,27 @@ declare global {
   }
 }
 
+async function ensureLibrariesLoaded(google: any) {
+  // Ensure the modular libraries are available before resolving
+  if (google?.maps?.importLibrary) {
+    await Promise.all([
+      google.maps.importLibrary('maps'),
+      google.maps.importLibrary('places').catch(() => {}),
+      // Load routes/geocoding if available for Directions/Geocoder reliability
+      google.maps.importLibrary?.('routes')?.catch?.(() => {}),
+      google.maps.importLibrary?.('geocoding')?.catch?.(() => {}),
+    ]);
+  }
+}
+
 export function loadGoogleMapsApi(): Promise<any> {
   // Already available
   if (typeof window !== 'undefined' && (window as any).google?.maps) {
-    return Promise.resolve((window as any).google);
+    const g = (window as any).google;
+    return (async () => {
+      await ensureLibrariesLoaded(g);
+      return g;
+    })();
   }
 
   if (googleMapsLoadingPromise) return googleMapsLoadingPromise;
@@ -22,22 +41,29 @@ export function loadGoogleMapsApi(): Promise<any> {
       'script[src*="maps.googleapis.com/maps/api/js"]'
     ) as HTMLScriptElement | null;
 
-    const resolveIfReady = () => {
-      if ((window as any).google?.maps) {
-        resolve((window as any).google);
-        return true;
+    const resolveIfReady = async () => {
+      const g = (window as any).google;
+      if (g?.maps) {
+        try {
+          await ensureLibrariesLoaded(g);
+          resolve(g);
+          return true;
+        } catch (e) {
+          reject(e as Error);
+          return false;
+        }
       }
       return false;
     };
 
-    if (resolveIfReady()) return; // In case it loaded between checks
+    
 
-    const onLoad = () => {
-      if (!resolveIfReady()) {
+    const onLoad = async () => {
+      if (!(await resolveIfReady())) {
         // In rare cases, load fires before maps is ready; poll briefly
         const start = Date.now();
-        const iv = window.setInterval(() => {
-          if (resolveIfReady()) {
+        const iv = window.setInterval(async () => {
+          if (await resolveIfReady()) {
             window.clearInterval(iv);
           } else if (Date.now() - start > 5000) {
             window.clearInterval(iv);
@@ -56,8 +82,8 @@ export function loadGoogleMapsApi(): Promise<any> {
 
       // Fallback polling if events don't fire (cached or preloaded)
       const start = Date.now();
-      const iv = window.setInterval(() => {
-        if (resolveIfReady()) {
+      const iv = window.setInterval(async () => {
+        if (await resolveIfReady()) {
           window.clearInterval(iv);
         } else if (Date.now() - start > 15000) {
           window.clearInterval(iv);
@@ -70,7 +96,7 @@ export function loadGoogleMapsApi(): Promise<any> {
     // Insert script if not present
     const script = document.createElement('script');
     script.src =
-      'https://maps.googleapis.com/maps/api/js?key=AIzaSyAejqe2t4TAptcLnkpoFTTNMhm0SFHFJgQ&libraries=places&loading=async';
+      'https://maps.googleapis.com/maps/api/js?key=AIzaSyAejqe2t4TAptcLnkpoFTTNMhm0SFHFJgQ&v=weekly&libraries=places,routes,geocoding&loading=async';
     script.async = true;
     script.defer = true;
     script.addEventListener('load', onLoad, { once: true });
@@ -79,8 +105,8 @@ export function loadGoogleMapsApi(): Promise<any> {
 
     // Extra safety: poll in case load event is missed by the browser
     const start = Date.now();
-    const iv = window.setInterval(() => {
-      if (resolveIfReady()) {
+    const iv = window.setInterval(async () => {
+      if (await resolveIfReady()) {
         window.clearInterval(iv);
       } else if (Date.now() - start > 15000) {
         window.clearInterval(iv);
@@ -90,4 +116,31 @@ export function loadGoogleMapsApi(): Promise<any> {
   });
 
   return googleMapsLoadingPromise;
+}
+
+export function useGoogleMapsLoader() {
+  const [ready, setReady] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+  const [googleObj, setGoogleObj] = useState<any>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    loadGoogleMapsApi()
+      .then((g) => {
+        if (cancelled) return;
+        setGoogleObj(g);
+        setReady(true);
+        setError(null);
+      })
+      .catch((e) => {
+        if (cancelled) return;
+        setError(e as Error);
+        setReady(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return { ready, error, google: googleObj } as const;
 }

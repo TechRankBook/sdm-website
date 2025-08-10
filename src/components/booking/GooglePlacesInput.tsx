@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { MapPin, Navigation2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { loadGoogleMapsApi } from "@/hooks/useGoogleMapsApi";
+import { useGoogleMapsLoader } from "@/hooks/useGoogleMapsApi";
 
 interface Place {
   place_id: string;
@@ -47,6 +47,7 @@ export const GooglePlacesInput = ({
   className,
   showCurrentLocation = false
 }: GooglePlacesInputProps) => {
+  const { ready, error, google } = useGoogleMapsLoader();
   const [suggestions, setSuggestions] = useState<Place[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -58,27 +59,31 @@ export const GooglePlacesInput = ({
   useEffect(() => {
     let cancelled = false;
 
-    const init = async () => {
+    if (ready && !error && window.google?.maps) {
       try {
-        await loadGoogleMapsApi();
-        if (cancelled) return;
-        if (window.google && window.google.maps) {
-          autocompleteService.current = new window.google.maps.places.AutocompleteService();
-          const mapDiv = document.createElement('div');
-          const map = new window.google.maps.Map(mapDiv);
-          placesService.current = new window.google.maps.places.PlacesService(map);
-        }
+        // Initialize services once Maps + Places are ready
+        autocompleteService.current = new window.google.maps.places.AutocompleteService();
+        const mapDiv = document.createElement('div');
+        const map = new window.google.maps.Map(mapDiv);
+        placesService.current = new window.google.maps.places.PlacesService(map);
       } catch (e) {
-        console.error('Failed to load Google Maps API', e);
+        // If creation fails, keep services null so UI gracefully degrades
+        autocompleteService.current = null;
+        placesService.current = null;
       }
-    };
+    } else {
+      // Not ready or failed: ensure clean state
+      autocompleteService.current = null;
+      placesService.current = null;
+      setShowSuggestions(false);
+      setIsLoading(false);
+    }
 
-    init();
     return () => { cancelled = true; };
-  }, []);
+  }, [ready, error]);
 
   const searchPlaces = async (input: string) => {
-    if (!autocompleteService.current || input.length < 2) {
+    if (!ready || !autocompleteService.current || input.length < 2) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
@@ -114,7 +119,7 @@ export const GooglePlacesInput = ({
   };
 
   const selectPlace = (place: any) => {
-    if (!placesService.current) return;
+    if (!ready || !placesService.current) return;
 
     const request = {
       placeId: place.place_id,
@@ -144,8 +149,7 @@ export const GooglePlacesInput = ({
 
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by this browser.');
-      return;
+      return; // Silent fail to avoid noisy UI
     }
 
     setIsGettingLocation(true);
@@ -154,7 +158,7 @@ export const GooglePlacesInput = ({
       (position) => {
         const { latitude, longitude } = position.coords;
         
-        if (window.google && window.google.maps) {
+        if (ready && window.google && window.google.maps) {
           const geocoder = new window.google.maps.Geocoder();
           const latlng = { lat: latitude, lng: longitude };
           
@@ -173,27 +177,15 @@ export const GooglePlacesInput = ({
               onChange(results[0].formatted_address, currentPlace);
               onPlaceSelect?.(currentPlace);
             } else {
-              alert('Unable to retrieve your location address.');
+              // Graceful no-op
             }
           });
+        } else {
+          setIsGettingLocation(false);
         }
       },
-      (error) => {
+      () => {
         setIsGettingLocation(false);
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            alert('Location access denied by user.');
-            break;
-          case error.POSITION_UNAVAILABLE:
-            alert('Location information is unavailable.');
-            break;
-          case error.TIMEOUT:
-            alert('Location request timeout.');
-            break;
-          default:
-            alert('An unknown error occurred while retrieving location.');
-            break;
-        }
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
     );

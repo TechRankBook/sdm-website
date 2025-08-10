@@ -13,6 +13,7 @@ import { useFareCalculation } from "@/hooks/useFareCalculation";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
+import { useGoogleMapsLoader } from "@/hooks/useGoogleMapsApi";
 import { 
   Clock, 
   Car,
@@ -110,6 +111,7 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
     return null;
   });
   const [activeMarker, setActiveMarker] = useState<'pickup' | 'dropoff'>('pickup');
+  const mapsLoader = useGoogleMapsLoader();
 
   const handlePickupChangeFromMap = (loc: LocationData) => {
     setPickupCoords(loc);
@@ -706,39 +708,41 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
           </div>
 
           {/* Map Picker */}
-          <div className="mb-6 space-y-3">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-medium text-foreground">Select on Map</h3>
-              <div className="p-1 rounded-lg glass inline-flex gap-1">
-                <Button
-                  size="sm"
-                  variant={activeMarker === 'pickup' ? 'default' : 'ghost'}
-                  className={cn(activeMarker === 'pickup' ? 'bg-gradient-primary text-white' : 'text-muted-foreground')}
-                  onClick={() => setActiveMarker('pickup')}
-                >
-                  <MapPin className="w-4 h-4 mr-1 text-green-500" /> Pickup
-                </Button>
-                <Button
-                  size="sm"
-                  variant={activeMarker === 'dropoff' ? 'default' : 'ghost'}
-                  className={cn(activeMarker === 'dropoff' ? 'bg-gradient-primary text-white' : 'text-muted-foreground')}
-                  onClick={() => setActiveMarker('dropoff')}
-                >
-                  <MapPin className="w-4 h-4 mr-1 text-red-500" /> Dropoff
-                </Button>
+          {mapsLoader.ready && !mapsLoader.error && (
+            <div className="mb-6 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium text-foreground">Select on Map</h3>
+                <div className="p-1 rounded-lg glass inline-flex gap-1">
+                  <Button
+                    size="sm"
+                    variant={activeMarker === 'pickup' ? 'default' : 'ghost'}
+                    className={cn(activeMarker === 'pickup' ? 'bg-gradient-primary text-white' : 'text-muted-foreground')}
+                    onClick={() => setActiveMarker('pickup')}
+                  >
+                    <MapPin className="w-4 h-4 mr-1 text-green-500" /> Pickup
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={activeMarker === 'dropoff' ? 'default' : 'ghost'}
+                    className={cn(activeMarker === 'dropoff' ? 'bg-gradient-primary text-white' : 'text-muted-foreground')}
+                    onClick={() => setActiveMarker('dropoff')}
+                  >
+                    <MapPin className="w-4 h-4 mr-1 text-red-500" /> Dropoff
+                  </Button>
+                </div>
               </div>
+              <GoogleMaps
+                pickup={pickupCoords || undefined}
+                dropoff={serviceType === 'car_rental' ? undefined : (dropoffCoords || undefined)}
+                height="320px"
+                onRouteUpdate={handleRouteUpdate}
+                interactive={true}
+                activeMarker={activeMarker}
+                onPickupChange={handlePickupChangeFromMap}
+                onDropoffChange={handleDropoffChangeFromMap}
+              />
             </div>
-            <GoogleMaps
-              pickup={pickupCoords || undefined}
-              dropoff={serviceType === 'car_rental' ? undefined : (dropoffCoords || undefined)}
-              height="320px"
-              onRouteUpdate={handleRouteUpdate}
-              interactive={true}
-              activeMarker={activeMarker}
-              onPickupChange={handlePickupChangeFromMap}
-              onDropoffChange={handleDropoffChangeFromMap}
-            />
-          </div>
+          )}
 
           {/* Guest Selection */}
           <div className="mb-6">

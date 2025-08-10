@@ -1,6 +1,6 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { Card } from "@/components/ui/card";
-import { loadGoogleMapsApi } from "@/hooks/useGoogleMapsApi";
+import { useGoogleMapsLoader } from "@/hooks/useGoogleMapsApi";
 
 interface Location {
   lat: number;
@@ -34,12 +34,13 @@ export const GoogleMaps = ({ pickup, dropoff, height = "300px", onRouteUpdate, i
   const pickupMarker = useRef<any>(null);
   const dropoffMarker = useRef<any>(null);
   const geocoder = useRef<any>(null);
-  const [isLoaded, setIsLoaded] = useState(false);
+  const { ready, error } = useGoogleMapsLoader();
 
   useEffect(() => {
     let isMounted = true;
 
     const initializeMap = () => {
+      if (!isMounted) return;
       if (!mapRef.current || !window.google) return;
 
       // Default center (Bangalore)
@@ -77,26 +78,17 @@ export const GoogleMaps = ({ pickup, dropoff, height = "300px", onRouteUpdate, i
       geocoder.current = new window.google.maps.Geocoder();
     };
 
-    const init = async () => {
-      try {
-        await loadGoogleMapsApi();
-        if (!isMounted) return;
-        initializeMap();
-        setIsLoaded(true);
-      } catch (e) {
-        console.error('Failed to load Google Maps API', e);
-      }
-    };
-
-    init();
+    if (ready && !error && !mapInstance.current) {
+      initializeMap();
+    }
 
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [ready, error]);
 
   useEffect(() => {
-    if (!isLoaded || !mapInstance.current) return;
+    if (!ready || !!error || !mapInstance.current) return;
 
     // Clear existing markers
     if (pickupMarker.current) {
@@ -135,34 +127,34 @@ export const GoogleMaps = ({ pickup, dropoff, height = "300px", onRouteUpdate, i
       }
     }
 
-  // Add dropoff marker
-  if (dropoff) {
-    dropoffMarker.current = new window.google.maps.Marker({
-      position: dropoff,
-      map: mapInstance.current,
-      title: dropoff.address || 'Dropoff Location',
-      draggable: interactive,
-      icon: {
-        url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
-          <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="16" cy="16" r="14" fill="#ef4444" stroke="white" stroke-width="4"/>
-            <circle cx="16" cy="16" r="6" fill="white"/>
-          </svg>
-        `),
-        scaledSize: new window.google.maps.Size(32, 32),
-        anchor: new window.google.maps.Point(16, 16)
-      }
-    });
-
-    if (interactive && onDropoffChange) {
-      dropoffMarker.current.addListener('dragend', async (e: any) => {
-        const lat = e.latLng.lat();
-        const lng = e.latLng.lng();
-        const address = await reverseGeocode(lat, lng);
-        onDropoffChange({ lat, lng, address });
+    // Add dropoff marker
+    if (dropoff) {
+      dropoffMarker.current = new window.google.maps.Marker({
+        position: dropoff,
+        map: mapInstance.current,
+        title: dropoff.address || 'Dropoff Location',
+        draggable: interactive,
+        icon: {
+          url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(`
+            <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="16" cy="16" r="14" fill="#ef4444" stroke="white" stroke-width="4"/>
+              <circle cx="16" cy="16" r="6" fill="white"/>
+            </svg>
+          `),
+          scaledSize: new window.google.maps.Size(32, 32),
+          anchor: new window.google.maps.Point(16, 16)
+        }
       });
+
+      if (interactive && onDropoffChange) {
+        dropoffMarker.current.addListener('dragend', async (e: any) => {
+          const lat = e.latLng.lat();
+          const lng = e.latLng.lng();
+          const address = await reverseGeocode(lat, lng);
+          onDropoffChange({ lat, lng, address });
+        });
+      }
     }
-  }
 
     // Calculate and display route if both locations are available
     if (pickup && dropoff && directionsService.current && directionsRenderer.current) {
@@ -173,7 +165,7 @@ export const GoogleMaps = ({ pickup, dropoff, height = "300px", onRouteUpdate, i
       mapInstance.current.setCenter(location);
       mapInstance.current.setZoom(15);
     }
-  }, [pickup, dropoff, isLoaded]);
+  }, [pickup, dropoff, ready, error]);
 
   const calculateRoute = (origin: Location, destination: Location) => {
     if (!directionsService.current || !directionsRenderer.current) return;
@@ -222,7 +214,7 @@ export const GoogleMaps = ({ pickup, dropoff, height = "300px", onRouteUpdate, i
 
   // Map click to select locations
   useEffect(() => {
-    if (!isLoaded || !mapInstance.current || !interactive) return;
+    if (!ready || !!error || !mapInstance.current || !interactive) return;
     const g = window.google;
     g.maps.event.clearListeners(mapInstance.current, 'click');
     mapInstance.current.addListener('click', async (e: any) => {
@@ -236,7 +228,11 @@ export const GoogleMaps = ({ pickup, dropoff, height = "300px", onRouteUpdate, i
         onDropoffChange?.(loc);
       }
     });
-  }, [isLoaded, interactive, activeMarker, onPickupChange, onDropoffChange]);
+  }, [ready, error, interactive, activeMarker, onPickupChange, onDropoffChange]);
+
+  if (!ready || !!error) {
+    return null; // Hide map entirely if API isn't ready or failed
+  }
 
   return (
     <Card className="glass overflow-hidden">
@@ -245,17 +241,6 @@ export const GoogleMaps = ({ pickup, dropoff, height = "300px", onRouteUpdate, i
         style={{ height, width: '100%' }}
         className="rounded-lg"
       />
-      {!isLoaded && (
-        <div 
-          style={{ height }}
-          className="flex items-center justify-center bg-accent/20"
-        >
-          <div className="text-center">
-            <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-            <p className="text-sm text-muted-foreground">Loading map...</p>
-          </div>
-        </div>
-      )}
     </Card>
   );
 };
