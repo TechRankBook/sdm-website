@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { MapPin, Navigation2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { loadGoogleMapsApi } from "@/hooks/useGoogleMapsApi";
 
 interface Place {
   place_id: string;
@@ -55,32 +56,25 @@ export const GooglePlacesInput = ({
   const placesService = useRef<any>(null);
 
   useEffect(() => {
-    const loadGoogleMaps = () => {
-      if (window.google && window.google.maps) {
-        initializeServices();
-        return;
-      }
+    let cancelled = false;
 
-      if (!document.querySelector('script[src*="maps.googleapis.com"]')) {
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyAejqe2t4TAptcLnkpoFTTNMhm0SFHFJgQ&libraries=places`;
-        script.async = true;
-        script.defer = true;
-        script.onload = initializeServices;
-        document.head.appendChild(script);
-      }
-    };
-
-    const initializeServices = () => {
-      if (window.google && window.google.maps) {
-        autocompleteService.current = new window.google.maps.places.AutocompleteService();
-        const mapDiv = document.createElement('div');
-        const map = new window.google.maps.Map(mapDiv);
-        placesService.current = new window.google.maps.places.PlacesService(map);
+    const init = async () => {
+      try {
+        await loadGoogleMapsApi();
+        if (cancelled) return;
+        if (window.google && window.google.maps) {
+          autocompleteService.current = new window.google.maps.places.AutocompleteService();
+          const mapDiv = document.createElement('div');
+          const map = new window.google.maps.Map(mapDiv);
+          placesService.current = new window.google.maps.places.PlacesService(map);
+        }
+      } catch (e) {
+        console.error('Failed to load Google Maps API', e);
       }
     };
 
-    loadGoogleMaps();
+    init();
+    return () => { cancelled = true; };
   }, []);
 
   const searchPlaces = async (input: string) => {

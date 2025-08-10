@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Card } from "@/components/ui/card";
+import { loadGoogleMapsApi } from "@/hooks/useGoogleMapsApi";
 
 interface Location {
   lat: number;
@@ -36,25 +37,7 @@ export const GoogleMaps = ({ pickup, dropoff, height = "300px", onRouteUpdate, i
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    const loadGoogleMaps = () => {
-      if (window.google && window.google.maps) {
-        initializeMap();
-        setIsLoaded(true);
-        return;
-      }
-
-      if (!document.querySelector('script[src*="maps.googleapis.com"]')) {
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyAejqe2t4TAptcLnkpoFTTNMhm0SFHFJgQ&libraries=places`;
-        script.async = true;
-        script.defer = true;
-        script.onload = () => {
-          initializeMap();
-          setIsLoaded(true);
-        };
-        document.head.appendChild(script);
-      }
-    };
+    let isMounted = true;
 
     const initializeMap = () => {
       if (!mapRef.current || !window.google) return;
@@ -94,7 +77,22 @@ export const GoogleMaps = ({ pickup, dropoff, height = "300px", onRouteUpdate, i
       geocoder.current = new window.google.maps.Geocoder();
     };
 
-    loadGoogleMaps();
+    const init = async () => {
+      try {
+        await loadGoogleMapsApi();
+        if (!isMounted) return;
+        initializeMap();
+        setIsLoaded(true);
+      } catch (e) {
+        console.error('Failed to load Google Maps API', e);
+      }
+    };
+
+    init();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   useEffect(() => {
