@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { MapPin, Navigation2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useGoogleMapsLoader } from "@/hooks/useGoogleMapsApi";
+import { usePlacesApi } from "@/hooks/usePlacesApi";
 
 interface Place {
   place_id: string;
@@ -31,12 +31,6 @@ interface GooglePlacesInputProps {
   showCurrentLocation?: boolean;
 }
 
-declare global {
-  interface Window {
-    google: any;
-    initMap: () => void;
-  }
-}
 
 export const GooglePlacesInput = ({
   placeholder,

@@ -16,12 +16,27 @@ async function ensureLibrariesLoaded(google: any) {
   if (google?.maps?.importLibrary) {
     await Promise.all([
       google.maps.importLibrary('maps'),
-      google.maps.importLibrary('places').catch(() => {}),
       // Load routes/geocoding if available for Directions/Geocoder reliability
       google.maps.importLibrary?.('routes')?.catch?.(() => {}),
       google.maps.importLibrary?.('geocoding')?.catch?.(() => {}),
     ]);
+    return;
   }
+
+  // Fallback for older loader where importLibrary isn't available
+  await new Promise<void>((resolve) => {
+    const start = Date.now();
+    const iv = window.setInterval(() => {
+      const g = (window as any).google;
+      if (g?.maps?.Map && g?.maps?.DirectionsService && g?.maps?.Geocoder) {
+        window.clearInterval(iv);
+        resolve();
+      } else if (Date.now() - start > 5000) {
+        window.clearInterval(iv);
+        resolve();
+      }
+    }, 50);
+  });
 }
 
 export function loadGoogleMapsApi(): Promise<any> {
@@ -96,7 +111,7 @@ export function loadGoogleMapsApi(): Promise<any> {
     // Insert script if not present
     const script = document.createElement('script');
     script.src =
-      'https://maps.googleapis.com/maps/api/js?key=AIzaSyAejqe2t4TAptcLnkpoFTTNMhm0SFHFJgQ&v=weekly&libraries=places,routes,geocoding&loading=async';
+      'https://maps.googleapis.com/maps/api/js?key=AIzaSyAejqe2t4TAptcLnkpoFTTNMhm0SFHFJgQ&v=weekly&libraries=routes,geocoding&loading=async';
     script.async = true;
     script.defer = true;
     script.addEventListener('load', onLoad, { once: true });

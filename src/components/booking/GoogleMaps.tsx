@@ -45,17 +45,36 @@ export const GoogleMaps = ({ pickup, dropoff, height = "300px", onRouteUpdate, i
       if (!mapRef.current || !window.google) return;
 
       const g = window.google;
-      // Import modular classes
-      const { Map, Marker } = await g.maps.importLibrary('maps');
-      const { DirectionsService, DirectionsRenderer } = await g.maps.importLibrary('routes');
-      const { Geocoder } = await g.maps.importLibrary('geocoding');
+      // Support both modular and classic loaders
+      let MapClass: any;
+      let MarkerClass: any;
+      let DirectionsServiceClass: any;
+      let DirectionsRendererClass: any;
+      let GeocoderClass: any;
 
-      classesRef.current = { Marker };
+      if (g.maps?.importLibrary) {
+        const mapsLib: any = await g.maps.importLibrary('maps');
+        const routesLib: any = await g.maps.importLibrary('routes');
+        const geocodeLib: any = await g.maps.importLibrary('geocoding');
+        MapClass = mapsLib.Map;
+        MarkerClass = mapsLib.Marker;
+        DirectionsServiceClass = routesLib.DirectionsService;
+        DirectionsRendererClass = routesLib.DirectionsRenderer;
+        GeocoderClass = geocodeLib.Geocoder;
+      } else {
+        MapClass = g.maps.Map;
+        MarkerClass = g.maps.Marker;
+        DirectionsServiceClass = g.maps.DirectionsService;
+        DirectionsRendererClass = g.maps.DirectionsRenderer;
+        GeocoderClass = g.maps.Geocoder;
+      }
+
+      classesRef.current = { Marker: MarkerClass };
 
       // Default center (Bangalore)
       const defaultCenter = { lat: 12.9716, lng: 77.5946 };
 
-      mapInstance.current = new Map(mapRef.current, {
+      mapInstance.current = new MapClass(mapRef.current, {
         zoom: 13,
         center: pickup || defaultCenter,
         styles: [
@@ -74,8 +93,8 @@ export const GoogleMaps = ({ pickup, dropoff, height = "300px", onRouteUpdate, i
         fullscreenControl: true,
       });
 
-      directionsService.current = new DirectionsService();
-      directionsRenderer.current = new DirectionsRenderer({
+      directionsService.current = new DirectionsServiceClass();
+      directionsRenderer.current = new DirectionsRendererClass({
         suppressMarkers: false,
         polylineOptions: {
           strokeColor: '#6366f1',
@@ -84,7 +103,7 @@ export const GoogleMaps = ({ pickup, dropoff, height = "300px", onRouteUpdate, i
         },
         map: mapInstance.current,
       });
-      geocoder.current = new Geocoder();
+      geocoder.current = new GeocoderClass();
     };
 
     if (ready && !error && !mapInstance.current) {
