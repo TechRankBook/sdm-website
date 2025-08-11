@@ -155,7 +155,7 @@ const Index = () => {
             {/* Booking Interface - Rider Only */}
             <div className="fade-in" style={{ animationDelay: "0.3s" }}>
               <div className="flex justify-center w-full">
-                <div className="w-full max-w-md sm:max-w-lg lg:max-w-xl">
+                <div className="w-full max-w-md sm:max-w-lg lg:max-w-md">
                   {renderBookingForm()}
                 </div>
               </div>
