@@ -109,7 +109,7 @@ const Index = () => {
         />
         
         <div className="relative container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid lg:grid-cols-2 gap-12 items-start">
             {/* Hero Content */}
             <div className="space-y-8">
               <div className="space-y-4 fade-in">
