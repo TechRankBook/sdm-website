@@ -23,7 +23,7 @@ import {
   Luggage,
   Zap
 } from "lucide-react";
-import { BookingData } from "@/pages/Booking";
+import { BookingData } from "@/stores/bookingStore";
 
 interface BookingFormProps {
   bookingData: BookingData;

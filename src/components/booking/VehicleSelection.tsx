@@ -2,7 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Car, Users, Clock } from "lucide-react";
 import { useFareCalculation } from "@/hooks/useFareCalculation";
-import { BookingData } from "@/pages/Booking";
+import { BookingData } from "@/stores/bookingStore";
 
 interface VehicleSelectionProps {
   bookingData: BookingData;
@@ -48,35 +48,41 @@ export const VehicleSelection = ({
   onBack, 
   routeData 
 }: VehicleSelectionProps) => {
+  // Calculate distance and duration multiplier for round trips
+  const multiplier = bookingData.isRoundTrip ? 2 : 1;
+  
   // Get fare calculation for all vehicle types
   const sedanFare = useFareCalculation({
     serviceType: bookingData.serviceType,
     vehicleType: "Sedan",
-    distanceKm: routeData?.distanceKm || 0,
-    durationMinutes: routeData?.durationMinutes || 0,
+    distanceKm: (routeData?.distanceKm || 0) * multiplier,
+    durationMinutes: (routeData?.durationMinutes || 0) * multiplier,
   });
 
   const suvFare = useFareCalculation({
     serviceType: bookingData.serviceType,
     vehicleType: "SUV",
-    distanceKm: routeData?.distanceKm || 0,
-    durationMinutes: routeData?.durationMinutes || 0,
+    distanceKm: (routeData?.distanceKm || 0) * multiplier,
+    durationMinutes: (routeData?.durationMinutes || 0) * multiplier,
   });
 
   const premiumFare = useFareCalculation({
     serviceType: bookingData.serviceType,
     vehicleType: "Premium",
-    distanceKm: routeData?.distanceKm || 0,
-    durationMinutes: routeData?.durationMinutes || 0,
+    distanceKm: (routeData?.distanceKm || 0) * multiplier,
+    durationMinutes: (routeData?.durationMinutes || 0) * multiplier,
   });
 
   const handleVehicleSelection = (vehicleType: string, fareData: any) => {
     updateBookingData({
       carType: vehicleType,
+      vehicleType: vehicleType,
       selectedFare: {
         type: vehicleType,
         price: fareData?.totalFare || 0
-      }
+      },
+      distanceKm: routeData?.distanceKm || 0,
+      durationMinutes: routeData?.durationMinutes || 0
     });
     onNext();
   };
@@ -94,11 +100,17 @@ export const VehicleSelection = ({
           const fareCalculation = vehicle.type === "Sedan" ? sedanFare : 
                                  vehicle.type === "SUV" ? suvFare : premiumFare;
           
+          const isDisabled = fareCalculation.isLoading || !fareCalculation.fareData;
+          
           return (
             <Card
               key={vehicle.type}
-              className="glass-hover p-4 cursor-pointer transition-all duration-300 hover:scale-[1.01] border border-glass-border hover:border-primary/30"
-              onClick={() => handleVehicleSelection(vehicle.type, fareCalculation.fareData)}
+              className={`glass-hover p-4 transition-all duration-300 border border-glass-border ${
+                isDisabled 
+                  ? 'opacity-60 cursor-not-allowed' 
+                  : 'cursor-pointer hover:scale-[1.01] hover:border-primary/30'
+              }`}
+              onClick={() => !isDisabled && handleVehicleSelection(vehicle.type, fareCalculation.fareData)}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4 flex-1">
@@ -118,12 +130,20 @@ export const VehicleSelection = ({
                         <span>{vehicle.estimatedTime} arrival</span>
                       </div>
                     </div>
+                    {bookingData.isRoundTrip && (
+                      <div className="text-xs text-primary font-medium">
+                        Round Trip - Double Distance
+                      </div>
+                    )}
                   </div>
                 </div>
                 
                 <div className="text-right">
                   {fareCalculation.isLoading ? (
-                    <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                      <span className="text-xs text-muted-foreground">Calculating...</span>
+                    </div>
                   ) : fareCalculation.fareData ? (
                     <>
                       <div className="text-2xl font-bold text-primary">
@@ -135,9 +155,13 @@ export const VehicleSelection = ({
                         </div>
                       )}
                     </>
+                  ) : fareCalculation.error ? (
+                    <div className="text-sm text-destructive">
+                      Price unavailable
+                    </div>
                   ) : (
                     <div className="text-sm text-muted-foreground">
-                      Price unavailable
+                      Select to see price
                     </div>
                   )}
                 </div>

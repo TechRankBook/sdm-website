@@ -73,13 +73,15 @@ export const Header = ({ isDarkMode, toggleDarkMode }: HeaderProps) => {
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center gap-6">
-            <Button 
-              onClick={() => handleNavigation('/booking')}
-              className="micro-bounce bg-gradient-primary"
-            >
-              <MapPin className="w-4 h-4 mr-2" />
-              Book a Ride
-            </Button>
+            {user ? (
+              <Button 
+                onClick={() => handleNavigation('/booking')}
+                className="micro-bounce bg-gradient-primary"
+              >
+                <MapPin className="w-4 h-4 mr-2" />
+                Book a Ride
+              </Button>
+            ) : null}
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -136,26 +138,49 @@ export const Header = ({ isDarkMode, toggleDarkMode }: HeaderProps) => {
               {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
             
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="default" className="micro-bounce bg-gradient-primary">
-                  <User className="w-4 h-4 mr-2" />
-                  Account
-                  <ChevronDown className="w-4 h-4 ml-1" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="glass">
-                <DropdownMenuItem disabled>
-                  <User className="w-4 h-4 mr-2" />
-                  {user?.email || user?.phone || 'User'}
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleSignOut}>
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Sign Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="default" className="micro-bounce bg-gradient-primary">
+                    <User className="w-4 h-4 mr-2" />
+                    Account
+                    <ChevronDown className="w-4 h-4 ml-1" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="glass">
+                  <DropdownMenuItem disabled>
+                    <User className="w-4 h-4 mr-2" />
+                    {user?.email || user?.phone || 'User'}
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => handleNavigation('/profile')}>
+                    <User className="w-4 h-4 mr-2" />
+                    Profile Management
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleNavigation('/trip-history')}>
+                    <Clock className="w-4 h-4 mr-2" />
+                    Trip History
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleNavigation('/tracking')}>
+                    <MapPin className="w-4 h-4 mr-2" />
+                    Ride Tracking
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button 
+                onClick={() => handleNavigation('/auth')}
+                className="micro-bounce bg-gradient-primary"
+              >
+                <User className="w-4 h-4 mr-2" />
+                Login
+              </Button>
+            )}
           </nav>
 
           {/* Mobile Menu Button */}
@@ -173,15 +198,17 @@ export const Header = ({ isDarkMode, toggleDarkMode }: HeaderProps) => {
         {isMenuOpen && (
           <div className="md:hidden mt-4 pb-4 border-t border-glass-border">
             <nav className="flex flex-col gap-3 pt-4">
+              {user ? (
+                <Button 
+                  onClick={() => handleNavigation('/booking')}
+                  className="justify-start bg-gradient-primary"
+                >
+                  <MapPin className="w-4 h-4 mr-2" />
+                  Book a Ride
+                </Button>
+              ) : null}
               <Button 
-                onClick={() => handleNavigation('/booking')}
-                className="justify-start bg-gradient-primary"
-              >
-                <MapPin className="w-4 h-4 mr-2" />
-                Book a Ride
-              </Button>
-              <Button 
-                onClick={() => handleNavigation('/about')}
+                onClick={() => handleNavigation('/')}
                 variant="ghost" 
                 className="justify-start"
               >
@@ -248,6 +275,34 @@ export const Header = ({ isDarkMode, toggleDarkMode }: HeaderProps) => {
                 <Bell className="w-4 h-4 mr-2" />
                 Notifications
               </Button>
+              {user && (
+                <>
+                  <Button 
+                    onClick={() => handleNavigation('/profile')}
+                    variant="ghost" 
+                    className="justify-start"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Profile Management
+                  </Button>
+                  <Button 
+                    onClick={() => handleNavigation('/trip-history')}
+                    variant="ghost" 
+                    className="justify-start"
+                  >
+                    <Clock className="w-4 h-4 mr-2" />
+                    Trip History
+                  </Button>
+                  <Button 
+                    onClick={() => handleNavigation('/tracking')}
+                    variant="ghost" 
+                    className="justify-start"
+                  >
+                    <MapPin className="w-4 h-4 mr-2" />
+                    Ride Tracking
+                  </Button>
+                </>
+              )}
               <div className="flex items-center gap-2 pt-2">
                 <Button 
                   variant="ghost" 
@@ -256,14 +311,24 @@ export const Header = ({ isDarkMode, toggleDarkMode }: HeaderProps) => {
                 >
                   {isDarkMode ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
                 </Button>
-                <Button 
-                  onClick={handleSignOut}
-                  variant="destructive" 
-                  className="flex-1"
-                >
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Sign Out
-                </Button>
+                {user ? (
+                  <Button 
+                    onClick={handleSignOut}
+                    variant="destructive" 
+                    className="flex-1"
+                  >
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </Button>
+                ) : (
+                  <Button 
+                    onClick={() => handleNavigation('/auth')}
+                    className="flex-1 bg-gradient-primary"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    Login
+                  </Button>
+                )}
               </div>
             </nav>
           </div>

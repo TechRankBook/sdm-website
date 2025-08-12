@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { MapPin, Navigation2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { usePlacesApi } from "@/hooks/usePlacesApi";
 
 interface Place {
   place_id: string;
@@ -30,12 +31,6 @@ interface GooglePlacesInputProps {
   showCurrentLocation?: boolean;
 }
 
-declare global {
-  interface Window {
-    google: any;
-    initMap: () => void;
-  }
-}
 
 export const GooglePlacesInput = ({
   placeholder,
@@ -46,71 +41,41 @@ export const GooglePlacesInput = ({
   className,
   showCurrentLocation = false
 }: GooglePlacesInputProps) => {
-  const [suggestions, setSuggestions] = useState<Place[]>([]);
+  const places = usePlacesApi();
+  const [sessionToken, setSessionToken] = useState<string | undefined>(undefined);
+  const [suggestions, setSuggestions] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isGettingLocation, setIsGettingLocation] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const autocompleteService = useRef<any>(null);
-  const placesService = useRef<any>(null);
 
-  useEffect(() => {
-    const loadGoogleMaps = () => {
-      if (window.google && window.google.maps) {
-        initializeServices();
-        return;
-      }
+  // No script initialization needed for REST-based Places API; we keep UI minimal and resilient
 
-      if (!document.querySelector('script[src*="maps.googleapis.com"]')) {
-        const script = document.createElement('script');
-        script.src = `https://maps.googleapis.com/maps/api/js?key=AIzaSyAejqe2t4TAptcLnkpoFTTNMhm0SFHFJgQ&libraries=places`;
-        script.async = true;
-        script.defer = true;
-        script.onload = initializeServices;
-        document.head.appendChild(script);
-      }
-    };
-
-    const initializeServices = () => {
-      if (window.google && window.google.maps) {
-        autocompleteService.current = new window.google.maps.places.AutocompleteService();
-        const mapDiv = document.createElement('div');
-        const map = new window.google.maps.Map(mapDiv);
-        placesService.current = new window.google.maps.places.PlacesService(map);
-      }
-    };
-
-    loadGoogleMaps();
-  }, []);
 
   const searchPlaces = async (input: string) => {
-    if (!autocompleteService.current || input.length < 2) {
+    if (input.length < 2) {
       setSuggestions([]);
       setShowSuggestions(false);
       return;
     }
 
     setIsLoading(true);
-    
-    const request = {
-      input,
-      componentRestrictions: { country: 'in' }, // Restrict to India
-      types: ['establishment', 'geocode'],
-    };
-
-    autocompleteService.current.getPlacePredictions(
-      request,
-      (predictions: any[], status: string) => {
-        setIsLoading(false);
-        if (status === window.google.maps.places.PlacesServiceStatus.OK && predictions) {
-          setSuggestions(predictions.slice(0, 5));
-          setShowSuggestions(true);
-        } else {
-          setSuggestions([]);
-          setShowSuggestions(false);
-        }
+    try {
+      const res = await places.autocomplete(input, sessionToken);
+      if (res) {
+        setSessionToken(res.sessiontoken);
+        setSuggestions((res.predictions || []).slice(0, 5));
+        setShowSuggestions((res.predictions || []).length > 0);
+      } else {
+        setSuggestions([]);
+        setShowSuggestions(false);
       }
-    );
+    } catch {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,87 +84,59 @@ export const GooglePlacesInput = ({
     searchPlaces(newValue);
   };
 
-  const selectPlace = (place: any) => {
-    if (!placesService.current) return;
-
-    const request = {
-      placeId: place.place_id,
-      fields: ['formatted_address', 'geometry', 'place_id', 'name']
-    };
-
-    placesService.current.getDetails(request, (placeDetails: any, status: string) => {
-      if (status === window.google.maps.places.PlacesServiceStatus.OK && placeDetails) {
+  const selectPlace = async (place: any) => {
+    try {
+      const details = await places.placeDetails(place.place_id, sessionToken);
+      if (details) {
         const selectedPlace: Place = {
-          place_id: placeDetails.place_id,
+          place_id: details.place_id,
           description: place.description,
-          formatted_address: placeDetails.formatted_address,
+          formatted_address: details.formatted_address,
           geometry: {
             location: {
-              lat: placeDetails.geometry.location.lat(),
-              lng: placeDetails.geometry.location.lng()
-            }
-          }
+              lat: details.geometry.location.lat,
+              lng: details.geometry.location.lng,
+            },
+          },
         };
-        
         onChange(place.description, selectedPlace);
         onPlaceSelect?.(selectedPlace);
         setShowSuggestions(false);
       }
-    });
+    } catch {
+      // silent fail
+    }
   };
 
   const getCurrentLocation = () => {
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by this browser.');
       return;
     }
 
     setIsGettingLocation(true);
-    
+
     navigator.geolocation.getCurrentPosition(
-      (position) => {
+      async (position) => {
         const { latitude, longitude } = position.coords;
-        
-        if (window.google && window.google.maps) {
-          const geocoder = new window.google.maps.Geocoder();
-          const latlng = { lat: latitude, lng: longitude };
-          
-          geocoder.geocode({ location: latlng }, (results: any[], status: string) => {
-            setIsGettingLocation(false);
-            if (status === 'OK' && results[0]) {
-              const currentPlace: Place = {
-                place_id: results[0].place_id,
-                description: results[0].formatted_address,
-                formatted_address: results[0].formatted_address,
-                geometry: {
-                  location: { lat: latitude, lng: longitude }
-                }
-              };
-              
-              onChange(results[0].formatted_address, currentPlace);
-              onPlaceSelect?.(currentPlace);
-            } else {
-              alert('Unable to retrieve your location address.');
-            }
-          });
+        try {
+          const result = await places.reverseGeocode(latitude, longitude);
+          setIsGettingLocation(false);
+          if (result) {
+            const currentPlace: Place = {
+              place_id: result.place_id || `${latitude},${longitude}`,
+              description: result.formatted_address,
+              formatted_address: result.formatted_address,
+              geometry: { location: { lat: latitude, lng: longitude } },
+            };
+            onChange(result.formatted_address, currentPlace);
+            onPlaceSelect?.(currentPlace);
+          }
+        } catch {
+          setIsGettingLocation(false);
         }
       },
-      (error) => {
+      () => {
         setIsGettingLocation(false);
-        switch (error.code) {
-          case error.PERMISSION_DENIED:
-            alert('Location access denied by user.');
-            break;
-          case error.POSITION_UNAVAILABLE:
-            alert('Location information is unavailable.');
-            break;
-          case error.TIMEOUT:
-            alert('Location request timeout.');
-            break;
-          default:
-            alert('An unknown error occurred while retrieving location.');
-            break;
-        }
       },
       { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
     );
@@ -261,32 +198,25 @@ export const GooglePlacesInput = ({
       </div>
 
       {/* Suggestions Dropdown */}
-      {showSuggestions && (suggestions.length > 0 || isLoading) && (
+      {showSuggestions && suggestions.length > 0 && (
         <div className="absolute top-full left-0 right-0 z-50 mt-1 bg-background border border-glass-border rounded-lg shadow-lg max-h-60 overflow-y-auto">
-          {isLoading ? (
-            <div className="p-3 text-center text-muted-foreground">
-              <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-              Searching...
-            </div>
-          ) : (
-            suggestions.map((place) => (
-              <button
-                key={place.place_id}
-                className="w-full p-3 text-left hover:bg-accent/20 flex items-center gap-3 transition-colors"
-                onClick={() => selectPlace(place)}
-              >
-                <MapPin className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium text-foreground truncate">
-                    {place.structured_formatting?.main_text || place.description}
-                  </div>
-                  <div className="text-xs text-muted-foreground truncate">
-                    {place.structured_formatting?.secondary_text || place.description}
-                  </div>
+          {suggestions.map((place: any) => (
+            <button
+              key={place.place_id}
+              className="w-full p-3 text-left hover:bg-accent/20 flex items-center gap-3 transition-colors"
+              onClick={() => selectPlace(place)}
+            >
+              <MapPin className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-medium text-foreground truncate">
+                  {place.structured_formatting?.main_text || place.description}
                 </div>
-              </button>
-            ))
-          )}
+                <div className="text-xs text-muted-foreground truncate">
+                  {place.structured_formatting?.secondary_text || place.description}
+                </div>
+              </div>
+            </button>
+          ))}
         </div>
       )}
     </div>

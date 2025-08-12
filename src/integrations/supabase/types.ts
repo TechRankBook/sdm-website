@@ -495,6 +495,7 @@ export type Database = {
           fare_amount: number | null
           id: string
           included_km: number | null
+          is_round_trip: boolean | null
           is_scheduled: boolean | null
           is_shared: boolean | null
           no_show_reason: string | null
@@ -508,21 +509,27 @@ export type Database = {
           pickup_location_id: string | null
           pickup_longitude: number | null
           rental_package_id: string | null
+          return_scheduled_time: string | null
           ride_type:
             | Database["public"]["Enums"]["booking_ride_type_enum"]
             | null
           scheduled_time: string | null
           service_type_id: string | null
           sharing_group_id: string | null
+          special_instructions: string | null
           start_time: string | null
           status: Database["public"]["Enums"]["booking_status_enum"] | null
           total_stops: number | null
+          trip_type: string | null
           updated_at: string | null
           upgrade_charges: number | null
           user_id: string | null
           vehicle_id: string | null
+          vehicle_type: string | null
           waiting_time_minutes: number | null
           zone_pricing_id: string | null
+          advance_amount: number | null
+          remaining_amount: number | null
         }
         Insert: {
           cancellation_reason?: string | null
@@ -539,6 +546,7 @@ export type Database = {
           fare_amount?: number | null
           id?: string
           included_km?: number | null
+          is_round_trip?: boolean | null
           is_scheduled?: boolean | null
           is_shared?: boolean | null
           no_show_reason?: string | null
@@ -552,19 +560,23 @@ export type Database = {
           pickup_location_id?: string | null
           pickup_longitude?: number | null
           rental_package_id?: string | null
+          return_scheduled_time?: string | null
           ride_type?:
             | Database["public"]["Enums"]["booking_ride_type_enum"]
             | null
           scheduled_time?: string | null
           service_type_id?: string | null
           sharing_group_id?: string | null
+          special_instructions?: string | null
           start_time?: string | null
           status?: Database["public"]["Enums"]["booking_status_enum"] | null
           total_stops?: number | null
+          trip_type?: string | null
           updated_at?: string | null
           upgrade_charges?: number | null
           user_id?: string | null
           vehicle_id?: string | null
+          vehicle_type?: string | null
           waiting_time_minutes?: number | null
           zone_pricing_id?: string | null
         }
@@ -583,6 +595,7 @@ export type Database = {
           fare_amount?: number | null
           id?: string
           included_km?: number | null
+          is_round_trip?: boolean | null
           is_scheduled?: boolean | null
           is_shared?: boolean | null
           no_show_reason?: string | null
@@ -596,19 +609,23 @@ export type Database = {
           pickup_location_id?: string | null
           pickup_longitude?: number | null
           rental_package_id?: string | null
+          return_scheduled_time?: string | null
           ride_type?:
             | Database["public"]["Enums"]["booking_ride_type_enum"]
             | null
           scheduled_time?: string | null
           service_type_id?: string | null
           sharing_group_id?: string | null
+          special_instructions?: string | null
           start_time?: string | null
           status?: Database["public"]["Enums"]["booking_status_enum"] | null
           total_stops?: number | null
+          trip_type?: string | null
           updated_at?: string | null
           upgrade_charges?: number | null
           user_id?: string | null
           vehicle_id?: string | null
+          vehicle_type?: string | null
           waiting_time_minutes?: number | null
           zone_pricing_id?: string | null
         }
@@ -1599,8 +1616,8 @@ export type Database = {
           currency: string | null
           gateway_response: Json | null
           id: string
+          razorpay_payment_id: string | null
           status: Database["public"]["Enums"]["payment_status_enum"] | null
-          stripe_payment_intent_id: string | null
           transaction_id: string | null
           updated_at: string | null
           user_id: string | null
@@ -1612,8 +1629,8 @@ export type Database = {
           currency?: string | null
           gateway_response?: Json | null
           id?: string
+          razorpay_payment_id?: string | null
           status?: Database["public"]["Enums"]["payment_status_enum"] | null
-          stripe_payment_intent_id?: string | null
           transaction_id?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -1625,8 +1642,8 @@ export type Database = {
           currency?: string | null
           gateway_response?: Json | null
           id?: string
+          razorpay_payment_id?: string | null
           status?: Database["public"]["Enums"]["payment_status_enum"] | null
-          stripe_payment_intent_id?: string | null
           transaction_id?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -1654,6 +1671,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      phone_otps: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          otp_code: string
+          phone_number: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id?: string
+          otp_code: string
+          phone_number: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          otp_code?: string
+          phone_number?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       phone_verifications: {
         Row: {
@@ -1705,7 +1749,7 @@ export type Database = {
           service_type_id: string
           surge_multiplier: number | null
           updated_at: string
-          vehicle_type: string
+          vehicle_type_id: string | null
           waiting_charges_per_minute: number | null
         }
         Insert: {
@@ -1724,7 +1768,7 @@ export type Database = {
           service_type_id: string
           surge_multiplier?: number | null
           updated_at?: string
-          vehicle_type: string
+          vehicle_type_id?: string | null
           waiting_charges_per_minute?: number | null
         }
         Update: {
@@ -1743,7 +1787,7 @@ export type Database = {
           service_type_id?: string
           surge_multiplier?: number | null
           updated_at?: string
-          vehicle_type?: string
+          vehicle_type_id?: string | null
           waiting_charges_per_minute?: number | null
         }
         Relationships: [
@@ -1752,6 +1796,13 @@ export type Database = {
             columns: ["service_type_id"]
             isOneToOne: false
             referencedRelation: "service_types"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pricing_rules_vehicle_type_id_fkey"
+            columns: ["vehicle_type_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_types"
             referencedColumns: ["id"]
           },
         ]
@@ -2668,8 +2719,8 @@ export type Database = {
           pollution_certificate_url: string | null
           registration_document_url: string | null
           status: Database["public"]["Enums"]["vehicle_status_enum"] | null
-          type: Database["public"]["Enums"]["vehicle_type_enum"] | null
           updated_at: string | null
+          vehicle_type_id: string | null
           vendor_id: string | null
           year: number | null
         }
@@ -2692,8 +2743,8 @@ export type Database = {
           pollution_certificate_url?: string | null
           registration_document_url?: string | null
           status?: Database["public"]["Enums"]["vehicle_status_enum"] | null
-          type?: Database["public"]["Enums"]["vehicle_type_enum"] | null
           updated_at?: string | null
+          vehicle_type_id?: string | null
           vendor_id?: string | null
           year?: number | null
         }
@@ -2716,8 +2767,8 @@ export type Database = {
           pollution_certificate_url?: string | null
           registration_document_url?: string | null
           status?: Database["public"]["Enums"]["vehicle_status_enum"] | null
-          type?: Database["public"]["Enums"]["vehicle_type_enum"] | null
           updated_at?: string | null
+          vehicle_type_id?: string | null
           vendor_id?: string | null
           year?: number | null
         }
@@ -2727,6 +2778,13 @@ export type Database = {
             columns: ["assigned_driver_id"]
             isOneToOne: false
             referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicles_vehicle_type_id_fkey"
+            columns: ["vehicle_type_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_types"
             referencedColumns: ["id"]
           },
           {
@@ -2998,7 +3056,9 @@ export type Database = {
         Returns: boolean
       }
       create_phone_verification: {
-        Args: { p_phone_number: string }
+        Args:
+          | { p_phone_number: string }
+          | { p_phone_number: string; p_user_id: string }
         Returns: {
           verification_id: string
           otp_code: string
@@ -3177,7 +3237,9 @@ export type Database = {
         Returns: boolean
       }
       verify_phone_otp: {
-        Args: { p_phone_number: string; p_otp_code: string }
+        Args:
+          | { p_phone_number: string; p_otp_code: string }
+          | { p_phone_number: string; p_otp_code: string; p_user_id: string }
         Returns: boolean
       }
     }

@@ -1,9 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { GooglePlacesInput } from "./GooglePlacesInput";
 import { GoogleMaps } from "./GoogleMaps";
@@ -11,6 +13,7 @@ import { useFareCalculation } from "@/hooks/useFareCalculation";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
+import { useGoogleMapsLoader } from "@/hooks/useGoogleMapsApi";
 import { 
   Clock, 
   Car,
@@ -27,9 +30,11 @@ import {
   Zap,
   MapPin,
   Navigation2,
-  TimerReset
+  TimerReset,
+  PawPrint,
+  MessageSquare
 } from "lucide-react";
-import { BookingData } from "@/pages/Booking";
+import { BookingData } from "@/stores/bookingStore";
 
 interface BookingFormProps {
   bookingData: BookingData;
@@ -49,20 +54,172 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
   const [dropoffLocation, setDropoffLocation] = useState(bookingData.dropoffLocation || "");
   const [scheduledDateTime, setScheduledDateTime] = useState(bookingData.scheduledDateTime || "");
   const [passengers, setPassengers] = useState(bookingData.passengers || 2);
-  const [hours, setHours] = useState("");
-  const [tripType, setTripType] = useState("oneway");
-  const [selectedDate, setSelectedDate] = useState<Date>();
-  const [selectedTime, setSelectedTime] = useState<string>("");
+  const [hours, setHours] = useState(bookingData.packageSelection || "");
+  const [tripType, setTripType] = useState(bookingData.tripType || "oneway");
+  const [selectedDate, setSelectedDate] = useState<Date>(() => {
+    if (bookingData.scheduledDateTime) {
+      return new Date(bookingData.scheduledDateTime);
+    }
+    return undefined;
+  });
+  const [selectedTime, setSelectedTime] = useState<string>(() => {
+    if (bookingData.scheduledDateTime) {
+      const date = new Date(bookingData.scheduledDateTime);
+      return date.toTimeString().slice(0, 5);
+    }
+    return "";
+  });
+  const [isRoundTrip, setIsRoundTrip] = useState(bookingData.isRoundTrip || false);
+  const [returnDate, setReturnDate] = useState<Date>(() => {
+    if (bookingData.returnDateTime) {
+      return new Date(bookingData.returnDateTime);
+    }
+    return undefined;
+  });
+  const [returnTime, setReturnTime] = useState<string>(() => {
+    if (bookingData.returnDateTime) {
+      const date = new Date(bookingData.returnDateTime);
+      return date.toTimeString().slice(0, 5);
+    }
+    return "";
+  });
+  const [luggageCount, setLuggageCount] = useState(0);
+  const [hasPet, setHasPet] = useState(false);
+  const [additionalInstructions, setAdditionalInstructions] = useState("");
+  const [specialInstructions, setSpecialInstructions] = useState(bookingData.specialInstructions || "");
+  const [showSpecialInstructions, setShowSpecialInstructions] = useState(false);
   
   // Location coordinates
-  const [pickupCoords, setPickupCoords] = useState<LocationData | null>(null);
-  const [dropoffCoords, setDropoffCoords] = useState<LocationData | null>(null);
+  const [pickupCoords, setPickupCoords] = useState<LocationData | null>(() => {
+    if (bookingData.pickupLatitude && bookingData.pickupLongitude) {
+      return {
+        lat: bookingData.pickupLatitude,
+        lng: bookingData.pickupLongitude,
+        address: bookingData.pickupLocation
+      };
+    }
+    return null;
+  });
+  const [dropoffCoords, setDropoffCoords] = useState<LocationData | null>(() => {
+    if (bookingData.dropoffLatitude && bookingData.dropoffLongitude) {
+      return {
+        lat: bookingData.dropoffLatitude,
+        lng: bookingData.dropoffLongitude,
+        address: bookingData.dropoffLocation || ""
+      };
+    }
+    return null;
+  });
+  const [activeMarker, setActiveMarker] = useState<'pickup' | 'dropoff'>('pickup');
+  const mapsLoader = useGoogleMapsLoader();
+
+  const handlePickupChangeFromMap = (loc: LocationData) => {
+    setPickupCoords(loc);
+    if (loc.address) setPickupLocation(loc.address);
+  };
+
+  const handleDropoffChangeFromMap = (loc: LocationData) => {
+    setDropoffCoords(loc);
+    if (loc.address) setDropoffLocation(loc.address);
+  };
+
   const [routeData, setRouteData] = useState<{
     distance: string;
     duration: string;
     distanceKm: number;
     durationMinutes: number;
-  } | null>(null);
+  } | null>(() => {
+    if (bookingData.distanceKm && bookingData.durationMinutes) {
+      return {
+        distance: `${bookingData.distanceKm.toFixed(1)} km`,
+        duration: `${Math.round(bookingData.durationMinutes)} min`,
+        distanceKm: bookingData.distanceKm,
+        durationMinutes: bookingData.durationMinutes
+      };
+    }
+    return null;
+  });
+
+  // Sync local state with booking data whenever it changes
+  useEffect(() => {
+    setServiceType(bookingData.serviceType);
+    setPickupLocation(bookingData.pickupLocation);
+    setDropoffLocation(bookingData.dropoffLocation || "");
+    setPassengers(bookingData.passengers || 2);
+    setHours(bookingData.packageSelection || "");
+    setTripType(bookingData.tripType || "oneway");
+    setIsRoundTrip(bookingData.isRoundTrip || false);
+    // Parse existing special instructions
+    if (bookingData.specialInstructions) {
+      const instructions = bookingData.specialInstructions;
+      
+      // Extract luggage count
+      const luggageMatch = instructions.match(/(\d+) luggage item/);
+      if (luggageMatch) {
+        setLuggageCount(parseInt(luggageMatch[1]));
+      }
+      
+      // Check for pet
+      setHasPet(instructions.includes("Traveling with pet"));
+      
+      // Extract additional instructions
+      let additionalText = instructions;
+      additionalText = additionalText.replace(/\d+ luggage item(s)?(,\s*)?/, "");
+      additionalText = additionalText.replace(/Traveling with pet(,\s*)?/, "");
+      setAdditionalInstructions(additionalText.trim());
+      
+      setSpecialInstructions(bookingData.specialInstructions);
+      
+      // Show special instructions section if there are any
+      setShowSpecialInstructions(true);
+    } else {
+      setLuggageCount(0);
+      setHasPet(false);
+      setAdditionalInstructions("");
+      setSpecialInstructions("");
+      setShowSpecialInstructions(false);
+    }
+    
+    // Set dates and times
+    if (bookingData.scheduledDateTime) {
+      const scheduledDate = new Date(bookingData.scheduledDateTime);
+      setSelectedDate(scheduledDate);
+      setSelectedTime(scheduledDate.toTimeString().slice(0, 5));
+    }
+    
+    if (bookingData.returnDateTime) {
+      const returnDate = new Date(bookingData.returnDateTime);
+      setReturnDate(returnDate);
+      setReturnTime(returnDate.toTimeString().slice(0, 5));
+    }
+    
+    // Set coordinates
+    if (bookingData.pickupLatitude && bookingData.pickupLongitude) {
+      setPickupCoords({
+        lat: bookingData.pickupLatitude,
+        lng: bookingData.pickupLongitude,
+        address: bookingData.pickupLocation
+      });
+    }
+    
+    if (bookingData.dropoffLatitude && bookingData.dropoffLongitude) {
+      setDropoffCoords({
+        lat: bookingData.dropoffLatitude,
+        lng: bookingData.dropoffLongitude,
+        address: bookingData.dropoffLocation || ""
+      });
+    }
+    
+    // Set route data
+    if (bookingData.distanceKm && bookingData.durationMinutes) {
+      setRouteData({
+        distance: `${bookingData.distanceKm.toFixed(1)} km`,
+        duration: `${Math.round(bookingData.durationMinutes)} min`,
+        distanceKm: bookingData.distanceKm,
+        durationMinutes: bookingData.durationMinutes
+      });
+    }
+  }, [bookingData]);
 
   // Modal states
   const [showGuestModal, setShowGuestModal] = useState(false);
@@ -70,7 +227,7 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
   const [showScheduleModal, setShowScheduleModal] = useState(false);
 
   const serviceTypes = [
-    { id: "city_ride", name: "CityRide", icon: Car },
+    { id: "city_ride", name: "Requested Ride", icon: Car },
     { id: "airport", name: "Airport Taxi", icon: Plane },
     { id: "outstation", name: "Outstation", icon: Route },
     { id: "car_rental", name: "Hourly Rentals", icon: TimerReset }
@@ -129,11 +286,87 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
     });
   };
 
+  const isFormValid = useCallback(() => {
+    // Remove excessive logging that was causing performance issues
+    const hasPickup = pickupLocation.trim() !== "";
+    const hasDestination = serviceType === "car_rental" ? hours !== "" : dropoffLocation.trim() !== "";
+    const hasDateTime = selectedDate && selectedTime;
+    const hasValidReturn = !isRoundTrip || serviceType !== "outstation" || (returnDate && returnTime);
+    
+    return hasPickup && hasDestination && hasDateTime && hasValidReturn;
+  }, [pickupLocation, serviceType, hours, dropoffLocation, selectedDate, selectedTime, isRoundTrip, returnDate, returnTime]);
+
+  const handleSearchCars = useCallback(() => {
+    console.log("🚗 Search Cars clicked! Starting submission...");
+    
+    try {
+      if (!isFormValid()) {
+        console.log("❌ Form validation failed");
+        return;
+      }
+
+      console.log("✅ Form validation passed - preparing data...");
+
+      const dateTime = selectedDate && selectedTime 
+        ? new Date(`${selectedDate.toISOString().split('T')[0]}T${selectedTime}`).toISOString()
+        : "";
+      
+      const returnDateTime = isRoundTrip && returnDate && returnTime
+        ? new Date(`${returnDate.toISOString().split('T')[0]}T${returnTime}`).toISOString()
+        : "";
+
+      // Make sure special instructions are up to date
+      updateSpecialInstructions();
+      
+      const bookingDataToUpdate = {
+        serviceType,
+        pickupLocation,
+        dropoffLocation: serviceType === "car_rental" ? undefined : dropoffLocation,
+        scheduledDateTime: dateTime,
+        returnDateTime,
+        passengers,
+        packageSelection: serviceType === "car_rental" ? hours : undefined,
+        isRoundTrip,
+        tripType,
+        specialInstructions,
+        pickupLatitude: pickupCoords?.lat,
+        pickupLongitude: pickupCoords?.lng,
+        dropoffLatitude: dropoffCoords?.lat,
+        dropoffLongitude: dropoffCoords?.lng,
+        distanceKm: routeData?.distanceKm || 0,
+        durationMinutes: routeData?.durationMinutes || 0
+      };
+
+      console.log("📦 Updating booking data:", bookingDataToUpdate);
+      
+      updateBookingData(bookingDataToUpdate);
+
+      console.log("➡️ Calling onNext() to proceed...");
+      onNext();
+      
+      console.log("✅ Navigation completed successfully!");
+      
+    } catch (error) {
+      console.error("💥 Error in handleSearchCars:", error);
+    }
+  }, [
+    isFormValid, selectedDate, selectedTime, isRoundTrip, returnDate, returnTime,
+    serviceType, pickupLocation, dropoffLocation, passengers, hours, tripType,
+    specialInstructions, pickupCoords, dropoffCoords, routeData, updateBookingData, onNext
+  ]);
+
   const handleVehicleSelection = (vehicleType: string, fareData: any) => {
     const dateTime = selectedDate && selectedTime 
       ? `${format(selectedDate, "yyyy-MM-dd")} ${selectedTime}`
       : "";
+    
+    const returnDateTime = returnDate && returnTime && isRoundTrip
+      ? `${format(returnDate, "yyyy-MM-dd")} ${returnTime}`
+      : "";
       
+    // Make sure special instructions are up to date
+    updateSpecialInstructions();
+    
     updateBookingData({
       serviceType,
       pickupLocation,
@@ -145,7 +378,11 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
       selectedFare: {
         type: vehicleType,
         price: fareData?.totalFare || 0
-      }
+      },
+      isRoundTrip,
+      returnDateTime,
+      tripType,
+      specialInstructions
     });
     onNext();
   };
@@ -157,6 +394,38 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
   };
 
   const canAddStops = serviceType !== "car_rental";
+  
+  // Function to update special instructions
+  const updateSpecialInstructions = () => {
+    // If special instructions section is hidden, clear the instructions
+    if (!showSpecialInstructions) {
+      setSpecialInstructions("");
+      return "";
+    }
+    
+    const parts = [];
+    
+    if (luggageCount > 0) {
+      parts.push(`${luggageCount} luggage item${luggageCount !== 1 ? 's' : ''}`);
+    }
+    
+    if (hasPet) {
+      parts.push("Traveling with pet");
+    }
+    
+    if (additionalInstructions.trim()) {
+      parts.push(additionalInstructions.trim());
+    }
+    
+    const combined = parts.join(", ");
+    setSpecialInstructions(combined);
+    return combined;
+  };
+  
+  // Update special instructions whenever any of the fields change
+  useEffect(() => {
+    updateSpecialInstructions();
+  }, [luggageCount, hasPet, additionalInstructions, showSpecialInstructions]);
 
   return (
     <>
@@ -206,7 +475,10 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                           ? "bg-gradient-primary text-white" 
                           : "text-muted-foreground"
                       )}
-                      onClick={() => setTripType("oneway")}
+                      onClick={() => {
+                        setTripType("oneway");
+                        setIsRoundTrip(false);
+                      }}
                     >
                       One way
                     </Button>
@@ -218,7 +490,10 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                           ? "bg-gradient-primary text-white" 
                           : "text-muted-foreground"
                       )}
-                      onClick={() => setTripType("roundtrip")}
+                      onClick={() => {
+                        setTripType("roundtrip");
+                        setIsRoundTrip(true);
+                      }}
                     >
                       Round Trip
                     </Button>
@@ -233,7 +508,10 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                           ? "bg-gradient-primary text-white" 
                           : "text-muted-foreground"
                       )}
-                      onClick={() => setTripType("pickup")}
+                      onClick={() => {
+                        setTripType("pickup");
+                        setIsRoundTrip(false);
+                      }}
                     >
                       Pick-up From Airport
                     </Button>
@@ -245,13 +523,28 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                           ? "bg-gradient-primary text-white" 
                           : "text-muted-foreground"
                       )}
-                      onClick={() => setTripType("drop")}
+                      onClick={() => {
+                        setTripType("drop");
+                        setIsRoundTrip(false);
+                      }}
                     >
                       Drop To Airport
                     </Button>
                   </>
                 )}
               </div>
+
+              {/* Round Trip Checkbox for Airport */}
+              {serviceType === "airport" && (
+                <div className="mt-4 flex items-center space-x-2">
+                  <Checkbox
+                    id="roundTrip"
+                    checked={isRoundTrip}
+                    onCheckedChange={(checked) => setIsRoundTrip(checked as boolean)}
+                  />
+                  <Label htmlFor="roundTrip" className="text-sm">Round Trip</Label>
+                </div>
+              )}
             </div>
           )}
 
@@ -292,7 +585,7 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
             )}
 
             {/* Date & Time Selection */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -350,7 +643,106 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                 </PopoverContent>
               </Popover>
             </div>
+
+            {/* Return Date & Time for Round Trip Outstation */}
+            {serviceType === "outstation" && isRoundTrip && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="h-12 justify-start glass-hover"
+                    >
+                      <CalendarIcon className="w-5 h-5 mr-3 text-primary" />
+                      {returnDate ? format(returnDate, "MMM dd") : "Return Date"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={returnDate}
+                      onSelect={setReturnDate}
+                      disabled={(date) => date < new Date() || (selectedDate && date <= selectedDate)}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="h-12 justify-start glass-hover"
+                    >
+                      <Clock className="w-5 h-5 mr-3 text-accent" />
+                      {returnTime || "Return Time"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-64 p-0" align="start">
+                    <div className="grid grid-cols-3 gap-1 p-4 max-h-60 overflow-y-auto">
+                      {[
+                        "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
+                        "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
+                        "15:00", "15:30", "16:00", "16:30", "17:00", "17:30",
+                        "18:00", "18:30", "19:00", "19:30", "20:00", "20:30"
+                      ].map((time) => (
+                        <Button
+                          key={time}
+                          variant={returnTime === time ? "default" : "ghost"}
+                          size="sm"
+                          className={cn(
+                            "text-sm",
+                            returnTime === time ? "bg-gradient-primary" : ""
+                          )}
+                          onClick={() => setReturnTime(time)}
+                        >
+                          {time}
+                        </Button>
+                      ))}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            )}
           </div>
+
+          {/* Map Picker */}
+          {mapsLoader.ready && !mapsLoader.error && (
+            <div className="mb-6 space-y-3">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-medium text-foreground">Select on Map</h3>
+                <div className="p-1 rounded-lg glass inline-flex gap-1">
+                  <Button
+                    size="sm"
+                    variant={activeMarker === 'pickup' ? 'default' : 'ghost'}
+                    className={cn(activeMarker === 'pickup' ? 'bg-gradient-primary text-white' : 'text-muted-foreground')}
+                    onClick={() => setActiveMarker('pickup')}
+                  >
+                    <MapPin className="w-4 h-4 mr-1 text-green-500" /> Pickup
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant={activeMarker === 'dropoff' ? 'default' : 'ghost'}
+                    className={cn(activeMarker === 'dropoff' ? 'bg-gradient-primary text-white' : 'text-muted-foreground')}
+                    onClick={() => setActiveMarker('dropoff')}
+                  >
+                    <MapPin className="w-4 h-4 mr-1 text-red-500" /> Dropoff
+                  </Button>
+                </div>
+              </div>
+              <GoogleMaps
+                pickup={pickupCoords || undefined}
+                dropoff={serviceType === 'car_rental' ? undefined : (dropoffCoords || undefined)}
+                height="320px"
+                onRouteUpdate={handleRouteUpdate}
+                interactive={true}
+                activeMarker={activeMarker}
+                onPickupChange={handlePickupChangeFromMap}
+                onDropoffChange={handleDropoffChangeFromMap}
+              />
+            </div>
+          )}
 
           {/* Guest Selection */}
           <div className="mb-6">
@@ -366,17 +758,137 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
               <ChevronRight className="w-4 h-4" />
             </Button>
           </div>
-          {/* Search Car Button */}
-          {pickupLocation && (serviceType === "car_rental" ? hours : dropoffLocation) && (
-            <div className="mt-6">
-              <Button 
-                onClick={onNext}
-                className="w-full h-12 bg-gradient-primary text-lg font-semibold"
+
+          {/* Special Instructions Toggle */}
+          <div className="mb-6">
+            <div className="flex items-center space-x-2 mb-3">
+              <Checkbox 
+                id="show-special-instructions" 
+                checked={showSpecialInstructions}
+                onCheckedChange={(checked) => {
+                  setShowSpecialInstructions(checked === true);
+                  if (checked === false) {
+                    // Clear special instructions when hiding the section
+                    setLuggageCount(0);
+                    setHasPet(false);
+                    setAdditionalInstructions("");
+                    setSpecialInstructions("");
+                  }
+                }}
+              />
+              <Label 
+                htmlFor="show-special-instructions" 
+                className="text-sm font-medium text-foreground cursor-pointer"
               >
-                Search Car
-              </Button>
+                Add Special Instructions
+              </Label>
             </div>
-          )}
+            
+            {/* Collapsible Special Instructions Section */}
+            {showSpecialInstructions && (
+              <div className="mt-4 p-4 rounded-lg glass-hover border border-glass-border animate-in fade-in-50 duration-300">
+                {/* Luggage Counter */}
+                <div className="flex items-center justify-between mb-4 p-3 rounded-lg glass-hover">
+                  <div className="flex items-center gap-2">
+                    <Luggage className="w-5 h-5 text-primary" />
+                    <span className="text-sm">Luggage Items</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 rounded-full"
+                      onClick={() => {
+                        const newCount = Math.max(0, luggageCount - 1);
+                        setLuggageCount(newCount);
+                        setTimeout(updateSpecialInstructions, 0);
+                      }}
+                      disabled={luggageCount === 0}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <span className="w-8 text-center">{luggageCount}</span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="icon"
+                      className="h-8 w-8 rounded-full"
+                      onClick={() => {
+                        const newCount = Math.min(3, luggageCount + 1);
+                        setLuggageCount(newCount);
+                        setTimeout(updateSpecialInstructions, 0);
+                      }}
+                      disabled={luggageCount === 3}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                
+                {/* Pet Toggle */}
+                <div className="flex items-center justify-between mb-4 p-3 rounded-lg glass-hover">
+                  <div className="flex items-center gap-2">
+                    <PawPrint className="w-5 h-5 text-primary" />
+                    <span className="text-sm">Traveling with Pet</span>
+                  </div>
+                  <Switch 
+                    checked={hasPet} 
+                    onCheckedChange={(checked) => {
+                      setHasPet(checked);
+                      setTimeout(updateSpecialInstructions, 0);
+                    }}
+                  />
+                </div>
+                
+                {/* Additional Instructions */}
+                <div className="mb-2">
+                  <div className="flex items-center gap-2 mb-2">
+                    <MessageSquare className="w-5 h-5 text-primary" />
+                    <Label htmlFor="additionalInstructions" className="text-sm">
+                      Additional Requirements
+                    </Label>
+                  </div>
+                  <textarea
+                    id="additionalInstructions"
+                    placeholder="Any other special requests or requirements..."
+                    value={additionalInstructions}
+                    onChange={(e) => {
+                      setAdditionalInstructions(e.target.value);
+                      setTimeout(updateSpecialInstructions, 0);
+                    }}
+                    className="w-full p-3 h-20 rounded-lg glass border border-glass-border text-foreground placeholder-muted-foreground resize-none"
+                  />
+                </div>
+                
+                {/* Preview of combined instructions */}
+                {(luggageCount > 0 || hasPet || additionalInstructions.trim()) && (
+                  <div className="mt-3 text-xs text-muted-foreground p-2 bg-muted/30 rounded">
+                    <span className="font-medium">Will be saved as: </span>
+                    {luggageCount > 0 && <span>{luggageCount} luggage item{luggageCount !== 1 ? 's' : ''}</span>}
+                    {luggageCount > 0 && (hasPet || additionalInstructions.trim()) && <span>, </span>}
+                    {hasPet && <span>Traveling with pet</span>}
+                    {hasPet && additionalInstructions.trim() && <span>, </span>}
+                    {additionalInstructions.trim() && <span>{additionalInstructions}</span>}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+          {/* Search Car Button */}
+          <div className="mt-6">
+            <Button 
+              onClick={handleSearchCars}
+              disabled={!isFormValid()}
+              className={`w-full h-12 text-lg font-semibold transition-all duration-300 ${
+                isFormValid() 
+                  ? 'bg-gradient-primary hover:scale-[1.02] micro-bounce' 
+                  : 'bg-muted text-muted-foreground cursor-not-allowed'
+              }`}
+            >
+              {isFormValid() ? "Search Cars" : "Please fill all required fields"}
+            </Button>
+          </div>
         </Card>
 
       {/* Modals */}

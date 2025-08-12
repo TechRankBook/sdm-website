@@ -7,8 +7,11 @@ schemas = ["public", "graphql_public"]
 extra_search_path = ["public", "extensions"]
 max_rows = 1000
 
-[functions.stripe-webhook]
-verify_jwt = false
+[functions.create-razorpay-order]
+verify_jwt = true
 
-[functions.create-checkout-session]
+[functions.verify-razorpay-payment]
+verify_jwt = true
+
+[functions.booking-notifications]
 verify_jwt = true

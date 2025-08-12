@@ -1,227 +1,266 @@
-import { Header } from "@/components/Header";
-import { useState } from "react";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { 
-  FileText, 
-  Shield, 
-  CreditCard, 
-  Car,
-  Users,
-  Clock,
-  AlertTriangle,
-  CheckCircle
-} from "lucide-react";
-
-const Terms = () => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-    document.documentElement.classList.toggle('dark');
-  };
-
-  const sections = [
-    {
-      title: "Service Agreement",
-      icon: FileText,
-      content: [
-        "SDM E-Mobility provides electric vehicle ride services through our mobile application and website.",
-        "By using our services, you agree to these terms and conditions.",
-        "We reserve the right to modify these terms with prior notice to users.",
-        "Services are available 24/7 subject to vehicle availability and operational conditions."
-      ]
-    },
-    {
-      title: "Booking & Payment",
-      icon: CreditCard,
-      content: [
-        "Minimum 20% advance payment required to confirm all bookings.",
-        "Remaining payment can be made via cash, UPI, cards, or digital wallets.",
-        "Cancellation charges apply based on timing: Free within 5 minutes, ₹25 within 15 minutes, ₹50 thereafter.",
-        "Refunds for advance payments processed within 5-7 business days.",
-        "Pricing may vary based on distance, time, demand, and service type."
-      ]
-    },
-    {
-      title: "User Responsibilities",
-      icon: Users,
-      content: [
-        "Provide accurate pickup and drop-off locations.",
-        "Be present at pickup location within 5 minutes of driver arrival.",
-        "Treat drivers and vehicles with respect and courtesy.",
-        "No smoking, illegal substances, or prohibited items in vehicles.",
-        "Follow safety guidelines and wear seat belts during the journey.",
-        "Report any issues immediately through our support channels."
-      ]
-    },
-    {
-      title: "Vehicle & Safety",
-      icon: Car,
-      content: [
-        "All vehicles are 100% electric and regularly maintained for safety.",
-        "Drivers are background-verified and trained for professional service.",
-        "Real-time GPS tracking available for all rides.",
-        "Emergency contact features available within the mobile application.",
-        "Vehicle capacity limits must be strictly followed for safety.",
-        "Child safety seats available on request for additional charges."
-      ]
-    },
-    {
-      title: "Service Limitations",
-      icon: AlertTriangle,
-      content: [
-        "Services subject to availability and operational areas.",
-        "We may suspend services during extreme weather conditions.",
-        "Ride requests may be declined if driver safety is at risk.",
-        "Service interruptions possible due to technical maintenance.",
-        "Outstation services require advance booking and route approval.",
-        "Airport services may have additional waiting charges during peak hours."
-      ]
-    },
-    {
-      title: "Privacy & Data",
-      icon: Shield,
-      content: [
-        "We collect and process personal data as per our Privacy Policy.",
-        "Location data used only for service delivery and safety purposes.",
-        "Payment information securely processed through encrypted channels.",
-        "Trip history maintained for service improvement and support.",
-        "Personal data not shared with third parties without consent.",
-        "Users can request data deletion as per applicable privacy laws."
-      ]
-    }
-  ];
-
-  const quickPoints = [
-    { icon: CheckCircle, text: "20% minimum advance payment required" },
-    { icon: CheckCircle, text: "Free cancellation within 5 minutes" },
-    { icon: CheckCircle, text: "24/7 customer support available" },
-    { icon: CheckCircle, text: "Real-time ride tracking included" },
-    { icon: CheckCircle, text: "Background-verified drivers only" },
-    { icon: CheckCircle, text: "100% electric vehicle fleet" }
-  ];
-
-  return (
-    <div className={`min-h-screen ${isDarkMode ? 'dark' : ''}`}>
-      <div className="min-h-screen bg-gradient-main text-foreground">
-        <Header isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
-        
-        <div className="container mx-auto px-4 py-20">
-          {/* Hero Section */}
-          <div className="text-center mb-16">
-            <h1 className="text-5xl md:text-6xl font-bold mb-6 gradient-text">
-              Terms & Conditions
-            </h1>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Please read these terms and conditions carefully before using SDM E-Mobility services. 
-              Your use of our platform constitutes acceptance of these terms.
+import { Header } from "@/components/Header"; 
+import { useState } from "react"; 
+import { Card } from "@/components/ui/card"; 
+import { Badge } from "@/components/ui/badge"; 
+import {  
+  FileText,  
+  Shield,  
+  CreditCard,  
+  Car, 
+  Users, 
+  Clock, 
+  AlertTriangle, 
+  CheckCircle, 
+  Mail, 
+  Phone, 
+  MapPin 
+} from "lucide-react"; 
+ 
+const Terms = () => { 
+  const [isDarkMode, setIsDarkMode] = useState(false); 
+ 
+  const toggleDarkMode = () => { 
+    setIsDarkMode(!isDarkMode); 
+    document.documentElement.classList.toggle('dark'); 
+  }; 
+ 
+  const sections = [ 
+    { 
+      title: "Terms & Conditions", 
+      icon: FileText, 
+      content: [ 
+        `This document outlines the terms and conditions ("Terms") for 
+using the services offered by SDM E-Mobility Services Private Limited 
+("SDM", "we", "us", or "our"). These Terms govern your use of our 
+electric vehicle (EV) rental services, including cab rentals, airport 
+transfers, outstation trips, city rides, and taxi services.` 
+      ] 
+    }, 
+    { 
+      title: "Acceptance of Terms", 
+      icon: CheckCircle, 
+      content: [ 
+        `By using our services, booking a ride, or accessing our 
+mobile application, you agree to be bound by these Terms. If you do 
+not agree to all the Terms, you are not authorized to use our 
+services.` 
+      ] 
+    }, 
+    { 
+      title: "Services Offered", 
+      icon: Car, 
+      content: [ 
+        `SDM provides a platform to connect you with eco-friendly 
+electric vehicle (EV) transportation options. We offer the following 
+services:`, 
+        `**Cab Rentals:** Book an EV cab for point-to-point travel 
+within the city.`, 
+        `**Airport Transfers:** Pre-book a comfortable and reliable EV 
+for your airport arrival or departure.`, 
+        `**Outstation Trips:** Travel to destinations outside the city 
+limits in a spacious and efficient EV.`, 
+        `**City Rides:** Get around town conveniently with our 
+on-demand EV taxi service.` 
+      ] 
+    }, 
+    { 
+      title: "Booking and Payment", 
+      icon: CreditCard, 
+      content: [ 
+        `Bookings can be made through our mobile application, website, 
+or by calling our customer service center. You will be provided with 
+fare estimates during the booking process. Fares may vary based on 
+distance, duration, service type, and any applicable taxes or fees. We 
+accept various payment methods, including online payment gateways, 
+debit/credit cards, and cash (subject to availability).` 
+      ] 
+    }, 
+    { 
+      title: "User Eligibility", 
+      icon: Users, 
+      content: [ 
+        `To use our services, you must be at least 18 years old and 
+possess a valid government-issued ID. For airport transfers, you may 
+be required to provide flight details during booking.` 
+      ] 
+    }, 
+    { 
+      title: "Rider Conduct", 
+      icon: Users, 
+      content: [ 
+        `You are responsible for the conduct of all passengers in the 
+vehicle during your ride. Smoking, littering, and consumption of 
+alcohol or illegal substances are strictly prohibited within the 
+vehicle. We reserve the right to terminate your ride and remove you 
+from the vehicle in case of disruptive or abusive behavior.` 
+      ] 
+    }, 
+    { 
+      title: "Vehicle Availability and Condition", 
+      icon: Car, 
+      content: [ 
+        `We strive to provide you with a clean and well-maintained EV 
+for your ride. While we make every effort to ensure vehicle 
+availability, we cannot guarantee a specific EV model for your 
+booking. We reserve the right to substitute a similar EV in case of 
+unforeseen circumstances.` 
+      ] 
+    }, 
+    { 
+      title: "Charging and Range", 
+      icon: AlertTriangle, 
+      content: [ 
+        `Our EVs are equipped with long-range batteries. You are not 
+responsible for charging the vehicle during your ride. In case of low 
+battery, the driver will take the most appropriate route to reach a 
+charging station to ensure uninterrupted service.` 
+      ] 
+    }, 
+    { 
+      title: "Cancellations and Refunds", 
+      icon: Clock, 
+      content: [ 
+        `Our cancellation policy is outlined during the booking 
+process and may vary depending on the service type and notice period. 
+Refunds, if applicable, will be processed in accordance with our 
+policy.` 
+      ] 
+    }, 
+    { 
+      title: "Liability and Indemnification", 
+      icon: Shield, 
+      content: [ 
+        `SDM is not liable for any delays, accidents, or damages 
+caused by factors beyond our control, including weather conditions, 
+traffic congestion, or mechanical breakdowns. We are committed to your 
+safety. However, you agree to indemnify and hold harmless SDM from any 
+claims, damages, or losses arising from your use of our services.` 
+      ] 
+    }, 
+    { 
+      title: "Privacy Policy", 
+      icon: Shield, 
+      content: [ 
+        `We respect your privacy. Please refer to our separate Privacy 
+Policy for details on how we collect, use, and disclose your personal 
+information.` 
+      ] 
+    }, 
+    { 
+      title: "Modifications to Terms", 
+      icon: FileText, 
+      content: [ 
+        `We reserve the right to modify these Terms at any time. We 
+will notify you of any significant changes by posting the updated 
+Terms on our website or mobile application.` 
+      ] 
+    }, 
+    { 
+      title: "Governing Law and Dispute Resolution", 
+      icon: Shield, 
+      content: [ 
+        `These Terms shall be governed by and construed in accordance 
+with the laws of India. Any dispute arising out of or relating to 
+these Terms shall be subject to the exclusive jurisdiction of the 
+courts located in Bengaluru, Mysuru, Karnataka and across India.` 
+      ] 
+    }, 
+  ]; 
+ 
+  const renderContent = (content) => { 
+    return content.map((item, itemIndex) => ( 
+      <div key={itemIndex} className="flex gap-3"> 
+        <div className="w-2 h-2 bg-primary rounded-full mt-2 
+flex-shrink-0"></div> 
+        {/* Render markdown-like bold text */} 
+        <p className="text-muted-foreground" 
+dangerouslySetInnerHTML={{ __html: item.replace(/\*\*(.*?)\*\*/g, 
+'<strong>$1</strong>') }}></p> 
+      </div> 
+    )); 
+  }; 
+ 
+  return ( 
+    <div className={`min-h-screen ${isDarkMode ? 'dark' : ''}`}> 
+      <div className="min-h-screen bg-gradient-main text-foreground"> 
+        <Header isDarkMode={isDarkMode} 
+toggleDarkMode={toggleDarkMode} /> 
+         
+        <div className="container mx-auto px-4 py-20"> 
+          {/* Hero Section */} 
+          <div className="text-center mb-16"> 
+            <h1 className="text-5xl md:text-6xl font-bold mb-6 
+gradient-text"> 
+              Terms & Conditions 
+            </h1> 
+            <p className="text-xl text-muted-foreground max-w-3xl 
+mx-auto"> 
+              Please read these terms and conditions carefully before 
+using SDM E-Mobility services.  
+              Your use of our platform constitutes acceptance of these 
+terms. 
+            </p> 
+            <Badge variant="secondary" className="mt-4"> 
+              Last Updated: August 2025 
+            </Badge> 
+          </div> 
+ 
+          {/* Terms Sections */} 
+          <div className="space-y-8 mb-16"> 
+            {sections.map((section, index) => ( 
+              <Card key={section.title} className="glass p-8"> 
+                <div className="flex items-center gap-4 mb-6"> 
+                  <div className="w-12 h-12 bg-gradient-primary 
+rounded-xl flex items-center justify-center"> 
+                    <section.icon className="w-6 h-6 text-white" /> 
+                  </div> 
+                  <h2 className="text-2xl 
+font-bold">{section.title}</h2> 
+                </div> 
+                <div className="space-y-4"> 
+                  {renderContent(section.content)} 
+                </div> 
+              </Card> 
+            ))} 
+          </div> 
+ 
+          {/* Contact Information */} 
+          <Card className="glass p-8 text-center"> 
+            <h2 className="text-2xl font-bold mb-4">Contact Us</h2> 
+            <p className="text-muted-foreground mb-6"> 
+              If you have any questions regarding these Terms, please 
+contact us: 
+            </p> 
+            <div className="space-y-2"> 
+              <p className="flex items-center justify-center gap-2"> 
+                <Mail className="w-4 h-4 text-primary" /> 
+                <strong>Email:</strong> Info@sdm-emobility.com 
+              </p> 
+              <p className="flex items-center justify-center gap-2"> 
+                <Phone className="w-4 h-4 text-primary" /> 
+                <strong>Phone:</strong> +91 9900992290 
+              </p> 
+              <p className="flex items-center justify-center gap-2"> 
+                <MapPin className="w-4 h-4 text-primary" /> 
+                <strong>Address:</strong> Bengaluru, Mysuru, Karnataka 
+and across India 
+              </p> 
+            </div> 
+             <div className="flex justify-center gap-6 text-sm text-muted-foreground mt-3">
+              <a href="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</a>
+              <a href="/terms" className="hover:text-primary transition-colors">Terms of Service</a>
+              <a href="/refund-policy" className="hover:text-primary transition-colors">Refund Policy</a>
+              <a href="/contact" className="hover:text-primary transition-colors">Contact Us</a>
+            </div>
+            <p className="text-xs text-muted-foreground mt-6">
+              © 2025 SDM E-Mobility. All rights reserved.
             </p>
-            <Badge variant="secondary" className="mt-4">
-              Last Updated: January 2025
-            </Badge>
-          </div>
-
-          {/* Quick Reference */}
-          <Card className="glass p-8 mb-16">
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-              <CheckCircle className="w-6 h-6 text-primary" />
-              Quick Reference
-            </h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {quickPoints.map((point, index) => (
-                <div key={index} className="flex items-center gap-3">
-                  <point.icon className="w-5 h-5 text-primary flex-shrink-0" />
-                  <span className="text-sm">{point.text}</span>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          {/* Terms Sections */}
-          <div className="space-y-8 mb-16">
-            {sections.map((section, index) => (
-              <Card key={section.title} className="glass p-8">
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center">
-                    <section.icon className="w-6 h-6 text-white" />
-                  </div>
-                  <h2 className="text-2xl font-bold">{section.title}</h2>
-                </div>
-                <div className="space-y-4">
-                  {section.content.map((item, itemIndex) => (
-                    <div key={itemIndex} className="flex gap-3">
-                      <div className="w-2 h-2 bg-primary rounded-full mt-2 flex-shrink-0"></div>
-                      <p className="text-muted-foreground">{item}</p>
-                    </div>
-                  ))}
-                </div>
-              </Card>
-            ))}
-          </div>
-
-          {/* Cancellation Policy */}
-          <Card className="glass p-8 mb-16">
-            <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-              <Clock className="w-6 h-6 text-primary" />
-              Cancellation Policy
-            </h2>
-            <div className="grid md:grid-cols-3 gap-6">
-              <div className="text-center p-4 bg-gradient-surface rounded-lg">
-                <div className="text-2xl font-bold text-primary mb-2">Free</div>
-                <p className="text-sm text-muted-foreground">Within 5 minutes of booking</p>
-              </div>
-              <div className="text-center p-4 bg-gradient-surface rounded-lg">
-                <div className="text-2xl font-bold text-primary mb-2">₹25</div>
-                <p className="text-sm text-muted-foreground">5-15 minutes after booking</p>
-              </div>
-              <div className="text-center p-4 bg-gradient-surface rounded-lg">
-                <div className="text-2xl font-bold text-primary mb-2">₹50</div>
-                <p className="text-sm text-muted-foreground">After 15 minutes or driver assigned</p>
-              </div>
-            </div>
-          </Card>
-
-          {/* Dispute Resolution */}
-          <Card className="glass p-8 mb-16">
-            <h2 className="text-2xl font-bold mb-6">Dispute Resolution</h2>
-            <div className="space-y-4">
-              <p className="text-muted-foreground">
-                Any disputes arising from the use of SDM E-Mobility services will be resolved through:
-              </p>
-              <div className="grid md:grid-cols-3 gap-4">
-                <div className="p-4 bg-gradient-surface rounded-lg">
-                  <h3 className="font-semibold mb-2">Step 1: Support</h3>
-                  <p className="text-sm text-muted-foreground">Contact our customer support team first</p>
-                </div>
-                <div className="p-4 bg-gradient-surface rounded-lg">
-                  <h3 className="font-semibold mb-2">Step 2: Mediation</h3>
-                  <p className="text-sm text-muted-foreground">Internal dispute resolution process</p>
-                </div>
-                <div className="p-4 bg-gradient-surface rounded-lg">
-                  <h3 className="font-semibold mb-2">Step 3: Arbitration</h3>
-                  <p className="text-sm text-muted-foreground">Final resolution through arbitration</p>
-                </div>
-              </div>
-            </div>
-          </Card>
-
-          {/* Contact Information */}
-          <Card className="glass p-8 text-center">
-            <h2 className="text-2xl font-bold mb-4">Questions About These Terms?</h2>
-            <p className="text-muted-foreground mb-6">
-              If you have any questions about these terms and conditions, please contact us:
-            </p>
-            <div className="space-y-2">
-              <p><strong>Email:</strong> legal@sdm-mobility.com</p>
-              <p><strong>Phone:</strong> +91 98765 43210</p>
-              <p><strong>Address:</strong> SDM E-Mobility HQ, Bangalore, Karnataka, India</p>
-            </div>
-          </Card>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default Terms;
+          </Card> 
+        </div> 
+      </div> 
+    </div> 
+  ); 
+}; 
+ 
+export default Terms; 
+ 

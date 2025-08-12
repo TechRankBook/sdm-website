@@ -1,96 +1,111 @@
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
+import { Header } from "@/components/Header";
+import { useState } from "react";
 import { EnhancedBookingForm } from "@/components/booking/EnhancedBookingForm";
 import { VehicleSelection } from "@/components/booking/VehicleSelection";
-import { PaymentPage } from "@/components/booking/PaymentPage";
-import { ThankYouPage } from "@/components/booking/ThankYouPage";
-import { ArrowBigLeft, HomeIcon } from "lucide-react";
+import { RazorpayPaymentPage } from "@/components/booking/RazorpayPaymentPage";
+import { ImprovedThankYouPage } from "@/components/booking/ImprovedThankYouPage";
 import { useSearchParams } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useBookingStore, type BookingData } from "@/stores/bookingStore";
 
-export interface BookingData {
-  serviceType: string;
-  pickupLocation: string;
-  dropoffLocation?: string;
-  scheduledDateTime?: string;
-  passengers?: number;
-  packageSelection?: string;
-  carType?: string;
-  selectedFare?: {
-    type: string;
-    price: number;
-  };
-}
+export type { BookingData };
 
 const Booking = () => {
-  const [currentStep, setCurrentStep] = useState(1);
-  const [bookingData, setBookingData] = useState<BookingData>({
-    serviceType: "city_ride",
-    pickupLocation: "",
-    dropoffLocation: "",
-    scheduledDateTime: "",
-    passengers: 1,
-    packageSelection: "",
-    carType: "",
-    selectedFare: undefined
-  });
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  const { 
+    bookingData, 
+    currentStep, 
+    setBookingData, 
+    setCurrentStep, 
+    nextStep, 
+    prevStep 
+  } = useBookingStore();
+  
   const [searchParams] = useSearchParams();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Handle pre-filled data from home page
-    const pickup = searchParams.get('pickup');
-    const destination = searchParams.get('destination');
-    const service = searchParams.get('service');
-    const time = searchParams.get('time');
+    const isDark = document.documentElement.classList.contains('dark');
+    setIsDarkMode(isDark);
+  }, []);
 
-    if (pickup || destination || service) {
-      setBookingData(prev => ({
-        ...prev,
-        pickupLocation: pickup || "",
-        dropoffLocation: destination || "",
-        serviceType: service === "city" ? "city_ride" : 
-                   service === "airport" ? "airport" :
-                   service === "rental" ? "car_rental" :
-                   service === "outstation" ? "outstation" : prev.serviceType
-      }));
+  const toggleDarkMode = () => {
+    document.documentElement.classList.toggle('dark');
+    setIsDarkMode(!isDarkMode);
+  };
+
+  useEffect(() => {
+    console.log("🔍 useEffect triggered - searchParams:", searchParams.toString(), "currentStep:", currentStep);
+    
+    // Handle step navigation from URL
+    const step = searchParams.get('step');
+    const bookingId = searchParams.get('booking_id');
+    const paymentSuccess = searchParams.get('payment_success');
+    const paymentCanceled = searchParams.get('payment_canceled');
+    
+    // If user is coming to booking page with payment success, show thank you page
+    if (step === '4' && bookingId) {
+      console.log("📍 Setting step to 4 for payment success");
+      setCurrentStep(4);
+      return;
     }
-
-    // Handle Stripe payment success/cancel
-    const sessionId = searchParams.get('session_id');
-    const success = searchParams.get('success');
-    const canceled = searchParams.get('canceled');
-
-    if (success === 'true' && sessionId) {
-      toast({
-        title: "Payment Successful! 🎉",
-        description: "Your booking has been confirmed. You'll receive driver details shortly.",
-      });
-      setCurrentStep(3); // Go to thank you page
-    } else if (canceled === 'true') {
+    
+    // If payment was successful, redirect to thank you page
+    if (paymentSuccess === 'true' && bookingId) {
+      console.log("📍 Setting step to 4 for payment success");
+      setCurrentStep(4);
+      return;
+    } 
+    
+    // If payment was canceled, stay on payment page with message
+    if (paymentCanceled === 'true') {
       toast({
         title: "Payment Canceled",
         description: "Your payment was canceled. You can try again.",
         variant: "destructive",
       });
-      setCurrentStep(2); // Go back to payment page
+      console.log("📍 Setting step to 3 for payment canceled");
+      setCurrentStep(3);
+      return;
     }
-  }, [searchParams, toast]);
 
-  const updateBookingData = (data: Partial<BookingData>) => {
-    setBookingData(prev => ({ ...prev, ...data }));
-  };
+    // Handle pre-filled data from home page
+    const pickup = searchParams.get('pickup');
+    const destination = searchParams.get('destination');
+    const service = searchParams.get('service');
 
-  const nextStep = () => {
-    setCurrentStep(prev => prev + 1);
-  };
+    if (pickup || destination || service) {
+      console.log("📍 Pre-filling form data from URL params");
+      setBookingData({
+        pickupLocation: pickup || "",
+        dropoffLocation: destination || "",
+        serviceType: service === "city" ? "city_ride" : 
+                   service === "airport" ? "airport" :
+                   service === "rental" ? "car_rental" :
+                   service === "outstation" ? "outstation" : bookingData.serviceType
+      });
+    }
 
-  const prevStep = () => {
-    setCurrentStep(prev => prev - 1);
-  };
+    // Only reset to step 1 if we're at the beginning of a fresh booking session
+    // AND there are no URL parameters indicating we should be elsewhere
+    // AND we're currently on step 1 (don't reset mid-flow)
+    if (!paymentSuccess && !paymentCanceled && !step && !bookingId && !pickup && !destination && !service) {
+      if (currentStep === 1) {
+        console.log("📍 Fresh booking session - staying on step 1");
+      } else {
+        console.log("📍 User is mid-booking flow - NOT resetting step. Current step:", currentStep);
+      }
+    }
+  }, [searchParams, toast, setCurrentStep, setBookingData, bookingData.serviceType]);
+
+  const updateBookingData = setBookingData;
 
   const renderStep = () => {
+    console.log("🎬 Rendering step:", currentStep);
     switch (currentStep) {
       case 1:
+        console.log("📝 Rendering EnhancedBookingForm (step 1)");
         return (
           <div className="w-full max-w-lg mx-auto">
             <EnhancedBookingForm
@@ -101,6 +116,7 @@ const Booking = () => {
           </div>
         );
       case 2:
+        console.log("🚗 Rendering VehicleSelection (step 2)");
         return (
           <div className="w-full max-w-lg mx-auto">
             <VehicleSelection
@@ -113,23 +129,27 @@ const Booking = () => {
           </div>
         );
       case 3:
+        console.log("💳 Rendering RazorpayPaymentPage (step 3)");
         return (
-          <PaymentPage
+          <RazorpayPaymentPage
             bookingData={bookingData}
             onNext={nextStep}
             onBack={prevStep}
           />
         );
       case 4:
-        return <ThankYouPage />;
+        console.log("🎉 Rendering ImprovedThankYouPage (step 4)");
+        return <ImprovedThankYouPage />;
       default:
+        console.log("❓ Unknown step:", currentStep);
         return null;
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-hero">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-background">
+      <Header isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
+      <div className="container mx-auto px-4 pt-24 pb-8">
         {/* Header with Step Indication */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">

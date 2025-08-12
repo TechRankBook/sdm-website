@@ -19,14 +19,18 @@ import {
 } from "lucide-react";
 import heroImage from "@/assets/hero-image.jpg";
 import { ThankYouPage } from "@/components/booking/ThankYouPage";
-import { PaymentPage } from "@/components/booking/PaymentPage";
+// Removed PaymentPage import as it's been replaced with RazorpayPaymentPage
 import { FareCalculation } from "@/components/booking/FareCalculation";
 import { EnhancedBookingForm } from "@/components/booking/EnhancedBookingForm";
-import { BookingData } from "./Booking";
+import { BookingData, useBookingStore } from "@/stores/bookingStore";
+import { useAuth } from "@/contexts/AuthContext";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
-  // Removed driver functionality - rider-only platform
+  const [isDarkMode, setIsDarkMode] = useState(true);
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const { bookingData, setBookingData, currentStep, setCurrentStep, nextStep, prevStep } = useBookingStore();
 
   useEffect(() => {
     const isDark = document.documentElement.classList.contains('dark');
@@ -72,63 +76,25 @@ const Index = () => {
     { value: "24/7", label: "Available" }
   ];
 
-  const [currentStep, setCurrentStep] = useState(1);
-    const [bookingData, setBookingData] = useState<BookingData>({
-      serviceType: "city_ride",
-      pickupLocation: "",
-      dropoffLocation: "",
-      scheduledDateTime: "",
-      passengers: 1,
-      packageSelection: "",
-      carType: "",
-      selectedFare: undefined
-    });
+  const handleBookingNext = () => {
+    if (!user) {
+      // Redirect to login, booking data is already saved in store
+      navigate('/auth');
+      return;
+    }
+    // If user is authenticated, proceed to booking page
+    navigate('/booking');
+  };
   
-    const updateBookingData = (data: Partial<BookingData>) => {
-      setBookingData(prev => ({ ...prev, ...data }));
-    };
-  
-    const nextStep = () => {
-      setCurrentStep(prev => prev + 1);
-    };
-  
-    const prevStep = () => {
-      setCurrentStep(prev => prev - 1);
-    };
-  
-    const renderStep = () => {
-      switch (currentStep) {
-        case 1:
-          return (
-            <EnhancedBookingForm
-              bookingData={bookingData}
-              updateBookingData={updateBookingData}
-              onNext={nextStep}
-            />
-          );
-        case 2:
-          return (
-            <FareCalculation
-              bookingData={bookingData}
-              updateBookingData={updateBookingData}
-              onNext={nextStep}
-              onBack={prevStep}
-            />
-          );
-        case 3:
-          return (
-            <PaymentPage
-              bookingData={bookingData}
-              onNext={nextStep}
-              onBack={prevStep}
-            />
-          );
-        case 4:
-          return <ThankYouPage />;
-        default:
-          return null;
-      }
-    };
+  const renderBookingForm = () => {
+    return (
+      <EnhancedBookingForm
+        bookingData={bookingData}
+        updateBookingData={setBookingData}
+        onNext={handleBookingNext}
+      />
+    );
+  };
 
   return (
     <div className="min-h-screen">
@@ -143,7 +109,7 @@ const Index = () => {
         />
         
         <div className="relative container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
+          <div className="grid lg:grid-cols-2 gap-12 items-start">
             {/* Hero Content */}
             <div className="space-y-8">
               <div className="space-y-4 fade-in">
@@ -165,7 +131,7 @@ const Index = () => {
               </div>
 
               <div className="flex flex-wrap gap-4">
-                <Button size="lg" className="bg-gradient-primary micro-bounce">
+                <Button size="lg" className="bg-gradient-primary micro-bounce" onClick={() => navigate('/booking')}>
                   <Play className="w-5 h-5 mr-2" />
                   Book Your Ride
                 </Button>
@@ -188,9 +154,11 @@ const Index = () => {
 
             {/* Booking Interface - Rider Only */}
             <div className="fade-in" style={{ animationDelay: "0.3s" }}>
-              <div className="flex justify-center">
-          {renderStep()}
-        </div>
+              <div className="flex justify-center w-full">
+                <div className="w-full max-w-md sm:max-w-lg lg:max-w-md">
+                  {renderBookingForm()}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -234,7 +202,7 @@ const Index = () => {
               Join millions of riders who've already made the switch to sustainable mobility
             </p>
             <div className="flex justify-center">
-              <Button size="lg" className="bg-gradient-primary micro-bounce">
+              <Button size="lg" className="bg-gradient-primary micro-bounce" onClick={() => navigate('/booking')}>
                 <Zap className="w-5 h-5 mr-2" />
                 Start Riding Today
                 <ArrowRight className="w-5 h-5 ml-2" />
@@ -253,10 +221,10 @@ const Index = () => {
               Powering the future of sustainable transportation
             </p>
             <div className="flex justify-center gap-6 text-sm text-muted-foreground">
-              <a href="#" className="hover:text-primary transition-colors">Privacy Policy</a>
-              <a href="#" className="hover:text-primary transition-colors">Terms of Service</a>
-              <a href="#" className="hover:text-primary transition-colors">Support</a>
-              <a href="#" className="hover:text-primary transition-colors">Careers</a>
+              <a href="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</a>
+              <a href="/terms" className="hover:text-primary transition-colors">Terms of Service</a>
+              <a href="/refund-policy" className="hover:text-primary transition-colors">Refund Policy</a>
+              <a href="/contact" className="hover:text-primary transition-colors">Contact Us</a>
             </div>
             <p className="text-xs text-muted-foreground mt-6">
               © 2025 SDM E-Mobility. All rights reserved.

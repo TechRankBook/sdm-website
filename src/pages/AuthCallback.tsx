@@ -1,12 +1,14 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { useBookingStore } from '@/stores/bookingStore';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 
 const AuthCallback = () => {
   const navigate = useNavigate();
   const { user, isPhoneVerified } = useAuth();
+  const { bookingData } = useBookingStore();
 
   useEffect(() => {
     // Handle OAuth callback
@@ -16,7 +18,12 @@ const AuthCallback = () => {
       
       if (user) {
         if (isPhoneVerified) {
-          navigate('/');
+          // Check if user was in the middle of a booking flow
+          if (bookingData.pickupLocation && bookingData.dropoffLocation) {
+            navigate('/booking');
+          } else {
+            navigate('/booking');
+          }
         } else {
           // User signed in with Google but needs phone verification
           navigate('/auth');

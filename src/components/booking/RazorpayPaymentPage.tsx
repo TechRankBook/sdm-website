@@ -1,0 +1,476 @@
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from 'react-router-dom';
+// Declare Razorpay types
+declare global {
+  interface Window {
+    Razorpay: any;
+  }
+}
+import {
+  ArrowLeft,
+  CreditCard,
+  Smartphone,
+  Wallet,
+  Zap,
+  Shield,
+  CheckCircle
+} from "lucide-react";
+import { BookingData } from "@/stores/bookingStore";
+import { BookingSummary } from "./BookingSummary";
+
+interface RazorpayPaymentPageProps {
+  bookingData: BookingData;
+  onNext: () => void;
+  onBack: () => void;
+}
+
+export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPaymentPageProps) => {
+  const [paymentMethod, setPaymentMethod] = useState("upi");
+  const [paymentAmount, setPaymentAmount] = useState("partial"); // "partial" or "full"
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+  const navigate = useNavigate();
+
+  // Load Razorpay script
+  useEffect(() => {
+    const script = document.createElement('script');
+    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+    script.onload = () => setRazorpayLoaded(true);
+    document.body.appendChild(script);
+
+    return () => {
+      if (document.body.contains(script)) {
+        document.body.removeChild(script);
+      }
+    };
+  }, []);
+
+  const totalFare = bookingData.selectedFare?.price || 0;
+  const partialPayment = Math.ceil(totalFare * 0.25); // 25% instead of 20%
+  const currentPaymentAmount = paymentAmount === "full" ? totalFare : partialPayment;
+  const remainingAmount = paymentAmount === "full" ? 0 : totalFare - partialPayment;
+
+  const paymentMethods = [
+    {
+      id: "upi",
+      name: "UPI",
+      icon: Smartphone,
+      description: "PhonePe, GooglePay, Paytm"
+    },
+    {
+      id: "card",
+      name: "Credit/Debit Card",
+      icon: CreditCard,
+      description: "Visa, Mastercard, RuPay"
+    },
+    {
+      id: "wallet",
+      name: "Digital Wallet",
+      icon: Wallet,
+      description: "Paytm, Mobikwik, Amazon Pay"
+    }
+  ];
+
+  const { toast } = useToast();
+
+  const handlePayment = async () => {
+    if (!bookingData.selectedFare) {
+      toast({
+        title: "Error",
+        description: "No fare selected. Please go back and select a vehicle.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!razorpayLoaded || !window.Razorpay) {
+      toast({
+        title: "Error",
+        description: "Payment system not loaded. Please refresh and try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsProcessing(true);
+
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        throw new Error('Please login to continue booking');
+      }
+
+      // Get service type ID
+      const { data: serviceType } = await supabase
+        .from('service_types')
+        .select('id')
+        .eq('name', bookingData.serviceType)
+        .single();
+
+      // Create booking in database first
+      const { data: booking, error: bookingError } = await supabase
+        .from('bookings')
+        .insert({
+          user_id: user.id,
+          pickup_address: bookingData.pickupLocation,
+          dropoff_address: bookingData.dropoffLocation,
+          pickup_latitude: bookingData.pickupLatitude,
+          pickup_longitude: bookingData.pickupLongitude,
+          dropoff_latitude: bookingData.dropoffLatitude,
+          dropoff_longitude: bookingData.dropoffLongitude,
+          fare_amount: bookingData.selectedFare.price,
+          status: 'pending',
+          payment_status: 'pending',
+          scheduled_time: bookingData.scheduledDateTime || null,
+          service_type_id: serviceType?.id || null,
+          is_scheduled: bookingData.scheduledDateTime ? true : false,
+          is_round_trip: bookingData.isRoundTrip || false,
+          return_scheduled_time: bookingData.returnDateTime || null,
+          trip_type: bookingData.tripType,
+          vehicle_type: bookingData.carType || bookingData.vehicleType,
+          special_instructions: bookingData.specialInstructions,
+          package_hours: bookingData.packageSelection ? parseInt(bookingData.packageSelection) : null,
+          distance_km: bookingData.distanceKm,
+          advance_amount: currentPaymentAmount,
+          remaining_amount: remainingAmount
+        })
+        .select()
+        .single();
+
+      if (bookingError) throw bookingError;
+
+      console.log('Booking created:', booking);
+
+      // Verify the booking was actually created by fetching it again
+      const { data: verifyBooking, error: verifyError } = await supabase
+        .from('bookings')
+        .select('id')
+        .eq('id', booking.id)
+        .single();
+
+      if (verifyError || !verifyBooking) {
+        console.error('Booking verification failed:', verifyError);
+        throw new Error('Booking was created but could not be verified. Please try again.');
+      }
+
+      console.log('Booking verified:', verifyBooking.id);
+
+      // Create Razorpay order
+      const { data, error } = await supabase.functions.invoke('create-razorpay-order', {
+        body: {
+          bookingData,
+          bookingId: booking.id,
+          paymentMethod: paymentMethod,
+          paymentAmount: currentPaymentAmount,
+        },
+      });
+
+      console.log('Razorpay order response:', { data, error });
+
+      if (error) throw error;
+
+      // Configure Razorpay options
+      const options = {
+        key: data.key_id,
+        amount: data.amount,
+        currency: data.currency,
+        name: "SDM E-Mobility",
+        description: `${bookingData.selectedFare.type} - ${bookingData.serviceType.charAt(0).toUpperCase() + bookingData.serviceType.slice(1)} Ride`,
+        order_id: data.order_id,
+        handler: async (response: any) => {
+          setIsProcessing(false);
+          try {
+            console.log('Payment successful:', response);
+
+            // Verify payment
+            const { data: verifyData, error: verifyError } = await supabase.functions.invoke('verify-razorpay-payment', {
+              body: {
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                booking_id: booking.id,
+              },
+            });
+
+            if (verifyError) throw verifyError;
+
+            console.log('Payment verified successfully:', verifyData);
+
+            // Send booking notification
+            try {
+              // AWAIT THE FETCH CALL
+              const notificationResponse = await fetch('https://gmualcoqyztvtsqhjlzb.supabase.co/functions/v1/booking-notifications', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  type: 'booking.confirmed',
+                  data: {
+                    booking: {
+                      id: booking.id,
+                      user_id: booking.user_id,
+                      pickup_address: booking.pickup_address,
+                      dropoff_address: booking.dropoff_address,
+                      fare_amount: booking.fare_amount,
+                      scheduled_time: booking.scheduled_time,
+                      vehicle_type: booking.vehicle_type,
+                      advance_amount: currentPaymentAmount,
+                      remaining_amount: remainingAmount
+                    }
+                  }
+                })
+              });
+
+              if (!notificationResponse.ok) {
+                console.error('Notification function responded with an error:', notificationResponse.status);
+              }
+            } catch (notificationError) {
+              console.error('Failed to send notification:', notificationError);
+            }
+            // From your booking system
+
+
+            // Show success message
+            toast({
+              title: "Payment Successful!",
+              description: "Your booking has been confirmed.",
+            });
+
+            // Store the booking data in sessionStorage to ensure it's available immediately
+            // on the thank you page, avoiding the need to fetch from the database
+            try {
+              const bookingForStorage = {
+                id: booking.id,
+                pickup_address: booking.pickup_address,
+                dropoff_address: booking.dropoff_address,
+                vehicle_type: booking.vehicle_type || bookingData.carType || bookingData.vehicleType,
+                scheduled_time: booking.scheduled_time,
+                fare_amount: booking.fare_amount,
+                payment_method: 'razorpay',
+                advance_amount: currentPaymentAmount,
+                remaining_amount: remainingAmount
+              };
+              
+              // Store the booking data in sessionStorage
+              sessionStorage.setItem('current_booking', JSON.stringify(bookingForStorage));
+              console.log('Booking data stored in sessionStorage');
+            } catch (storageError) {
+              console.error('Failed to store booking in sessionStorage:', storageError);
+            }
+
+            // Navigate to thank you page immediately
+            console.log('Navigating to thank you page with booking ID:', booking.id);
+            navigate(`/booking?step=4&booking_id=${booking.id}&payment_success=true`);
+            onNext();
+
+          } catch (verifyErr: any) {
+            console.error('Payment verification error:', verifyErr);
+            toast({
+              title: "Payment Verification Failed",
+              description: verifyErr?.message || "Failed to verify payment. Please contact support.",
+              variant: "destructive",
+            });
+          }
+        },
+        prefill: {
+          name: data.user_name,
+          email: data.user_email,
+          contact: data.user_phone,
+        },
+        notes: {
+          booking_id: booking.id,
+          service_type: bookingData.serviceType,
+        },
+        theme: {
+          color: "#6366f1",
+        },
+        modal: {
+          ondismiss: () => {
+            // Only set processing to false after a short delay to avoid premature failure messages
+            setTimeout(() => {
+              setIsProcessing(false);
+            }, 500);
+          },
+          // Enable mobile optimization
+          backdrop_close: false,
+          confirm_close: false, // Prevent accidental dismissal
+          escape: false,
+        },
+        // Improve mobile compatibility
+        config: {
+          display: {
+            blocks: {
+              banks: {
+                name: 'Most Used Methods',
+                instruments: [
+                  { method: 'upi' },
+                  { method: 'card' },
+                  { method: 'wallet' },
+                ],
+              },
+            },
+            sequence: ['block.banks'],
+            preferences: {
+              show_default_blocks: true,
+            },
+          },
+        },
+        method: {
+          upi: paymentMethod === 'upi',
+          card: paymentMethod === 'card',
+          wallet: paymentMethod === 'wallet',
+        },
+      };
+
+      const razorpayInstance = new window.Razorpay(options);
+
+      // Add global error handler for payment failures
+      razorpayInstance.on('payment.failed', (response: any) => {
+        setTimeout(() => {
+          setIsProcessing(false);
+          console.error('Payment failed:', response);
+          toast({
+            title: "Payment Failed",
+            description: response.error?.description || "Payment could not be completed. Please try again.",
+            variant: "destructive",
+          });
+        }, 100);
+      });
+
+      razorpayInstance.open();
+
+    } catch (error: any) {
+      console.error('Payment error:', error);
+      toast({
+        title: "Payment Error",
+        description: error?.message || "Failed to process payment. Please try again.",
+        variant: "destructive",
+      });
+      setIsProcessing(false);
+    }
+  };
+
+  return (
+    <div className="w-full max-w-lg mx-auto space-y-6">
+      <Card className="glass rounded-2xl p-6">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
+          <Button
+            variant="ghost"
+            onClick={onBack}
+            className="flex items-center gap-2 text-muted-foreground hover:text-foreground"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </Button>
+          <h1 className="text-xl md:text-2xl font-bold text-foreground">Payment</h1>
+          <div className="w-[60px]"></div>
+        </div>
+
+        {/* Booking Summary */}
+        <BookingSummary bookingData={bookingData} />
+
+        {/* Payment Amount Selection */}
+        <Card className="glass-hover p-4 mb-6">
+          <h2 className="text-lg font-semibold text-foreground mb-4">Choose Payment Amount</h2>
+
+          <RadioGroup value={paymentAmount} onValueChange={setPaymentAmount} className="space-y-3 mb-4">
+            <Card className="glass-hover p-3">
+              <div className="flex items-center space-x-3">
+                <RadioGroupItem value="partial" id="partial" />
+                <Label htmlFor="partial" className="flex items-center justify-between cursor-pointer flex-1">
+                  <div>
+                    <p className="font-medium text-foreground text-sm">Partial Payment (25%)</p>
+                    <p className="text-xs text-muted-foreground">Pay remaining after ride</p>
+                  </div>
+                  <span className="text-primary font-bold text-lg">₹{partialPayment}</span>
+                </Label>
+              </div>
+            </Card>
+
+            <Card className="glass-hover p-3">
+              <div className="flex items-center space-x-3">
+                <RadioGroupItem value="full" id="full" />
+                <Label htmlFor="full" className="flex items-center justify-between cursor-pointer flex-1">
+                  <div>
+                    <p className="font-medium text-foreground text-sm">Full Payment</p>
+                    <p className="text-xs text-muted-foreground">Pay complete fare now</p>
+                  </div>
+                  <span className="text-primary font-bold text-lg">₹{totalFare}</span>
+                </Label>
+              </div>
+            </Card>
+          </RadioGroup>
+
+          {paymentAmount === "partial" && remainingAmount > 0 && (
+            <div className="text-xs text-muted-foreground">
+              Remaining ₹{remainingAmount} will be collected after ride completion
+            </div>
+          )}
+        </Card>
+
+        {/* Payment Method Selection */}
+        <div className="mb-6">
+          <h2 className="text-lg font-semibold text-foreground mb-4">Select Payment Method</h2>
+
+          <RadioGroup value={paymentMethod} onValueChange={setPaymentMethod} className="space-y-3">
+            {paymentMethods.map((method) => (
+              <Card key={method.id} className="glass-hover p-3">
+                <div className="flex items-center space-x-3">
+                  <RadioGroupItem value={method.id} id={method.id} />
+                  <Label htmlFor={method.id} className="flex items-center gap-3 cursor-pointer flex-1">
+                    <div className="p-2 rounded-lg bg-gradient-primary">
+                      <method.icon className="w-4 h-4 text-white" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground text-sm">{method.name}</p>
+                      <p className="text-xs text-muted-foreground">{method.description}</p>
+                    </div>
+                  </Label>
+                </div>
+              </Card>
+            ))}
+          </RadioGroup>
+        </div>
+
+        {/* Security Notice */}
+        <Card className="glass-hover p-4 mb-6">
+          <div className="flex items-center gap-2 mb-2">
+            <Shield className="w-4 h-4 text-primary" />
+            <span className="text-sm font-medium text-foreground">Secure Payment by Razorpay</span>
+          </div>
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            Your payment information is encrypted and secure. Powered by Razorpay's industry-standard security.
+          </p>
+        </Card>
+
+        {/* Confirm Payment Button */}
+        <Button
+          onClick={handlePayment}
+          disabled={isProcessing || !razorpayLoaded}
+          className="w-full h-12 bg-gradient-primary text-lg font-semibold micro-bounce"
+        >
+          {isProcessing ? (
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+              Processing Payment...
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5" />
+              Pay ₹{currentPaymentAmount} Now
+            </div>
+          )}
+        </Button>
+      </Card>
+    </div>
+  );
+};

@@ -27,7 +27,7 @@ const Auth = () => {
   useEffect(() => {
     // If user is authenticated and phone is verified, redirect to home
     if (user && isPhoneVerified) {
-      navigate('/');
+      navigate('/booking');
     }
     // If user is authenticated but phone not verified, show phone verification step
     else if (user && !isPhoneVerified) {
@@ -85,7 +85,7 @@ const Auth = () => {
         title: "Verification Successful",
         description: "Welcome to SDM E-Mobility! You're now signed in.",
       });
-      navigate('/');
+      navigate('/booking');
     } else {
       console.error('OTP verification failed:', result.error);
       toast({
@@ -164,7 +164,7 @@ const Auth = () => {
         title: "Phone Verified Successfully",
         description: "Your phone number has been verified. Welcome to SDM E-Mobility!",
       });
-      navigate('/');
+      navigate('/booking');
     } else {
       console.error('Phone verification failed:', result.error);
       toast({
@@ -196,13 +196,17 @@ const Auth = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <form onSubmit={handlePhoneSubmit} className="space-y-4">
-              <div>
+              <div className="flex">
+                <span className="flex items-center rounded-l-md border border-r-0 border-input bg-muted pl-3 pr-2 text-sm text-muted-foreground">
+                  +91
+                </span>
                 <Input
                   type="tel"
-                  placeholder="Enter phone number"
+                  placeholder="Enter 10-digit phone number"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="text-center text-lg"
+                  className="flex-1 rounded-l-none text-lg"
+                  maxLength={10}
                 />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
@@ -298,13 +302,17 @@ const Auth = () => {
           </CardHeader>
           <CardContent className="space-y-4">
             <form onSubmit={handleGooglePhoneVerification} className="space-y-4">
-              <div>
+              <div className="flex">
+                <span className="flex items-center rounded-l-md border border-r-0 border-input bg-muted pl-3 pr-2 text-sm text-muted-foreground">
+                  +91
+                </span>
                 <Input
                   type="tel"
-                  placeholder="Enter phone number"
+                  placeholder="Enter 10-digit phone number"
                   value={phoneNumber}
                   onChange={(e) => setPhoneNumber(e.target.value)}
-                  className="text-center text-lg"
+                  className="flex-1 rounded-l-none text-lg"
+                  maxLength={10}
                 />
               </div>
               <Button type="submit" className="w-full" disabled={loading}>
