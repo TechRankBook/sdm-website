@@ -8,6 +8,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MapPin, Phone, Car, Clock, Navigation, User, AlertCircle } from "lucide-react";
 import { LiveMapTracking } from "@/components/booking/LiveMapTracking";
+import { VehicleDriverDetails } from "@/components/booking/VehicleDriverDetails";
+import { TripSharingModal } from "@/components/booking/TripSharingModal";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -21,6 +23,7 @@ interface ActiveBooking {
   start_time: string;
   vehicle_type: string;
   driver_id: string;
+  vehicle_id: string;
   pickup_latitude: number;
   pickup_longitude: number;
   dropoff_latitude: number;
@@ -40,6 +43,17 @@ interface Driver {
 interface DriverUser {
   full_name: string;
   phone_no: string;
+  profile_picture_url?: string;
+}
+
+interface Vehicle {
+  id: string;
+  make: string;
+  model: string;
+  year: number;
+  license_plate: string;
+  color: string;
+  type?: string;
 }
 
 const RideTracking = () => {
@@ -48,9 +62,11 @@ const RideTracking = () => {
   const [activeBooking, setActiveBooking] = useState<ActiveBooking | null>(null);
   const [driver, setDriver] = useState<Driver | null>(null);
   const [driverUser, setDriverUser] = useState<DriverUser | null>(null);
+  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
   const [loading, setLoading] = useState(true);
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
+  const [tripSharingOpen, setTripSharingOpen] = useState(false);
 
   useEffect(() => {
     const isDark = document.documentElement.classList.contains('dark');
@@ -148,6 +164,26 @@ const RideTracking = () => {
 
         if (userError) throw userError;
         setDriverUser(userData);
+
+        // Fetch vehicle details if booking has a vehicle
+        if (bookingData.vehicle_id) {
+          const { data: vehicleData, error: vehicleError } = await supabase
+            .from('vehicles')
+            .select('*')
+            .eq('id', bookingData.vehicle_id)
+            .single();
+
+          if (vehicleError) throw vehicleError;
+          setVehicle({
+            id: vehicleData.id,
+            make: vehicleData.make,
+            model: vehicleData.model,
+            year: vehicleData.year,
+            license_plate: vehicleData.license_plate,
+            color: vehicleData.color,
+            type: 'Standard'
+          });
+        }
       }
     } catch (error) {
       console.error('Error fetching active ride:', error);
@@ -259,54 +295,12 @@ const RideTracking = () => {
                 </CardContent>
               </Card>
 
-              {/* Driver Information */}
-              {driver && driverUser && (
-                <Card className="glass">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <User className="w-5 h-5" />
-                      Driver Information
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Driver Name</p>
-                          <p className="text-lg font-medium">{driverUser.full_name}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">License Number</p>
-                          <p className="text-sm font-mono">{driver.license_number}</p>
-                        </div>
-                      </div>
-                      <div className="space-y-3">
-                        <div>
-                          <p className="text-sm text-muted-foreground">Rating</p>
-                          <p className="text-sm font-medium">{driver.rating}/5.0 ({driver.total_rides} trips)</p>
-                        </div>
-                        <div>
-                          <p className="text-sm text-muted-foreground">Status</p>
-                          <Badge variant="outline" className="text-xs">
-                            {driver.status}
-                          </Badge>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    <div className="flex gap-4 pt-4 border-t border-border">
-                      <Button variant="outline" className="flex-1">
-                        <Phone className="w-4 h-4 mr-2" />
-                        Call Driver
-                      </Button>
-                      <Button variant="outline" className="flex-1">
-                        <MapPin className="w-4 h-4 mr-2" />
-                        Share Location
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
+              {/* Vehicle & Driver Information */}
+              <VehicleDriverDetails 
+                vehicle={vehicle}
+                driver={driver}
+                driverUser={driverUser}
+              />
 
               {/* Live Map Tracking */}
               {activeBooking.pickup_latitude && activeBooking.pickup_longitude && 
@@ -339,11 +333,23 @@ const RideTracking = () => {
               <Card className="glass">
                 <CardContent className="p-6">
                   <div className="grid md:grid-cols-3 gap-4">
-                    <Button variant="outline" className="h-12">
+                    <Button 
+                      variant="outline" 
+                      className="h-12"
+                      onClick={() => {
+                        // Emergency support action
+                        window.open('tel:+911234567890', '_self');
+                        toast.info('Calling emergency support...');
+                      }}
+                    >
                       <Phone className="w-4 h-4 mr-2" />
                       Emergency Support
                     </Button>
-                    <Button variant="outline" className="h-12">
+                    <Button 
+                      variant="outline" 
+                      className="h-12"
+                      onClick={() => setTripSharingOpen(true)}
+                    >
                       <User className="w-4 h-4 mr-2" />
                       Share Trip Details
                     </Button>
@@ -392,6 +398,14 @@ const RideTracking = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Trip Sharing Modal */}
+      <TripSharingModal
+        isOpen={tripSharingOpen}
+        onClose={() => setTripSharingOpen(false)}
+        booking={activeBooking}
+        driver={driverUser}
+      />
     </div>
   );
 };
