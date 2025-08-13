@@ -7,6 +7,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { MapPin, Phone, Car, Clock, Navigation, User, AlertCircle } from "lucide-react";
+import { LiveMapTracking } from "@/components/booking/LiveMapTracking";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 interface ActiveBooking {
   id: string;
@@ -46,6 +49,8 @@ const RideTracking = () => {
   const [driver, setDriver] = useState<Driver | null>(null);
   const [driverUser, setDriverUser] = useState<DriverUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
 
   useEffect(() => {
     const isDark = document.documentElement.classList.contains('dark');
@@ -59,6 +64,45 @@ const RideTracking = () => {
   const toggleDarkMode = () => {
     document.documentElement.classList.toggle('dark');
     setIsDarkMode(!isDarkMode);
+  };
+
+  const handleCancelRide = async () => {
+    if (!activeBooking || !cancelReason.trim()) {
+      toast.error('Please provide a cancellation reason');
+      return;
+    }
+
+    try {
+      // Update booking status to cancelled
+      const { error: bookingError } = await supabase
+        .from('bookings')
+        .update({ 
+          status: 'cancelled',
+          cancellation_reason: cancelReason.trim()
+        })
+        .eq('id', activeBooking.id);
+
+      if (bookingError) throw bookingError;
+
+      // Insert cancellation record
+      const { error: cancellationError } = await supabase
+        .from('booking_cancellations')
+        .insert({
+          booking_id: activeBooking.id,
+          user_id: user?.id,
+          reason: cancelReason.trim()
+        });
+
+      if (cancellationError) throw cancellationError;
+
+      toast.success('Ride cancelled successfully');
+      setCancelDialogOpen(false);
+      setCancelReason('');
+      setActiveBooking(null); // Clear active booking
+    } catch (error) {
+      console.error('Error cancelling ride:', error);
+      toast.error('Failed to cancel ride');
+    }
   };
 
   const fetchActiveRide = async () => {
@@ -264,72 +308,32 @@ const RideTracking = () => {
                 </Card>
               )}
 
-              {/* Live Tracking - Enhanced for Started trips */}
-              <Card className="glass">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Navigation className="w-5 h-5" />
-                    Live Tracking
-                    {activeBooking.status === 'started' && (
-                      <Badge className="bg-green-500/20 text-green-400 border-green-500/50 ml-2">
-                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse mr-1"></div>
-                        Live
-                      </Badge>
-                    )}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {activeBooking.status === 'started' ? (
-                    <div className="space-y-4">
-                      <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
-                        <div className="flex items-center gap-2 text-green-800 dark:text-green-200">
-                          <AlertCircle className="w-4 h-4" />
-                          <span className="text-sm font-medium">Trip is in progress</span>
-                        </div>
-                        <p className="text-sm text-green-700 dark:text-green-300 mt-1">
-                          Your driver is on the way. Real-time location tracking is active.
-                        </p>
-                      </div>
-
-                      {driver && driver.current_latitude && driver.current_longitude && (
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="bg-card/50 rounded-lg p-3">
-                            <p className="text-sm text-muted-foreground">Driver Location</p>
-                            <p className="text-xs font-mono">
-                              {driver.current_latitude.toFixed(6)}, {driver.current_longitude.toFixed(6)}
-                            </p>
-                          </div>
-                          <div className="bg-card/50 rounded-lg p-3">
-                            <p className="text-sm text-muted-foreground">Status</p>
-                            <p className="text-sm font-medium text-green-600">En Route</p>
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="bg-muted rounded-lg h-48 flex items-center justify-center">
-                        <div className="text-center">
-                          <Navigation className="w-8 h-8 mx-auto mb-2 text-primary animate-pulse" />
-                          <p className="text-sm font-medium">Real-time tracking active</p>
-                          <p className="text-xs text-muted-foreground">Map integration will be available soon</p>
-                        </div>
-                      </div>
-
-                      <Button className="w-full bg-gradient-primary" size="lg">
-                        <Navigation className="w-4 h-4 mr-2" />
-                        Track Driver on Map
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="bg-muted rounded-lg h-64 flex items-center justify-center">
-                      <div className="text-center">
-                        <MapPin className="w-12 h-12 mx-auto mb-2 text-muted-foreground" />
-                        <p className="text-muted-foreground">Waiting for trip to start</p>
-                        <p className="text-sm text-muted-foreground">Live tracking will be available once driver starts the trip</p>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              {/* Live Map Tracking */}
+              {activeBooking.pickup_latitude && activeBooking.pickup_longitude && 
+               activeBooking.dropoff_latitude && activeBooking.dropoff_longitude && (
+                <LiveMapTracking
+                  pickup={{
+                    lat: activeBooking.pickup_latitude,
+                    lng: activeBooking.pickup_longitude,
+                    address: activeBooking.pickup_address
+                  }}
+                  dropoff={{
+                    lat: activeBooking.dropoff_latitude,
+                    lng: activeBooking.dropoff_longitude,
+                    address: activeBooking.dropoff_address
+                  }}
+                  driverLocation={
+                    driver?.current_latitude && driver?.current_longitude
+                      ? {
+                          lat: driver.current_latitude,
+                          lng: driver.current_longitude
+                        }
+                      : undefined
+                  }
+                  isActive={activeBooking.status === 'started'}
+                  height="400px"
+                />
+              )}
 
               {/* Quick Actions */}
               <Card className="glass">
@@ -343,7 +347,11 @@ const RideTracking = () => {
                       <User className="w-4 h-4 mr-2" />
                       Share Trip Details
                     </Button>
-                    <Button variant="destructive" className="h-12">
+                    <Button 
+                      variant="destructive" 
+                      className="h-12"
+                      onClick={() => setCancelDialogOpen(true)}
+                    >
                       Cancel Ride
                     </Button>
                   </div>
@@ -353,6 +361,37 @@ const RideTracking = () => {
           )}
         </div>
       </div>
+
+      {/* Cancel Ride Dialog */}
+      <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Ride</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel this ride? Please provide a reason for cancellation.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <Textarea
+              placeholder="Please provide a reason for cancellation..."
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              className="min-h-[100px]"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setCancelReason('')}>
+              Keep Ride
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleCancelRide}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Cancel Ride
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

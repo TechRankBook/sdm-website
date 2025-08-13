@@ -52,6 +52,46 @@ const TripHistory = () => {
   const [cancelBookingId, setCancelBookingId] = useState<string | null>(null);
   const [cancelReason, setCancelReason] = useState("");
 
+  const handleCancelBooking = async () => {
+    if (!cancelBookingId || !cancelReason.trim()) {
+      toast.error('Please provide a cancellation reason');
+      return;
+    }
+
+    try {
+      // Update booking status to cancelled
+      const { error: bookingError } = await supabase
+        .from('bookings')
+        .update({ 
+          status: 'cancelled',
+          cancellation_reason: cancelReason.trim()
+        })
+        .eq('id', cancelBookingId);
+
+      if (bookingError) throw bookingError;
+
+      // Insert cancellation record
+      const { error: cancellationError } = await supabase
+        .from('booking_cancellations')
+        .insert({
+          booking_id: cancelBookingId,
+          user_id: user?.id,
+          reason: cancelReason.trim()
+        });
+
+      if (cancellationError) throw cancellationError;
+
+      toast.success('Booking cancelled successfully');
+      setCancelDialogOpen(false);
+      setCancelBookingId(null);
+      setCancelReason('');
+      fetchTripHistory(); // Refresh the list
+    } catch (error) {
+      console.error('Error cancelling booking:', error);
+      toast.error('Failed to cancel booking');
+    }
+  };
+
   useEffect(() => {
     const isDark = document.documentElement.classList.contains('dark');
     setIsDarkMode(isDark);
@@ -247,6 +287,18 @@ const TripHistory = () => {
                         Trip ID: {booking.id.slice(0, 8)}...
                       </div>
                       <div className="flex gap-2">
+                        {(booking.status === 'pending' || booking.status === 'accepted') && (
+                          <Button 
+                            variant="destructive" 
+                            size="sm"
+                            onClick={() => {
+                              setCancelBookingId(booking.id);
+                              setCancelDialogOpen(true);
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        )}
                         {booking.status === 'completed' && booking.driver_id && (
                           <Button 
                             variant="outline" 
@@ -295,6 +347,40 @@ const TripHistory = () => {
         driverName={reviewModalData.driverName}
         onReviewSubmitted={handleReviewSubmitted}
       />
+
+      {/* Cancel Booking Dialog */}
+      <AlertDialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Cancel Booking</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to cancel this booking? Please provide a reason for cancellation.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-4">
+            <Textarea
+              placeholder="Please provide a reason for cancellation..."
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              className="min-h-[100px]"
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setCancelReason('');
+              setCancelBookingId(null);
+            }}>
+              Keep Booking
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleCancelBooking}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Cancel Booking
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
