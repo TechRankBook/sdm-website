@@ -258,6 +258,29 @@ export const ImprovedThankYouPage = () => {
     setUsingFallbackData(true);
   }
 
+  // Ensure booking exists before accessing properties
+  if (!booking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="glass max-w-md w-full p-6 text-center">
+          <div className="w-16 h-16 bg-destructive/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <span className="text-destructive text-2xl">✗</span>
+          </div>
+          <h1 className="text-xl font-bold text-foreground mb-2">Booking Not Found</h1>
+          <p className="text-muted-foreground mb-6">
+            Unable to find your booking details. Please try again.
+          </p>
+          <Button 
+            onClick={() => {resetBookingData(); navigate('/booking')}} 
+            className="w-full"
+          >
+            Book New Ride
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
   const remainingAmount = booking.fare_amount - actualPaidAmount;
 
   return (
