@@ -40,7 +40,12 @@ serve(async (req) => {
     const { data: userData, error: userError } = await supabase.auth.getUser(token);
     if (userError) throw new Error(`Authentication error: ${userError.message}`);
     const user = userData.user;
-    if (!user?.email) throw new Error('User not authenticated or email not available');
+    if (!user) throw new Error('User not authenticated');
+    const  userInfo  = await supabase
+      .from('users')
+      .select('id, email, phone_no')
+      .eq('id', user.id)
+      .single();
     logStep('User authenticated', { userId: user.id, email: user.email });
 
     const { bookingData, bookingId, paymentMethod = 'razorpay', paymentAmount } = await req.json();
@@ -58,7 +63,8 @@ serve(async (req) => {
 
     // Create Razorpay order
     const orderData = {
-      amount: actualPaymentAmount * 100, // Amount in paise
+      amount: 1* 100, // Amount in paise
+      // amount: actualPaymentAmount * 100,
       currency: 'INR',
       receipt: `rcpt_${bookingId.slice(-32)}`, // Truncate to fit 40 char limit
       payment_capture: 1,
@@ -126,8 +132,8 @@ serve(async (req) => {
       key_id: razorpayKeyId,
       booking_id: bookingId,
       user_email: user.email,
-      user_name: user.user_metadata?.full_name || user.email,
-      user_phone: user.user_metadata?.phone_number || '',
+      user_name: userInfo.data?.full_name || userInfo.data?.email.split('@')[0] || 'Guest',
+      user_phone: userInfo.data?.phone_number || user.user_metadata?.phone_no || 'Not provided',
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,

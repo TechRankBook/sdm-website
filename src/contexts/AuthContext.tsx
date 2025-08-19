@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
+import { sendOTPViaWhatsapp } from '@/utils/smsService';
 
 interface AuthContextType {
   user: User | null;
@@ -410,6 +411,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (!smsResult.success) {
         console.error('SMS sending failed:', smsResult.error);
+      }
+      const whatsAppResult = await sendOTPViaWhatsapp(formattedPhone, otpCode);
+      if (!whatsAppResult.success) {
+        console.error('WhatsApp sending failed:', whatsAppResult.error);
       }
       
       return { success: true };

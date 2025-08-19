@@ -48,6 +48,48 @@ const Auth = () => {
 
     setLoading(true);
     const result = await signInWithPhone(phoneNumber);
+
+    const registerPhoneNumber = async (phoneNumberId, accessToken, pin) => {
+  const url = `https://graph.facebook.com/v19.0/${phoneNumberId}/register`;
+
+  const headers = {
+    'Authorization': `Bearer ${accessToken}`,
+    'Content-Type': 'application/json'
+  };
+
+  const payload = {
+    messaging_product: 'whatsapp',
+    pin: pin
+  };
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: headers,
+      body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Request was successful!');
+    console.log('Response JSON:', data);
+    return data;
+  } catch (error) {
+    console.error('An error occurred:', error);
+    return null;
+  }
+};
+
+// --- Example of how to call the function ---
+const myPhoneNumberId = "740329502490134"; // Replace with your actual Phone Number ID
+const myAccessToken = "EAAeZCgWUm52MBPILW4FRZBqYOha7IsbTYwUhjsQk1z9rMCDVR9qWVvk87mLLxyUcxOHLVZBBCg1zdSNvTkUUnJYjF0WLyiNvc1ai3SPvSBle3p677z6zXPBxFzkJKEsYX3BzWUsoLgy8COnzMJpBNql2SQ1XfQNXPOWocZCKJXxZBA1et2ntGxBRCIIIVLEPZCSabZBYfR5crnRx8B4pZCZCvhSeaa6DwcheSoSfFEiGNSGZAsaf3UAhD4JzaRma4xxwZDZD"; // Replace with your actual Access Token
+const myPin = "123456"; // Replace with your desired 6-digit PIN
+
+const data = await registerPhoneNumber(myPhoneNumberId, myAccessToken, myPin);
+console.log('what is this?', data);
     
     if (result.success) {
       setStep('otp');
@@ -111,6 +153,7 @@ const Auth = () => {
     }
     // Loading will be handled by auth state change
   };
+
 
   // For Google users to send phone verification
   const handleGooglePhoneVerification = async (e: React.FormEvent) => {
