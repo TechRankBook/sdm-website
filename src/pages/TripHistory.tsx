@@ -285,7 +285,7 @@ const TripHistory = () => {
 
                     <div className="flex justify-between items-center pt-4 border-t border-border">
                       <div className="text-sm text-muted-foreground">
-                        Trip ID: {booking.id.slice(-6)}...
+                        Trip ID: #{booking.id.slice(-6)}
                       </div>
                       <div className="flex gap-2">
                         {(booking.status === 'pending' || booking.status === 'accepted') && (
