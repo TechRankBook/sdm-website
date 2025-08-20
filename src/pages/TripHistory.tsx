@@ -230,7 +230,6 @@ const TripHistory = () => {
                 <Card key={booking.id} className="glass">
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start mb-4">
-                      <h3 Class="text-lg">{booking.id.slice(-6)}</h3>
                       <div className="flex items-center gap-2">
                         <Badge className={getStatusColor(booking.status)}>
                           {booking.status}
@@ -285,7 +284,7 @@ const TripHistory = () => {
 
                     <div className="flex justify-between items-center pt-4 border-t border-border">
                       <div className="text-sm text-muted-foreground">
-                        Trip ID: #{booking.id.slice(-6)}
+                        Trip ID: {booking.id.slice(0, 8)}...
                       </div>
                       <div className="flex gap-2">
                         {(booking.status === 'pending' || booking.status === 'accepted') && (
