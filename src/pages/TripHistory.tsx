@@ -230,6 +230,7 @@ const TripHistory = () => {
                 <Card key={booking.id} className="glass">
                   <CardContent className="p-6">
                     <div className="flex justify-between items-start mb-4">
+                      <h3 Class="text-lg">{booking.id.slice(-6)}</h3>
                       <div className="flex items-center gap-2">
                         <Badge className={getStatusColor(booking.status)}>
                           {booking.status}
