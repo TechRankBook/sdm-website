@@ -132,11 +132,13 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
           payment_status: 'pending',
           scheduled_time: bookingData.scheduledDateTime || null,
           service_type_id: serviceType?.id || null,
+          service_type: bookingData.serviceType, // Add service_type field
           is_scheduled: bookingData.scheduledDateTime ? true : false,
           is_round_trip: bookingData.isRoundTrip || false,
           return_scheduled_time: bookingData.returnDateTime || null,
           trip_type: bookingData.tripType,
           vehicle_type: bookingData.carType || bookingData.vehicleType,
+          passengers: bookingData.passengers || 1, // Add passengers field
           special_instructions: bookingData.specialInstructions,
           package_hours: bookingData.packageSelection ? parseInt(bookingData.packageSelection) : null,
           distance_km: bookingData.distanceKm,

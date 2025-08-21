@@ -7,7 +7,7 @@ export type Json =
   | Json[]
 
 export type Database = {
-  // Allows to automatically instanciate createClient with right options
+  // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "12.2.3 (519615d)"
@@ -29,78 +29,6 @@ export type Database = {
           id?: number
           inserted_at?: string
           version?: string
-        }
-        Relationships: []
-      }
-      about_page: {
-        Row: {
-          copyright: string
-          created_at: string | null
-          description: string
-          id: number
-          title: string
-          version: string
-        }
-        Insert: {
-          copyright: string
-          created_at?: string | null
-          description: string
-          id?: number
-          title: string
-          version: string
-        }
-        Update: {
-          copyright?: string
-          created_at?: string | null
-          description?: string
-          id?: number
-          title?: string
-          version?: string
-        }
-        Relationships: []
-      }
-      addresses: {
-        Row: {
-          address_line1: string
-          address_line2: string | null
-          building_no: string
-          created_at: string | null
-          email: string | null
-          id: string
-          is_default: boolean | null
-          name: string
-          other_type: string | null
-          phone: string
-          type: string
-          user_id: string
-        }
-        Insert: {
-          address_line1: string
-          address_line2?: string | null
-          building_no: string
-          created_at?: string | null
-          email?: string | null
-          id: string
-          is_default?: boolean | null
-          name: string
-          other_type?: string | null
-          phone: string
-          type: string
-          user_id: string
-        }
-        Update: {
-          address_line1?: string
-          address_line2?: string | null
-          building_no?: string
-          created_at?: string | null
-          email?: string | null
-          id?: string
-          is_default?: boolean | null
-          name?: string
-          other_type?: string | null
-          phone?: string
-          type?: string
-          user_id?: string
         }
         Relationships: []
       }
@@ -171,6 +99,13 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "admins_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admins_user_id_fkey"
             columns: ["id"]
             isOneToOne: true
             referencedRelation: "users"
@@ -270,6 +205,13 @@ export type Database = {
             columns: ["admin_id"]
             isOneToOne: false
             referencedRelation: "admins"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "booking_confirmations_admin_id_fkey"
+            columns: ["admin_id"]
+            isOneToOne: false
+            referencedRelation: "admins_with_user_info"
             referencedColumns: ["id"]
           },
           {
@@ -481,11 +423,12 @@ export type Database = {
       }
       bookings: {
         Row: {
+          advance_amount: number | null
           cancellation_reason: string | null
           created_at: string | null
           distance_km: number | null
           driver_id: string | null
-          dropoff_address: string | null
+          dropoff_address: string
           dropoff_latitude: number | null
           dropoff_location_id: string | null
           dropoff_longitude: number | null
@@ -500,20 +443,23 @@ export type Database = {
           is_shared: boolean | null
           no_show_reason: string | null
           package_hours: number | null
+          passengers: number | null
           payment_method: string | null
           payment_status:
             | Database["public"]["Enums"]["payment_status_enum"]
             | null
-          pickup_address: string | null
+          pickup_address: string
           pickup_latitude: number | null
           pickup_location_id: string | null
           pickup_longitude: number | null
+          remaining_amount: number | null
           rental_package_id: string | null
           return_scheduled_time: string | null
           ride_type:
             | Database["public"]["Enums"]["booking_ride_type_enum"]
             | null
           scheduled_time: string | null
+          service_type: string | null
           service_type_id: string | null
           sharing_group_id: string | null
           special_instructions: string | null
@@ -523,20 +469,19 @@ export type Database = {
           trip_type: string | null
           updated_at: string | null
           upgrade_charges: number | null
-          user_id: string | null
+          user_id: string
           vehicle_id: string | null
           vehicle_type: string | null
           waiting_time_minutes: number | null
           zone_pricing_id: string | null
-          advance_amount: number | null
-          remaining_amount: number | null
         }
         Insert: {
+          advance_amount?: number | null
           cancellation_reason?: string | null
           created_at?: string | null
           distance_km?: number | null
           driver_id?: string | null
-          dropoff_address?: string | null
+          dropoff_address: string
           dropoff_latitude?: number | null
           dropoff_location_id?: string | null
           dropoff_longitude?: number | null
@@ -551,20 +496,23 @@ export type Database = {
           is_shared?: boolean | null
           no_show_reason?: string | null
           package_hours?: number | null
+          passengers?: number | null
           payment_method?: string | null
           payment_status?:
             | Database["public"]["Enums"]["payment_status_enum"]
             | null
-          pickup_address?: string | null
+          pickup_address: string
           pickup_latitude?: number | null
           pickup_location_id?: string | null
           pickup_longitude?: number | null
+          remaining_amount?: number | null
           rental_package_id?: string | null
           return_scheduled_time?: string | null
           ride_type?:
             | Database["public"]["Enums"]["booking_ride_type_enum"]
             | null
           scheduled_time?: string | null
+          service_type?: string | null
           service_type_id?: string | null
           sharing_group_id?: string | null
           special_instructions?: string | null
@@ -574,18 +522,19 @@ export type Database = {
           trip_type?: string | null
           updated_at?: string | null
           upgrade_charges?: number | null
-          user_id?: string | null
+          user_id: string
           vehicle_id?: string | null
           vehicle_type?: string | null
           waiting_time_minutes?: number | null
           zone_pricing_id?: string | null
         }
         Update: {
+          advance_amount?: number | null
           cancellation_reason?: string | null
           created_at?: string | null
           distance_km?: number | null
           driver_id?: string | null
-          dropoff_address?: string | null
+          dropoff_address?: string
           dropoff_latitude?: number | null
           dropoff_location_id?: string | null
           dropoff_longitude?: number | null
@@ -600,20 +549,23 @@ export type Database = {
           is_shared?: boolean | null
           no_show_reason?: string | null
           package_hours?: number | null
+          passengers?: number | null
           payment_method?: string | null
           payment_status?:
             | Database["public"]["Enums"]["payment_status_enum"]
             | null
-          pickup_address?: string | null
+          pickup_address?: string
           pickup_latitude?: number | null
           pickup_location_id?: string | null
           pickup_longitude?: number | null
+          remaining_amount?: number | null
           rental_package_id?: string | null
           return_scheduled_time?: string | null
           ride_type?:
             | Database["public"]["Enums"]["booking_ride_type_enum"]
             | null
           scheduled_time?: string | null
+          service_type?: string | null
           service_type_id?: string | null
           sharing_group_id?: string | null
           special_instructions?: string | null
@@ -623,7 +575,7 @@ export type Database = {
           trip_type?: string | null
           updated_at?: string | null
           upgrade_charges?: number | null
-          user_id?: string | null
+          user_id?: string
           vehicle_id?: string | null
           vehicle_type?: string | null
           waiting_time_minutes?: number | null
@@ -636,6 +588,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "drivers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers_with_user_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_with_driver_details"
+            referencedColumns: ["driver_id"]
           },
           {
             foreignKeyName: "bookings_dropoff_location_id_fkey"
@@ -677,6 +643,13 @@ export type Database = {
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_with_driver_details"
             referencedColumns: ["id"]
           },
           {
@@ -805,6 +778,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "communication_threads_assigned_admin_id_fkey"
+            columns: ["assigned_admin_id"]
+            isOneToOne: false
+            referencedRelation: "admins_with_user_info"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "communication_threads_booking_id_fkey"
             columns: ["booking_id"]
             isOneToOne: false
@@ -833,11 +813,32 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "communication_threads_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers_with_user_info"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "communication_threads_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
             referencedRelation: "drivers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_threads_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers_with_user_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_threads_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_with_driver_details"
+            referencedColumns: ["driver_id"]
           },
         ]
       }
@@ -913,6 +914,13 @@ export type Database = {
             referencedRelation: "customers"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "customer_saved_locations_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers_with_user_info"
+            referencedColumns: ["id"]
+          },
         ]
       }
       customers: {
@@ -946,6 +954,13 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "customers_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customers_user_id_fkey"
             columns: ["id"]
             isOneToOne: true
             referencedRelation: "users"
@@ -1005,10 +1020,31 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "driver_maintenance_logs_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers_with_user_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_maintenance_logs_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_with_driver_details"
+            referencedColumns: ["driver_id"]
+          },
+          {
             foreignKeyName: "driver_maintenance_logs_vehicle_id_fkey"
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "driver_maintenance_logs_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_with_driver_details"
             referencedColumns: ["id"]
           },
         ]
@@ -1065,6 +1101,13 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "drivers_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drivers_user_id_fkey"
             columns: ["id"]
             isOneToOne: true
             referencedRelation: "users"
@@ -1150,42 +1193,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      feedback: {
-        Row: {
-          contact_info: string | null
-          created_at: string | null
-          description: string
-          feedback_type: string
-          id: number
-          image_urls: string[] | null
-          issue_type: string | null
-          status: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          contact_info?: string | null
-          created_at?: string | null
-          description: string
-          feedback_type: string
-          id?: number
-          image_urls?: string[] | null
-          issue_type?: string | null
-          status?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          contact_info?: string | null
-          created_at?: string | null
-          description?: string
-          feedback_type?: string
-          id?: number
-          image_urls?: string[] | null
-          issue_type?: string | null
-          status?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
       }
       feedback_actions: {
         Row: {
@@ -1749,6 +1756,7 @@ export type Database = {
           service_type_id: string
           surge_multiplier: number | null
           updated_at: string
+          vehicle_type: string | null
           vehicle_type_id: string | null
           waiting_charges_per_minute: number | null
         }
@@ -1768,6 +1776,7 @@ export type Database = {
           service_type_id: string
           surge_multiplier?: number | null
           updated_at?: string
+          vehicle_type?: string | null
           vehicle_type_id?: string | null
           waiting_charges_per_minute?: number | null
         }
@@ -1787,6 +1796,7 @@ export type Database = {
           service_type_id?: string
           surge_multiplier?: number | null
           updated_at?: string
+          vehicle_type?: string | null
           vehicle_type_id?: string | null
           waiting_charges_per_minute?: number | null
         }
@@ -2496,6 +2506,13 @@ export type Database = {
             referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "vehicle_alerts_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_with_driver_details"
+            referencedColumns: ["id"]
+          },
         ]
       }
       vehicle_documents: {
@@ -2541,6 +2558,13 @@ export type Database = {
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_documents_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_with_driver_details"
             referencedColumns: ["id"]
           },
         ]
@@ -2605,6 +2629,13 @@ export type Database = {
             referencedRelation: "vehicles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "vehicle_maintenance_logs_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_with_driver_details"
+            referencedColumns: ["id"]
+          },
         ]
       }
       vehicle_performance: {
@@ -2650,6 +2681,13 @@ export type Database = {
             columns: ["vehicle_id"]
             isOneToOne: false
             referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_performance_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_with_driver_details"
             referencedColumns: ["id"]
           },
         ]
@@ -2719,6 +2757,7 @@ export type Database = {
           pollution_certificate_url: string | null
           registration_document_url: string | null
           status: Database["public"]["Enums"]["vehicle_status_enum"] | null
+          type: string | null
           updated_at: string | null
           vehicle_type_id: string | null
           vendor_id: string | null
@@ -2743,6 +2782,7 @@ export type Database = {
           pollution_certificate_url?: string | null
           registration_document_url?: string | null
           status?: Database["public"]["Enums"]["vehicle_status_enum"] | null
+          type?: string | null
           updated_at?: string | null
           vehicle_type_id?: string | null
           vendor_id?: string | null
@@ -2767,6 +2807,7 @@ export type Database = {
           pollution_certificate_url?: string | null
           registration_document_url?: string | null
           status?: Database["public"]["Enums"]["vehicle_status_enum"] | null
+          type?: string | null
           updated_at?: string | null
           vehicle_type_id?: string | null
           vendor_id?: string | null
@@ -2774,11 +2815,53 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "vehicles_assigned_driver_fkey"
+            columns: ["assigned_driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicles_assigned_driver_fkey"
+            columns: ["assigned_driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers_with_user_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicles_assigned_driver_fkey"
+            columns: ["assigned_driver_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_with_driver_details"
+            referencedColumns: ["driver_id"]
+          },
+          {
             foreignKeyName: "vehicles_assigned_driver_id_fkey"
             columns: ["assigned_driver_id"]
             isOneToOne: false
             referencedRelation: "drivers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicles_assigned_driver_id_fkey"
+            columns: ["assigned_driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers_with_user_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicles_assigned_driver_id_fkey"
+            columns: ["assigned_driver_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_with_driver_details"
+            referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "vehicles_type_fkey"
+            columns: ["type"]
+            isOneToOne: false
+            referencedRelation: "vehicle_types"
+            referencedColumns: ["name"]
           },
           {
             foreignKeyName: "vehicles_vehicle_type_id_fkey"
@@ -3018,32 +3101,222 @@ export type Database = {
         }
         Relationships: []
       }
+      admins_with_user_info: {
+        Row: {
+          assigned_region: string | null
+          can_approve_bookings: boolean | null
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string | null
+          phone_no: string | null
+          profile_picture_url: string | null
+          updated_at: string | null
+          user_status: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admins_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admins_user_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customers_with_user_info: {
+        Row: {
+          created_at: string | null
+          dob: string | null
+          email: string | null
+          full_name: string | null
+          id: string | null
+          loyalty_points: number | null
+          phone_no: string | null
+          preferred_payment_method: string | null
+          profile_picture_url: string | null
+          referral_code: string | null
+          updated_at: string | null
+          user_status: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customers_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "customers_user_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      drivers_with_user_info: {
+        Row: {
+          created_at: string | null
+          current_latitude: number | null
+          current_longitude: number | null
+          email: string | null
+          full_name: string | null
+          id: string | null
+          id_proof_document_url: string | null
+          joined_on: string | null
+          kyc_status: string | null
+          license_document_url: string | null
+          license_number: string | null
+          phone_no: string | null
+          profile_picture_url: string | null
+          rating: number | null
+          rejection_reason: string | null
+          status: Database["public"]["Enums"]["driver_status_enum"] | null
+          total_rides: number | null
+          updated_at: string | null
+          user_status: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drivers_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drivers_user_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicles_with_driver_details: {
+        Row: {
+          assigned_driver_id: string | null
+          driver_email: string | null
+          driver_id: string | null
+          driver_name: string | null
+          driver_phone: string | null
+          driver_profile_picture_url: string | null
+          driver_status:
+            | Database["public"]["Enums"]["driver_status_enum"]
+            | null
+          id: string | null
+          is_available: boolean | null
+          license_plate: string | null
+          make: string | null
+          model: string | null
+          rating: number | null
+          total_rides: number | null
+          type: string | null
+          vehicle_status:
+            | Database["public"]["Enums"]["vehicle_status_enum"]
+            | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "drivers_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "drivers_user_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicles_assigned_driver_fkey"
+            columns: ["assigned_driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicles_assigned_driver_fkey"
+            columns: ["assigned_driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers_with_user_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicles_assigned_driver_fkey"
+            columns: ["assigned_driver_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_with_driver_details"
+            referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "vehicles_assigned_driver_id_fkey"
+            columns: ["assigned_driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicles_assigned_driver_id_fkey"
+            columns: ["assigned_driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers_with_user_info"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicles_assigned_driver_id_fkey"
+            columns: ["assigned_driver_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles_with_driver_details"
+            referencedColumns: ["driver_id"]
+          },
+          {
+            foreignKeyName: "vehicles_type_fkey"
+            columns: ["type"]
+            isOneToOne: false
+            referencedRelation: "vehicle_types"
+            referencedColumns: ["name"]
+          },
+        ]
+      }
     }
     Functions: {
       auto_assign_nearest_driver: {
         Args: {
           booking_id: string
+          max_distance_km?: number
           pickup_latitude: number
           pickup_longitude: number
-          max_distance_km?: number
         }
         Returns: string
       }
       calculate_booking_fare: {
         Args: {
-          service_type_id: string
-          vehicle_type: string
           distance_km: number
           duration_minutes?: number
+          service_type_id: string
           surge_multiplier?: number
+          vehicle_type: string
         }
         Returns: number
       }
       change_user_role: {
         Args: {
-          user_uuid: string
           admin_uuid: string
           new_role: Database["public"]["Enums"]["user_role_enum"]
+          user_uuid: string
         }
         Returns: boolean
       }
@@ -3052,7 +3325,7 @@ export type Database = {
         Returns: number
       }
       complete_phone_verification: {
-        Args: { p_user_id: string; p_phone_number: string }
+        Args: { p_phone_number: string; p_user_id: string }
         Returns: boolean
       }
       create_phone_verification: {
@@ -3060,8 +3333,8 @@ export type Database = {
           | { p_phone_number: string }
           | { p_phone_number: string; p_user_id: string }
         Returns: {
-          verification_id: string
           otp_code: string
+          verification_id: string
         }[]
       }
       generate_otp: {
@@ -3073,106 +3346,110 @@ export type Database = {
         Returns: string
       }
       get_booking_analytics: {
-        Args: { start_date?: string; end_date?: string }
+        Args: { end_date?: string; start_date?: string }
         Returns: {
-          total_bookings: number
-          completed_bookings: number
-          cancelled_bookings: number
-          pending_bookings: number
-          completion_rate: number
           booking_trends: Json
-          ride_type_distribution: Json
+          cancelled_bookings: number
+          completed_bookings: number
+          completion_rate: number
           hourly_distribution: Json
+          pending_bookings: number
+          ride_type_distribution: Json
+          total_bookings: number
         }[]
       }
       get_customer_analytics: {
-        Args: { start_date?: string; end_date?: string }
+        Args: { end_date?: string; start_date?: string }
         Returns: {
-          total_customers: number
+          customer_acquisition_trend: Json
+          customer_retention_rate: number
           new_customers: number
           repeat_customers: number
-          customer_retention_rate: number
           top_customers: Json
-          customer_acquisition_trend: Json
+          total_customers: number
         }[]
       }
       get_driver_performance: {
         Args: { driver_id: string; period_days?: number }
         Returns: {
-          total_trips: number
-          completed_trips: number
-          cancelled_trips: number
-          total_earnings: number
-          average_rating: number
           acceptance_rate: number
+          average_rating: number
+          cancelled_trips: number
+          completed_trips: number
           online_hours: number
+          total_earnings: number
+          total_trips: number
         }[]
       }
       get_driver_performance_analytics: {
-        Args: { start_date?: string; end_date?: string }
+        Args: { end_date?: string; start_date?: string }
         Returns: {
-          total_active_drivers: number
           average_rating: number
-          top_drivers: Json
-          driver_status_distribution: Json
           driver_earnings: Json
+          driver_status_distribution: Json
+          top_drivers: Json
+          total_active_drivers: number
         }[]
       }
       get_driver_rides: {
         Args: { driver_uuid: string }
         Returns: {
+          created_at: string
+          dropoff_address: string
+          end_time: string
+          fare_amount: number
           id: string
           pickup_address: string
-          dropoff_address: string
-          fare_amount: number
-          status: Database["public"]["Enums"]["booking_status_enum"]
-          created_at: string
           start_time: string
-          end_time: string
+          status: Database["public"]["Enums"]["booking_status_enum"]
         }[]
       }
       get_notification_analytics: {
-        Args: { start_date?: string; end_date?: string }
+        Args: { end_date?: string; start_date?: string }
         Returns: {
-          total_sent: number
-          total_delivered: number
-          total_failed: number
-          delivery_rate: number
           channel_breakdown: Json
           daily_stats: Json
+          delivery_rate: number
+          total_delivered: number
+          total_failed: number
+          total_sent: number
         }[]
       }
       get_revenue_analytics: {
-        Args: { start_date?: string; end_date?: string }
+        Args: { end_date?: string; start_date?: string }
         Returns: {
-          total_revenue: number
-          completed_bookings: number
           average_fare: number
-          revenue_growth_percentage: number
+          completed_bookings: number
           daily_revenue: Json
+          revenue_growth_percentage: number
+          total_revenue: number
         }[]
       }
       get_service_performance_analytics: {
-        Args: { start_date?: string; end_date?: string }
+        Args: { end_date?: string; start_date?: string }
         Returns: {
-          average_trip_duration: number
           average_distance: number
-          service_efficiency_score: number
-          popular_routes: Json
-          vehicle_utilization: Json
+          average_trip_duration: number
           maintenance_insights: Json
+          popular_routes: Json
+          service_efficiency_score: number
+          vehicle_utilization: Json
         }[]
       }
       get_settings_by_category: {
         Args: { category_name: string }
         Returns: {
-          setting_key: string
-          setting_value: Json
-          setting_type: string
-          display_name: string
           description: string
+          display_name: string
           is_active: boolean
+          setting_key: string
+          setting_type: string
+          setting_value: Json
         }[]
+      }
+      get_user_profile: {
+        Args: { user_uuid: string }
+        Returns: Json
       }
       get_user_role: {
         Args: { user_uuid: string }
@@ -3181,32 +3458,32 @@ export type Database = {
       get_user_stats: {
         Args: { user_id: string }
         Returns: {
-          total_bookings: number
-          completed_trips: number
-          cancelled_trips: number
-          total_spent: number
           average_rating: number
+          cancelled_trips: number
+          completed_trips: number
           last_trip_date: string
+          total_bookings: number
+          total_spent: number
         }[]
       }
       process_wallet_transaction: {
         Args: {
-          wallet_id: string
           amount: number
-          transaction_type: string
           description?: string
+          transaction_type: string
+          wallet_id: string
         }
         Returns: string
       }
       send_notification: {
         Args: {
-          p_user_id: string
-          p_channel: Database["public"]["Enums"]["notification_channel_enum"]
-          p_title: string
-          p_message: string
-          p_template_id?: string
           p_campaign_id?: string
+          p_channel: Database["public"]["Enums"]["notification_channel_enum"]
+          p_message: string
           p_metadata?: Json
+          p_template_id?: string
+          p_title: string
+          p_user_id: string
         }
         Returns: string
       }
@@ -3215,15 +3492,15 @@ export type Database = {
         Returns: number
       }
       soft_delete_user: {
-        Args: { user_uuid: string; admin_uuid: string }
+        Args: { admin_uuid: string; user_uuid: string }
         Returns: boolean
       }
       toggle_user_block: {
         Args: {
-          user_uuid: string
-          admin_uuid: string
           action: string
+          admin_uuid: string
           reason?: string
+          user_uuid: string
         }
         Returns: boolean
       }
@@ -3238,8 +3515,8 @@ export type Database = {
       }
       verify_phone_otp: {
         Args:
-          | { p_phone_number: string; p_otp_code: string }
-          | { p_phone_number: string; p_otp_code: string; p_user_id: string }
+          | { p_otp_code: string; p_phone_number: string }
+          | { p_otp_code: string; p_phone_number: string; p_user_id: string }
         Returns: boolean
       }
     }
@@ -3253,7 +3530,7 @@ export type Database = {
         | "completed"
         | "cancelled"
         | "no_driver"
-      driver_status_enum: "active" | "inactive" | "on_break"
+      driver_status_enum: "active" | "inactive" | "suspended" | "on_ride"
       maintenance_log_status_enum: "pending" | "completed"
       notification_channel_enum:
         | "in_app"
@@ -3407,7 +3684,7 @@ export const Constants = {
         "cancelled",
         "no_driver",
       ],
-      driver_status_enum: ["active", "inactive", "on_break"],
+      driver_status_enum: ["active", "inactive", "suspended", "on_ride"],
       maintenance_log_status_enum: ["pending", "completed"],
       notification_channel_enum: ["in_app", "sms", "whatsapp", "call", "email"],
       payment_status_enum: ["pending", "paid", "failed"],

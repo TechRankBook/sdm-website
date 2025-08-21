@@ -21,9 +21,15 @@ interface BookingDetails {
   payment_status: string;
   payment_method: string;
   created_at: string;
+  scheduled_time: string;
   start_time: string;
   end_time: string;
   vehicle_type: string;
+  service_type: string;
+  trip_type: string;
+  passengers: number;
+  advance_amount: number;
+  remaining_amount: number;
   special_instructions: string;
   distance_km: number;
   waiting_time_minutes: number;
@@ -206,6 +212,19 @@ export const TripDetailsModal = ({ isOpen, onClose, bookingId }: TripDetailsModa
               Trip Information
             </h3>
             <div className="grid gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Service Type</p>
+                  <p className="font-medium capitalize">{booking.service_type?.replace('_', ' ') || 'Standard'}</p>
+                </div>
+                {booking.trip_type && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Trip Type</p>
+                    <p className="font-medium capitalize">{booking.trip_type}</p>
+                  </div>
+                )}
+              </div>
+              
               <div className="flex items-start gap-3">
                 <MapPin className="w-4 h-4 text-green-500 mt-1 flex-shrink-0" />
                 <div>
@@ -220,12 +239,32 @@ export const TripDetailsModal = ({ isOpen, onClose, bookingId }: TripDetailsModa
                   <p className="font-medium">{booking.dropoff_address}</p>
                 </div>
               </div>
+              
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center gap-2">
                   <Calendar className="w-4 h-4 text-primary" />
                   <div>
                     <p className="text-sm text-muted-foreground">Booking Time</p>
                     <p className="text-sm font-medium">{formatDateTime(booking.created_at)}</p>
+                  </div>
+                </div>
+                {booking.scheduled_time && (
+                  <div className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-accent" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Scheduled Time</p>
+                      <p className="text-sm font-medium">{formatDateTime(booking.scheduled_time)}</p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center gap-2">
+                  <User className="w-4 h-4 text-primary" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Passengers</p>
+                    <p className="text-sm font-medium">{booking.passengers || 1}</p>
                   </div>
                 </div>
                 {booking.start_time && (
@@ -301,7 +340,7 @@ export const TripDetailsModal = ({ isOpen, onClose, bookingId }: TripDetailsModa
           {/* Payment Information */}
           <div className="space-y-4">
             <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground">
-              Payment Details
+              Payment Details & Fare Breakdown
             </h3>
             <div className="grid gap-4">
               <div className="flex items-center gap-3">
@@ -311,6 +350,24 @@ export const TripDetailsModal = ({ isOpen, onClose, bookingId }: TripDetailsModa
                   <p className="text-lg font-bold">₹{booking.fare_amount}</p>
                 </div>
               </div>
+              
+              {(booking.advance_amount || booking.remaining_amount) && (
+                <div className="grid grid-cols-2 gap-4">
+                  {booking.advance_amount && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Advance Paid</p>
+                      <p className="text-sm font-medium text-green-600">₹{booking.advance_amount}</p>
+                    </div>
+                  )}
+                  {booking.remaining_amount && (
+                    <div>
+                      <p className="text-sm text-muted-foreground">Remaining Amount</p>
+                      <p className="text-sm font-medium text-orange-600">₹{booking.remaining_amount}</p>
+                    </div>
+                  )}
+                </div>
+              )}
+              
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center gap-2">
                   <CreditCard className="w-4 h-4 text-primary" />

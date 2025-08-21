@@ -82,7 +82,10 @@ export const VehicleSelection = ({
         price: fareData?.totalFare || 0
       },
       distanceKm: routeData?.distanceKm || 0,
-      durationMinutes: routeData?.durationMinutes || 0
+      durationMinutes: routeData?.durationMinutes || 0,
+      // Ensure passengers count is preserved
+      passengers: bookingData.passengers || 1,
+      serviceType: bookingData.serviceType
     });
     onNext();
   };

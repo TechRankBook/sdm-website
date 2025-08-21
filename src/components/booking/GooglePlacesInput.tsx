@@ -88,6 +88,26 @@ export const GooglePlacesInput = ({
     try {
       const details = await places.placeDetails(place.place_id, sessionToken);
       if (details) {
+        // Check if location is within Mysore or Bangalore (simple check using formatted address)
+        const address = details.formatted_address?.toLowerCase() || '';
+        const description = place.description?.toLowerCase() || '';
+        
+        const isMysoreOrBangalore = 
+          address.includes('mysore') || address.includes('mysuru') ||
+          address.includes('bangalore') || address.includes('bengaluru') ||
+          description.includes('mysore') || description.includes('mysuru') ||
+          description.includes('bangalore') || description.includes('bengaluru');
+        
+        const isKarnataka = address.includes('karnataka') || description.includes('karnataka');
+        
+        if (!isKarnataka || !isMysoreOrBangalore) {
+          // Show error message for unsupported location
+          const errorMessage = "Service not available in this location yet.";
+          onChange(errorMessage);
+          setShowSuggestions(false);
+          return;
+        }
+        
         const selectedPlace: Place = {
           place_id: details.place_id,
           description: place.description,
