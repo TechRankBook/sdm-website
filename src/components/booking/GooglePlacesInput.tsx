@@ -64,8 +64,22 @@ export const GooglePlacesInput = ({
       const res = await places.autocomplete(input, sessionToken);
       if (res) {
         setSessionToken(res.sessiontoken);
-        setSuggestions((res.predictions || []).slice(0, 5));
-        setShowSuggestions((res.predictions || []).length > 0);
+        
+        // Filter suggestions to only include Mysore and Bangalore locations
+        const filteredPredictions = (res.predictions || []).filter((place: any) => {
+          const description = place.description?.toLowerCase() || '';
+          
+          const isMysoreOrBangalore = 
+            description.includes('mysore') || description.includes('mysuru') ||
+            description.includes('bangalore') || description.includes('bengaluru');
+          
+          const isKarnataka = description.includes('karnataka');
+          
+          return isKarnataka && isMysoreOrBangalore;
+        }).slice(0, 5);
+        
+        setSuggestions(filteredPredictions);
+        setShowSuggestions(filteredPredictions.length > 0);
       } else {
         setSuggestions([]);
         setShowSuggestions(false);

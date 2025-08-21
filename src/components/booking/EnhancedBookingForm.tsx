@@ -356,12 +356,34 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
   ]);
 
   const handleVehicleSelection = (vehicleType: string, fareData: any) => {
+    // Create proper timezone-aware datetime strings in IST
     const dateTime = selectedDate && selectedTime 
-      ? `${format(selectedDate, "yyyy-MM-dd")} ${selectedTime}`
+      ? (() => {
+          const [hours, minutes] = selectedTime.split(':');
+          const localDate = new Date(selectedDate);
+          localDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+          // Format as ISO string but preserve local timezone
+          const year = localDate.getFullYear();
+          const month = String(localDate.getMonth() + 1).padStart(2, '0');
+          const day = String(localDate.getDate()).padStart(2, '0');
+          const hour = String(localDate.getHours()).padStart(2, '0');
+          const minute = String(localDate.getMinutes()).padStart(2, '0');
+          return `${year}-${month}-${day} ${hour}:${minute}:00`;
+        })()
       : "";
     
     const returnDateTime = returnDate && returnTime && isRoundTrip
-      ? `${format(returnDate, "yyyy-MM-dd")} ${returnTime}`
+      ? (() => {
+          const [hours, minutes] = returnTime.split(':');
+          const localDate = new Date(returnDate);
+          localDate.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+          const year = localDate.getFullYear();
+          const month = String(localDate.getMonth() + 1).padStart(2, '0');
+          const day = String(localDate.getDate()).padStart(2, '0');
+          const hour = String(localDate.getHours()).padStart(2, '0');
+          const minute = String(localDate.getMinutes()).padStart(2, '0');
+          return `${year}-${month}-${day} ${hour}:${minute}:00`;
+        })()
       : "";
       
     // Make sure special instructions are up to date
@@ -601,7 +623,12 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                     mode="single"
                     selected={selectedDate}
                     onSelect={setSelectedDate}
-                    disabled={(date) => date < new Date()}
+                    disabled={(date) => {
+                      const now = new Date();
+                      const tomorrow = new Date(now);
+                      tomorrow.setDate(now.getDate() + 1);
+                      return date < tomorrow;
+                    }}
                     initialFocus
                     className="p-3 pointer-events-auto"
                   />
@@ -625,20 +652,38 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                       "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
                       "15:00", "15:30", "16:00", "16:30", "17:00", "17:30",
                       "18:00", "18:30", "19:00", "19:30", "20:00", "20:30"
-                    ].map((time) => (
-                      <Button
-                        key={time}
-                        variant={selectedTime === time ? "default" : "ghost"}
-                        size="sm"
-                        className={cn(
-                          "text-sm",
-                          selectedTime === time ? "bg-gradient-primary" : ""
-                        )}
-                        onClick={() => setSelectedTime(time)}
-                      >
-                        {time}
-                      </Button>
-                    ))}
+                    ].map((time) => {
+                      // Check if this time slot is within 24 hours from now
+                      const isTimeDisabled = (() => {
+                        if (!selectedDate) return false;
+                        
+                        const now = new Date();
+                        const selectedDateTime = new Date(selectedDate);
+                        const [hours, minutes] = time.split(':');
+                        selectedDateTime.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+                        
+                        // Disable if selected time is within 24 hours from now
+                        const hoursDifference = (selectedDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+                        return hoursDifference < 24;
+                      })();
+
+                      return (
+                        <Button
+                          key={time}
+                          variant={selectedTime === time ? "default" : "ghost"}
+                          size="sm"
+                          disabled={isTimeDisabled}
+                          className={cn(
+                            "text-sm",
+                            selectedTime === time ? "bg-gradient-primary" : "",
+                            isTimeDisabled ? "opacity-50 cursor-not-allowed" : ""
+                          )}
+                          onClick={() => setSelectedTime(time)}
+                        >
+                          {time}
+                        </Button>
+                      );
+                    })}
                   </div>
                 </PopoverContent>
               </Popover>
@@ -662,7 +707,12 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                       mode="single"
                       selected={returnDate}
                       onSelect={setReturnDate}
-                      disabled={(date) => date < new Date() || (selectedDate && date <= selectedDate)}
+                      disabled={(date) => {
+                        const now = new Date();
+                        const tomorrow = new Date(now);
+                        tomorrow.setDate(now.getDate() + 1);
+                        return date < tomorrow || (selectedDate && date <= selectedDate);
+                      }}
                       initialFocus
                       className="p-3 pointer-events-auto"
                     />
