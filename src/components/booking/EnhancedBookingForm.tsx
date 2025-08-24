@@ -90,9 +90,25 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
   const [showSpecialInstructions, setShowSpecialInstructions] = useState(false);
   const [preferSharing, setPreferSharing] = useState(false);
   const [selectedAirportTerminal, setSelectedAirportTerminal] = useState("");
+  const [pickupTerminal, setPickupTerminal] = useState("");
+  const [dropoffTerminal, setDropoffTerminal] = useState("");
   const [pickupLocationError, setPickupLocationError] = useState("");
   const [dropoffLocationError, setDropoffLocationError] = useState("");
   const [dateTimeError, setDateTimeError] = useState("");
+
+  // Airport terminal coordinates
+  const airportTerminals = {
+    "terminal1": {
+      name: "Terminal 1 – Kempegowda International Airport",
+      address: "Terminal 1, Kempegowda International Airport, Devanahalli, Bengaluru, Karnataka 560300, India",
+      coordinates: { lat: 13.1986, lng: 77.7066 }
+    },
+    "terminal2": {
+      name: "Terminal 2 – Kempegowda International Airport", 
+      address: "Terminal 2, Kempegowda International Airport, Devanahalli, Bengaluru, Karnataka 560300, India",
+      coordinates: { lat: 13.1979, lng: 77.7064 }
+    }
+  };
   
   // Location coordinates
   const [pickupCoords, setPickupCoords] = useState<LocationData | null>(() => {
@@ -284,6 +300,30 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
       lng: place.geometry.location.lng,
       address: place.description
     });
+  };
+
+  const handlePickupTerminalSelect = (terminal: string) => {
+    setPickupTerminal(terminal);
+    const terminalData = airportTerminals[terminal as keyof typeof airportTerminals];
+    setPickupLocation(terminalData.address);
+    setPickupCoords({
+      lat: terminalData.coordinates.lat,
+      lng: terminalData.coordinates.lng,
+      address: terminalData.address
+    });
+    setPickupLocationError("");
+  };
+
+  const handleDropoffTerminalSelect = (terminal: string) => {
+    setDropoffTerminal(terminal);
+    const terminalData = airportTerminals[terminal as keyof typeof airportTerminals];
+    setDropoffLocation(terminalData.address);
+    setDropoffCoords({
+      lat: terminalData.coordinates.lat,
+      lng: terminalData.coordinates.lng,
+      address: terminalData.address
+    });
+    setDropoffLocationError("");
   };
 
   const handleDropoffSelect = (place: any) => {
@@ -483,7 +523,7 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
       parts.push("Traveling with pet");
     }
     
-    if (preferSharing) {
+    if (preferSharing && serviceType === "airport") {
       parts.push("Preferred sharing for cost-effective travel");
     }
     
@@ -628,14 +668,56 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
 
           {/* Location Inputs */}
           <div className="space-y-4 mb-6">
-            <GooglePlacesInput
-              placeholder="Pick-up location"
-              value={pickupLocation}
-              onChange={(value) => setPickupLocation(value)}
-              onPlaceSelect={handlePickupSelect}
-              icon="pickup"
-              showCurrentLocation={true}
-            />
+            {serviceType === "airport" && tripType === "pickup" ? (
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">Select Pickup Terminal</Label>
+                <div className="space-y-2">
+                  {Object.entries(airportTerminals).map(([key, terminal]) => (
+                    <div
+                      key={key}
+                      className={cn(
+                        "p-3 border rounded-lg cursor-pointer transition-all",
+                        pickupTerminal === key
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/50"
+                      )}
+                      onClick={() => handlePickupTerminalSelect(key)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "w-4 h-4 border-2 rounded-full",
+                          pickupTerminal === key
+                            ? "border-primary bg-primary"
+                            : "border-border"
+                        )} />
+                        <span className="font-medium">{terminal.name}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {pickupLocationError && (
+                  <p className="text-xs text-destructive mt-1 px-1">
+                    {pickupLocationError}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div>
+                <GooglePlacesInput
+                  placeholder="Pick-up location"
+                  value={pickupLocation}
+                  onChange={(value) => setPickupLocation(value)}
+                  onPlaceSelect={handlePickupSelect}
+                  icon="pickup"
+                  showCurrentLocation={true}
+                />
+                {pickupLocationError && (
+                  <p className="text-xs text-destructive mt-1 px-1">
+                    {pickupLocationError}
+                  </p>
+                )}
+              </div>
+            )}
 
             {serviceType === "car_rental" ? (
               <div className="relative">
@@ -650,33 +732,60 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
               </div>
             ) : (
               <div>
-                <GooglePlacesInput
-                  placeholder={
-                    serviceType === "airport" && tripType === "drop" 
-                      ? "KIA (BLR)" 
-                      : "Drop-off location"
-                  }
-                  value={dropoffLocation}
-                  onChange={(value) => setDropoffLocation(value)}
-                  onPlaceSelect={handleDropoffSelect}
-                  icon="dropoff"
-                />
-                {/* Airport Terminal Selection */}
-                {serviceType === "airport" && dropoffLocation.toLowerCase().includes("airport") && (
-                  <div className="mt-2">
-                    <select 
-                      className="w-full p-3 rounded-lg glass border border-glass-border text-foreground bg-background"
-                      value={selectedAirportTerminal}
-                      onChange={(e) => setSelectedAirportTerminal(e.target.value)}
-                    >
-                      <option value="">Select Terminal</option>
-                      <option value="Terminal 1">Kempegowda International Airport – Terminal 1</option>
-                      <option value="Terminal 2">Kempegowda International Airport – Terminal 2</option>
-                    </select>
+                {serviceType === "airport" && tripType === "drop" ? (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium">Select Drop Terminal</Label>
+                    <div className="space-y-2">
+                      {Object.entries(airportTerminals).map(([key, terminal]) => (
+                        <div
+                          key={key}
+                          className={cn(
+                            "p-3 border rounded-lg cursor-pointer transition-all",
+                            dropoffTerminal === key
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/50"
+                          )}
+                          onClick={() => handleDropoffTerminalSelect(key)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={cn(
+                              "w-4 h-4 border-2 rounded-full",
+                              dropoffTerminal === key
+                                ? "border-primary bg-primary"
+                                : "border-border"
+                            )} />
+                            <span className="font-medium">
+                              {key === "terminal1" ? "Terminal 1" : "Terminal 2"}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    {dropoffLocationError && (
+                      <p className="text-xs text-destructive mt-1 px-1">
+                        {dropoffLocationError}
+                      </p>
+                    )}
                   </div>
-                )}
-                {dropoffLocationError && (
-                  <p className="text-destructive text-sm mt-1">{dropoffLocationError}</p>
+                ) : (
+                  <div>
+                    <GooglePlacesInput
+                      placeholder={
+                        serviceType === "airport" && tripType === "drop" 
+                          ? "KIA (BLR)" 
+                          : "Drop-off location"
+                      }
+                      value={dropoffLocation}
+                      onChange={(value) => setDropoffLocation(value)}
+                      onPlaceSelect={handleDropoffSelect}
+                      icon="dropoff"
+                    />
+                    {dropoffLocationError && (
+                      <p className="text-xs text-destructive mt-1 px-1">
+                        {dropoffLocationError}
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
             )}
@@ -981,23 +1090,25 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                   />
                 </div>
                 
-                {/* Cost Sharing Option */}
-                <div className="flex items-center justify-between mb-4 p-3 rounded-lg glass-hover">
-                  <div className="flex items-center gap-2">
-                    <Users className="w-5 h-5 text-primary" />
-                    <div>
-                      <span className="text-sm">Preferred Sharing for Cost-Effective Travel</span>
-                      <div className="text-xs text-muted-foreground">💡 Travel to the airport with shared rides and save up to 60%. T&C apply.</div>
+                {/* Cost Sharing Option - Only for Airport Taxi */}
+                {serviceType === "airport" && (
+                  <div className="flex items-center justify-between mb-4 p-3 rounded-lg glass-hover">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-5 h-5 text-primary" />
+                      <div>
+                        <span className="text-sm">Preferred Sharing for Cost-Effective Travel</span>
+                        <div className="text-xs text-muted-foreground">💡 Travel to the airport with shared rides and save up to 60%. T&C apply.</div>
+                      </div>
                     </div>
+                    <Switch 
+                      checked={preferSharing} 
+                      onCheckedChange={(checked) => {
+                        setPreferSharing(checked);
+                        setTimeout(updateSpecialInstructions, 0);
+                      }}
+                    />
                   </div>
-                  <Switch 
-                    checked={preferSharing} 
-                    onCheckedChange={(checked) => {
-                      setPreferSharing(checked);
-                      setTimeout(updateSpecialInstructions, 0);
-                    }}
-                  />
-                </div>
+                )}
 
                 {/* Airport Terminal Selection for Pickup */}
                 {serviceType === "airport" && tripType === "pickup" && (
