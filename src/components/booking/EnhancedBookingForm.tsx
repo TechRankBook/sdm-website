@@ -88,6 +88,11 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
   const [additionalInstructions, setAdditionalInstructions] = useState("");
   const [specialInstructions, setSpecialInstructions] = useState(bookingData.specialInstructions || "");
   const [showSpecialInstructions, setShowSpecialInstructions] = useState(false);
+  const [preferSharing, setPreferSharing] = useState(false);
+  const [selectedAirportTerminal, setSelectedAirportTerminal] = useState("");
+  const [pickupLocationError, setPickupLocationError] = useState("");
+  const [dropoffLocationError, setDropoffLocationError] = useState("");
+  const [dateTimeError, setDateTimeError] = useState("");
   
   // Location coordinates
   const [pickupCoords, setPickupCoords] = useState<LocationData | null>(() => {
@@ -262,6 +267,18 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
   });
 
   const handlePickupSelect = (place: any) => {
+    // Validate location radius for Mysore/Bangalore
+    const lat = place.geometry.location.lat;
+    const lng = place.geometry.location.lng;
+    
+    const isWithinRadius = validateLocationRadius(lat, lng);
+    if (!isWithinRadius) {
+      setPickupLocationError("❌ We're currently unavailable in this location. Please select a location near Mysore or Bangalore.");
+      return;
+    } else {
+      setPickupLocationError("");
+    }
+    
     setPickupCoords({
       lat: place.geometry.location.lat,
       lng: place.geometry.location.lng,
@@ -270,11 +287,45 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
   };
 
   const handleDropoffSelect = (place: any) => {
+    // Validate location radius for Mysore/Bangalore
+    const lat = place.geometry.location.lat;
+    const lng = place.geometry.location.lng;
+    
+    const isWithinRadius = validateLocationRadius(lat, lng);
+    if (!isWithinRadius) {
+      setDropoffLocationError("❌ We're currently unavailable in this location. Please select a location near Mysore or Bangalore.");
+      return;
+    } else {
+      setDropoffLocationError("");
+    }
+    
     setDropoffCoords({
       lat: place.geometry.location.lat,
       lng: place.geometry.location.lng,
       address: place.description
     });
+  };
+
+  // Function to validate location radius (within 50km of Mysore or Bangalore)
+  const validateLocationRadius = (lat: number, lng: number) => {
+    const mysoreCoords = { lat: 12.2958, lng: 76.6394 }; // Mysore coordinates
+    const bangaloreCoords = { lat: 12.9716, lng: 77.5946 }; // Bangalore coordinates
+    
+    const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => {
+      const R = 6371; // Earth's radius in kilometers
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLng = (lng2 - lng1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLng / 2) * Math.sin(dLng / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    };
+    
+    const distanceFromMysore = calculateDistance(lat, lng, mysoreCoords.lat, mysoreCoords.lng);
+    const distanceFromBangalore = calculateDistance(lat, lng, bangaloreCoords.lat, bangaloreCoords.lng);
+    
+    return distanceFromMysore <= 50 || distanceFromBangalore <= 50;
   };
 
   const handleRouteUpdate = (distance: string, duration: string, distanceValue: number, durationValue: number) => {
@@ -305,14 +356,33 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
         return;
       }
 
+      // Validate 6-hour advance booking rule
+      if (selectedDate && selectedTime) {
+        const now = new Date();
+        const selectedDateTime = new Date(selectedDate);
+        const [hours, minutes] = selectedTime.split(':').map(Number);
+        selectedDateTime.setHours(hours, minutes, 0, 0);
+        
+        const timeDiff = selectedDateTime.getTime() - now.getTime();
+        const hoursDiff = timeDiff / (1000 * 60 * 60);
+        
+        if (hoursDiff < 6) {
+          setDateTimeError("❌ You must book at least 6 hours in advance.");
+          return;
+        } else {
+          setDateTimeError("");
+        }
+      }
+
       console.log("✅ Form validation passed - preparing data...");
 
+      // Create datetime in local timezone to prevent date shifting
       const dateTime = selectedDate && selectedTime 
-        ? new Date(`${selectedDate.toISOString().split('T')[0]}T${selectedTime}`).toISOString()
+        ? `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}T${selectedTime}:00`
         : "";
       
       const returnDateTime = isRoundTrip && returnDate && returnTime
-        ? new Date(`${returnDate.toISOString().split('T')[0]}T${returnTime}`).toISOString()
+        ? `${returnDate.getFullYear()}-${String(returnDate.getMonth() + 1).padStart(2, '0')}-${String(returnDate.getDate()).padStart(2, '0')}T${returnTime}:00`
         : "";
 
       // Make sure special instructions are up to date
@@ -413,6 +483,14 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
       parts.push("Traveling with pet");
     }
     
+    if (preferSharing) {
+      parts.push("Preferred sharing for cost-effective travel");
+    }
+    
+    if (selectedAirportTerminal) {
+      parts.push(`Terminal: ${selectedAirportTerminal}`);
+    }
+    
     if (additionalInstructions.trim()) {
       parts.push(additionalInstructions.trim());
     }
@@ -425,7 +503,7 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
   // Update special instructions whenever any of the fields change
   useEffect(() => {
     updateSpecialInstructions();
-  }, [luggageCount, hasPet, additionalInstructions, showSpecialInstructions]);
+  }, [luggageCount, hasPet, additionalInstructions, showSpecialInstructions, preferSharing, selectedAirportTerminal]);
 
   return (
     <>
@@ -571,17 +649,41 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                 </Button>
               </div>
             ) : (
-              <GooglePlacesInput
-                placeholder={
-                  serviceType === "airport" && tripType === "drop" 
-                    ? "KIA (BLR)" 
-                    : "Drop-off location"
-                }
-                value={dropoffLocation}
-                onChange={(value) => setDropoffLocation(value)}
-                onPlaceSelect={handleDropoffSelect}
-                icon="dropoff"
-              />
+              <div>
+                <GooglePlacesInput
+                  placeholder={
+                    serviceType === "airport" && tripType === "drop" 
+                      ? "KIA (BLR)" 
+                      : "Drop-off location"
+                  }
+                  value={dropoffLocation}
+                  onChange={(value) => setDropoffLocation(value)}
+                  onPlaceSelect={handleDropoffSelect}
+                  icon="dropoff"
+                />
+                {/* Airport Terminal Selection */}
+                {serviceType === "airport" && dropoffLocation.toLowerCase().includes("airport") && (
+                  <div className="mt-2">
+                    <select 
+                      className="w-full p-3 rounded-lg glass border border-glass-border text-foreground bg-background"
+                      value={selectedAirportTerminal}
+                      onChange={(e) => setSelectedAirportTerminal(e.target.value)}
+                    >
+                      <option value="">Select Terminal</option>
+                      <option value="Terminal 1">Kempegowda International Airport – Terminal 1</option>
+                      <option value="Terminal 2">Kempegowda International Airport – Terminal 2</option>
+                    </select>
+                  </div>
+                )}
+                {dropoffLocationError && (
+                  <p className="text-destructive text-sm mt-1">{dropoffLocationError}</p>
+                )}
+              </div>
+            )}
+            
+            {/* Pickup Location Error */}
+            {pickupLocationError && (
+              <p className="text-destructive text-sm mt-1">{pickupLocationError}</p>
             )}
 
             {/* Date & Time Selection */}
@@ -600,8 +702,15 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                   <Calendar
                     mode="single"
                     selected={selectedDate}
-                    onSelect={setSelectedDate}
-                    disabled={(date) => date < new Date()}
+                    onSelect={(date) => {
+                      setSelectedDate(date);
+                      setDateTimeError(""); // Clear error when date changes
+                    }}
+                    disabled={(date) => {
+                      const now = new Date();
+                      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                      return date < today;
+                    }}
                     initialFocus
                     className="p-3 pointer-events-auto"
                   />
@@ -625,20 +734,46 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                       "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
                       "15:00", "15:30", "16:00", "16:30", "17:00", "17:30",
                       "18:00", "18:30", "19:00", "19:30", "20:00", "20:30"
-                    ].map((time) => (
-                      <Button
-                        key={time}
-                        variant={selectedTime === time ? "default" : "ghost"}
-                        size="sm"
-                        className={cn(
-                          "text-sm",
-                          selectedTime === time ? "bg-gradient-primary" : ""
-                        )}
-                        onClick={() => setSelectedTime(time)}
-                      >
-                        {time}
-                      </Button>
-                    ))}
+                      ].map((time) => {
+                        // Check if time slot is within 6 hours for today
+                        const isDisabled = selectedDate && selectedTime !== time ? (() => {
+                          const now = new Date();
+                          const selectedDateTime = new Date(selectedDate);
+                          const isToday = selectedDateTime.toDateString() === now.toDateString();
+                          
+                          if (isToday) {
+                            const [hours, minutes] = time.split(':').map(Number);
+                            const timeSlot = new Date(selectedDateTime);
+                            timeSlot.setHours(hours, minutes, 0, 0);
+                            
+                            const timeDiff = timeSlot.getTime() - now.getTime();
+                            const hoursDiff = timeDiff / (1000 * 60 * 60);
+                            
+                            return hoursDiff < 6;
+                          }
+                          return false;
+                        })() : false;
+
+                        return (
+                          <Button
+                            key={time}
+                            variant={selectedTime === time ? "default" : "ghost"}
+                            size="sm"
+                            className={cn(
+                              "text-sm",
+                              selectedTime === time ? "bg-gradient-primary" : "",
+                              isDisabled ? "opacity-50 cursor-not-allowed" : ""
+                            )}
+                            disabled={isDisabled}
+                            onClick={() => {
+                              setSelectedTime(time);
+                              setDateTimeError(""); // Clear error when time changes
+                            }}
+                          >
+                            {time}
+                          </Button>
+                        );
+                      })}
                   </div>
                 </PopoverContent>
               </Popover>
@@ -704,6 +839,11 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                   </PopoverContent>
                 </Popover>
               </div>
+            )}
+            
+            {/* Date Time Error Message */}
+            {dateTimeError && (
+              <p className="text-destructive text-sm mt-2">{dateTimeError}</p>
             )}
           </div>
 
@@ -841,6 +981,43 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                   />
                 </div>
                 
+                {/* Cost Sharing Option */}
+                <div className="flex items-center justify-between mb-4 p-3 rounded-lg glass-hover">
+                  <div className="flex items-center gap-2">
+                    <Users className="w-5 h-5 text-primary" />
+                    <div>
+                      <span className="text-sm">Preferred Sharing for Cost-Effective Travel</span>
+                      <div className="text-xs text-muted-foreground">💡 Travel to the airport with shared rides and save up to 60%. T&C apply.</div>
+                    </div>
+                  </div>
+                  <Switch 
+                    checked={preferSharing} 
+                    onCheckedChange={(checked) => {
+                      setPreferSharing(checked);
+                      setTimeout(updateSpecialInstructions, 0);
+                    }}
+                  />
+                </div>
+
+                {/* Airport Terminal Selection for Pickup */}
+                {serviceType === "airport" && tripType === "pickup" && (
+                  <div className="mb-4">
+                    <Label className="text-sm mb-2 block">Select Terminal</Label>
+                    <select 
+                      className="w-full p-3 rounded-lg glass border border-glass-border text-foreground bg-background"
+                      value={selectedAirportTerminal}
+                      onChange={(e) => {
+                        setSelectedAirportTerminal(e.target.value);
+                        setTimeout(updateSpecialInstructions, 0);
+                      }}
+                    >
+                      <option value="">Select Terminal</option>
+                      <option value="Terminal 1">Kempegowda International Airport – Terminal 1</option>
+                      <option value="Terminal 2">Kempegowda International Airport – Terminal 2</option>
+                    </select>
+                  </div>
+                )}
+
                 {/* Additional Instructions */}
                 <div className="mb-2">
                   <div className="flex items-center gap-2 mb-2">
@@ -862,13 +1039,17 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                 </div>
                 
                 {/* Preview of combined instructions */}
-                {(luggageCount > 0 || hasPet || additionalInstructions.trim()) && (
+                {(luggageCount > 0 || hasPet || preferSharing || selectedAirportTerminal || additionalInstructions.trim()) && (
                   <div className="mt-3 text-xs text-muted-foreground p-2 bg-muted/30 rounded">
                     <span className="font-medium">Will be saved as: </span>
                     {luggageCount > 0 && <span>{luggageCount} luggage item{luggageCount !== 1 ? 's' : ''}</span>}
-                    {luggageCount > 0 && (hasPet || additionalInstructions.trim()) && <span>, </span>}
+                    {luggageCount > 0 && (hasPet || preferSharing || selectedAirportTerminal || additionalInstructions.trim()) && <span>, </span>}
                     {hasPet && <span>Traveling with pet</span>}
-                    {hasPet && additionalInstructions.trim() && <span>, </span>}
+                    {hasPet && (preferSharing || selectedAirportTerminal || additionalInstructions.trim()) && <span>, </span>}
+                    {preferSharing && <span>Preferred sharing for cost-effective travel</span>}
+                    {preferSharing && (selectedAirportTerminal || additionalInstructions.trim()) && <span>, </span>}
+                    {selectedAirportTerminal && <span>Terminal: {selectedAirportTerminal}</span>}
+                    {selectedAirportTerminal && additionalInstructions.trim() && <span>, </span>}
                     {additionalInstructions.trim() && <span>{additionalInstructions}</span>}
                   </div>
                 )}
@@ -917,12 +1098,16 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                   variant="outline"
                   size="sm"
                   className="w-8 h-8 glass"
-                  onClick={() => setPassengers(passengers + 1)}
+                  onClick={() => setPassengers(Math.min(6, passengers + 1))}
+                  disabled={passengers >= 6}
                 >
                   <Plus className="w-3 h-3" />
                 </Button>
               </div>
             </div>
+            <p className="text-xs text-muted-foreground text-center">
+              Select the number of guests for your ride (Maximum 6 passengers)
+            </p>
           </div>
         </DialogContent>
       </Dialog>

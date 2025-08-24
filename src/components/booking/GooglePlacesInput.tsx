@@ -88,21 +88,42 @@ export const GooglePlacesInput = ({
     try {
       const details = await places.placeDetails(place.place_id, sessionToken);
       if (details) {
-        // Check if location is within Mysore or Bangalore (simple check using formatted address)
+        // Enhanced location validation with radius check
+        const lat = details.geometry.location.lat;
+        const lng = details.geometry.location.lng;
         const address = details.formatted_address?.toLowerCase() || '';
         const description = place.description?.toLowerCase() || '';
         
+        // Basic string check for Mysore/Bangalore
         const isMysoreOrBangalore = 
           address.includes('mysore') || address.includes('mysuru') ||
           address.includes('bangalore') || address.includes('bengaluru') ||
           description.includes('mysore') || description.includes('mysuru') ||
           description.includes('bangalore') || description.includes('bengaluru');
         
-        const isKarnataka = address.includes('karnataka') || description.includes('karnataka');
+        // Radius check (within 50km of Mysore or Bangalore)
+        const mysoreCoords = { lat: 12.2958, lng: 76.6394 };
+        const bangaloreCoords = { lat: 12.9716, lng: 77.5946 };
         
-        if (!isKarnataka || !isMysoreOrBangalore) {
+        const calculateDistance = (lat1: number, lng1: number, lat2: number, lng2: number) => {
+          const R = 6371; // Earth's radius in kilometers
+          const dLat = (lat2 - lat1) * Math.PI / 180;
+          const dLng = (lng2 - lng1) * Math.PI / 180;
+          const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+          const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+          return R * c;
+        };
+        
+        const distanceFromMysore = calculateDistance(lat, lng, mysoreCoords.lat, mysoreCoords.lng);
+        const distanceFromBangalore = calculateDistance(lat, lng, bangaloreCoords.lat, bangaloreCoords.lng);
+        
+        const isWithinRadius = distanceFromMysore <= 50 || distanceFromBangalore <= 50;
+        
+        if (!isMysoreOrBangalore && !isWithinRadius) {
           // Show error message for unsupported location
-          const errorMessage = "Service not available in this location yet.";
+          const errorMessage = "❌ We're currently unavailable in this location. Please select a location near Mysore or Bangalore.";
           onChange(errorMessage);
           setShowSuggestions(false);
           return;
