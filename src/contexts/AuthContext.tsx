@@ -284,11 +284,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     // Add country code if not present (assuming India +91)
     if (digits.length === 10) {
-      return `91${digits}`;
+      return `+91${digits}`;
     } else if (digits.length === 12 && digits.startsWith('91')) {
-      return `${digits}`;
+      return `+${digits}`;
     } else if (digits.length === 13 && digits.startsWith('91')) {
-      return `${digits.substring(1)}`;
+      return `+${digits.substring(1)}`;
     }
     
     return phone; // Return as-is if format is unclear
