@@ -14,6 +14,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
 import { useRentalPackages } from "@/hooks/useRentalPackages";
+import { useGoogleMapsLoader } from "@/hooks/useGoogleMapsApi";
 import { 
   Clock, 
   Car,
@@ -53,6 +54,7 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
   const [pickupLocation, setPickupLocation] = useState(bookingData.pickupLocation);
   const [dropoffLocation, setDropoffLocation] = useState(bookingData.dropoffLocation || "");
   const [scheduledDateTime, setScheduledDateTime] = useState(bookingData.scheduledDateTime || "");
+  const [passengers, setPassengers] = useState(bookingData.passengers || 2);
   const [vehicleType, setVehicleType] = useState(bookingData.vehicleType || "All");
   const [selectedPackage, setSelectedPackage] = useState<string>("");
   const [packageDetails, setPackageDetails] = useState<any>(null);
@@ -173,7 +175,7 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
     setPickupLocation(bookingData.pickupLocation);
     setDropoffLocation(bookingData.dropoffLocation || "");
     setPassengers(bookingData.passengers || 2);
-    setPackageDetails(bookingData.packageDetails || null);
+    setPackageDetails(null);
     setHours(bookingData.packageSelection || "");
     setTripType(bookingData.tripType || "oneway");
     setIsRoundTrip(bookingData.isRoundTrip || false);
@@ -443,7 +445,6 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
         returnDateTime,
         passengers,
         packageSelection: serviceType === "car_rental" ? selectedPackage : undefined,
-        packageDetails: serviceType === "car_rental" ? packageDetails : undefined,
         isRoundTrip,
         tripType,
         specialInstructions,
@@ -492,7 +493,6 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
       scheduledDateTime: dateTime,
       passengers,
       packageSelection: serviceType === "car_rental" ? selectedPackage : undefined,
-      packageDetails: serviceType === "car_rental" ? packageDetails : undefined,
       carType: vehicleType,
       selectedFare: {
         type: vehicleType,

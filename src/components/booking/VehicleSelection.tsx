@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Car, Users, Clock } from "lucide-react";
 import { useFareCalculation } from "@/hooks/useFareCalculation";
+import { useRentalPackages } from "@/hooks/useRentalPackages";
 import { BookingData } from "@/stores/bookingStore";
 
 interface VehicleSelectionProps {
@@ -61,6 +62,7 @@ export const VehicleSelection = ({
     vehicleType: "Sedan",
     distanceKm: (routeData?.distanceKm || 0) * multiplier,
     durationMinutes: (routeData?.durationMinutes || 0) * multiplier,
+    packageId: bookingData.serviceType === "car_rental" ? bookingData.packageSelection : undefined,
   });
 
   const suvFare = useFareCalculation({
@@ -68,6 +70,7 @@ export const VehicleSelection = ({
     vehicleType: "SUV",
     distanceKm: (routeData?.distanceKm || 0) * multiplier,
     durationMinutes: (routeData?.durationMinutes || 0) * multiplier,
+    packageId: bookingData.serviceType === "car_rental" ? bookingData.packageSelection : undefined,
   });
 
   const premiumFare = useFareCalculation({
@@ -75,6 +78,7 @@ export const VehicleSelection = ({
     vehicleType: "Premium",
     distanceKm: (routeData?.distanceKm || 0) * multiplier,
     durationMinutes: (routeData?.durationMinutes || 0) * multiplier,
+    packageId: bookingData.serviceType === "car_rental" ? bookingData.packageSelection : undefined,
   });
 
   const handleVehicleSelection = (vehicleType: string, fareData: any) => {
@@ -156,18 +160,22 @@ export const VehicleSelection = ({
                       <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
                       <span className="text-xs text-muted-foreground">Calculating...</span>
                     </div>
-                  ) : fareCalculation.fareData ? (
-                    <>
-                      <div className="text-2xl font-bold text-primary">
-                        ₹{fareCalculation.fareData.totalFare}
-                      </div>
-                      {routeData && (
-                        <div className="text-xs text-muted-foreground">
-                          {routeData.distance} • {routeData.duration}
-                        </div>
-                      )}
-                    </>
-                  ) : fareCalculation.error ? (
+                      ) : fareCalculation.fareData ? (
+                        <>
+                          <div className="text-2xl font-bold text-primary">
+                            ₹{fareCalculation.fareData.totalFare}
+                          </div>
+                          {bookingData.serviceType === "car_rental" && fareCalculation.fareData.packageDetails ? (
+                            <div className="text-xs text-muted-foreground">
+                              {fareCalculation.fareData.packageDetails.name}
+                            </div>
+                          ) : routeData ? (
+                            <div className="text-xs text-muted-foreground">
+                              {routeData.distance} • {routeData.duration}
+                            </div>
+                          ) : null}
+                        </>
+                      ) : fareCalculation.error ? (
                     <div className="text-sm text-destructive">
                       Price unavailable
                     </div>
