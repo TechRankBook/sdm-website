@@ -23,21 +23,25 @@ const vehicleTypes = [
     capacity: "4 passengers", 
     estimatedTime: "5 min",
     icon: Car,
-    description: "Comfortable and economical"
+    description: "Comfortable and economical",
+    disabled: false
   },
   { 
     type: "SUV", 
     capacity: "6 passengers", 
     estimatedTime: "7 min",
     icon: Users,
-    description: "Spacious for groups"
+    description: "Spacious for groups",
+    disabled: false
   },
   { 
     type: "Premium", 
     capacity: "4 passengers", 
     estimatedTime: "10 min",
     icon: Car,
-    description: "Luxury experience"
+    description: "Luxury experience",
+    disabled: true,
+    comingSoon: true
   }
 ];
 
@@ -103,18 +107,23 @@ export const VehicleSelection = ({
           const fareCalculation = vehicle.type === "Sedan" ? sedanFare : 
                                  vehicle.type === "SUV" ? suvFare : premiumFare;
           
-          const isDisabled = fareCalculation.isLoading || !fareCalculation.fareData;
+          const isDisabled = vehicle.disabled || fareCalculation.isLoading || !fareCalculation.fareData;
           
           return (
             <Card
               key={vehicle.type}
-              className={`glass-hover p-4 transition-all duration-300 border border-glass-border ${
+              className={`glass-hover p-4 transition-all duration-300 border border-glass-border relative ${
                 isDisabled 
                   ? 'opacity-60 cursor-not-allowed' 
                   : 'cursor-pointer hover:scale-[1.01] hover:border-primary/30'
               }`}
               onClick={() => !isDisabled && handleVehicleSelection(vehicle.type, fareCalculation.fareData)}
             >
+              {vehicle.comingSoon && (
+                <div className="absolute top-2 right-2 bg-primary text-white text-xs px-2 py-1 rounded-full">
+                  Coming Soon
+                </div>
+              )}
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4 flex-1">
                   <div className="p-3 rounded-xl bg-gradient-primary">

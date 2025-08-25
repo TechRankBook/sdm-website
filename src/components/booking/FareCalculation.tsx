@@ -30,7 +30,8 @@ export const FareCalculation = ({ bookingData, updateBookingData, onNext, onBack
       price: 299,
       originalPrice: 350,
       estimatedTime: "5 min",
-      capacity: "4 passengers"
+      capacity: "4 passengers",
+      disabled: false
     },
     {
       type: "SUV",
@@ -40,7 +41,8 @@ export const FareCalculation = ({ bookingData, updateBookingData, onNext, onBack
       price: 459,
       originalPrice: 520,
       estimatedTime: "7 min",
-      capacity: "6 passengers"
+      capacity: "6 passengers",
+      disabled: false
     },
     {
       type: "Premium",
@@ -50,7 +52,9 @@ export const FareCalculation = ({ bookingData, updateBookingData, onNext, onBack
       price: 699,
       originalPrice: 799,
       estimatedTime: "10 min",
-      capacity: "4 passengers"
+      capacity: "4 passengers",
+      disabled: true,
+      comingSoon: true
     }
   ];
 
@@ -111,9 +115,18 @@ export const FareCalculation = ({ bookingData, updateBookingData, onNext, onBack
           {carTypes.map((car) => (
             <Card
               key={car.type}
-              className="glass-hover p-4 sm:p-6 cursor-pointer transition-all duration-300 hover:scale-[1.01] hover:shadow-glow"
-              onClick={() => handleCarSelection(car)}
+              className={`glass-hover p-4 sm:p-6 transition-all duration-300 relative ${
+                car.disabled 
+                  ? 'opacity-60 cursor-not-allowed' 
+                  : 'cursor-pointer hover:scale-[1.01] hover:shadow-glow'
+              }`}
+              onClick={() => !car.disabled && handleCarSelection(car)}
             >
+              {car.comingSoon && (
+                <div className="absolute top-2 right-2 bg-primary text-white text-xs px-2 py-1 rounded-full">
+                  Coming Soon
+                </div>
+              )}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="flex items-start gap-3 sm:gap-4 flex-1">
                   <div className="p-2 sm:p-3 rounded-lg bg-gradient-primary shrink-0">
@@ -162,14 +175,15 @@ export const FareCalculation = ({ bookingData, updateBookingData, onNext, onBack
                   </div>
                   <Button 
                     size="sm" 
-                    className="bg-gradient-primary micro-bounce text-xs sm:text-sm px-3 sm:px-4"
+                    disabled={car.disabled}
+                    className="bg-gradient-primary micro-bounce text-xs sm:text-sm px-3 sm:px-4 disabled:opacity-50"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleCarSelection(car);
+                      if (!car.disabled) handleCarSelection(car);
                     }}
                   >
-                    Select
-                    <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 ml-1" />
+                    {car.disabled ? "Coming Soon" : "Select"}
+                    {!car.disabled && <ChevronRight className="w-3 h-3 sm:w-4 sm:h-4 ml-1" />}
                   </Button>
                 </div>
               </div>

@@ -5,9 +5,10 @@ import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 // Declare Razorpay types
 declare global {
   interface Window {
@@ -37,6 +38,8 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
   const [paymentAmount, setPaymentAmount] = useState("partial"); // "partial" or "full"
   const [isProcessing, setIsProcessing] = useState(false);
   const [razorpayLoaded, setRazorpayLoaded] = useState(false);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
+  const [showTermsError, setShowTermsError] = useState(false);
   const navigate = useNavigate();
 
   // Load Razorpay script
@@ -82,6 +85,17 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
   const { toast } = useToast();
 
   const handlePayment = async () => {
+    // Check if terms are accepted
+    if (!acceptedTerms) {
+      setShowTermsError(true);
+      toast({
+        title: "Terms Required",
+        description: "Please accept the Terms and Conditions to proceed.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!bookingData.selectedFare) {
       toast({
         title: "Error",
@@ -99,6 +113,8 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
       });
       return;
     }
+
+    setShowTermsError(false);
 
     setIsProcessing(true);
 
@@ -454,11 +470,43 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
           </p>
         </Card>
 
+        {/* Terms & Conditions */}
+        <Card className="glass-hover p-4 mb-6">
+          <div className="flex items-start gap-3">
+            <Checkbox
+              id="terms"
+              checked={acceptedTerms}
+              onCheckedChange={(checked) => {
+                setAcceptedTerms(checked as boolean);
+                if (checked) setShowTermsError(false);
+              }}
+              className="mt-1"
+            />
+            <div className="flex-1">
+              <Label htmlFor="terms" className="text-sm text-foreground cursor-pointer">
+                I accept the{" "}
+                <Link 
+                  to="/terms" 
+                  target="_blank"
+                  className="text-primary hover:underline font-medium"
+                >
+                  Terms and Conditions
+                </Link>
+              </Label>
+              {showTermsError && (
+                <p className="text-destructive text-xs mt-1">
+                  Please accept the Terms and Conditions to proceed.
+                </p>
+              )}
+            </div>
+          </div>
+        </Card>
+
         {/* Confirm Payment Button */}
         <Button
           onClick={handlePayment}
-          disabled={isProcessing || !razorpayLoaded}
-          className="w-full h-12 bg-gradient-primary text-lg font-semibold micro-bounce"
+          disabled={isProcessing || !razorpayLoaded || !acceptedTerms}
+          className="w-full h-12 bg-gradient-primary text-lg font-semibold micro-bounce disabled:opacity-50"
         >
           {isProcessing ? (
             <div className="flex items-center gap-2">

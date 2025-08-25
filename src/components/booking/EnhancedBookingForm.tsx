@@ -13,7 +13,7 @@ import { useFareCalculation } from "@/hooks/useFareCalculation";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { useGoogleMapsLoader } from "@/hooks/useGoogleMapsApi";
+import { useRentalPackages } from "@/hooks/useRentalPackages";
 import { 
   Clock, 
   Car,
@@ -54,7 +54,8 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
   const [dropoffLocation, setDropoffLocation] = useState(bookingData.dropoffLocation || "");
   const [scheduledDateTime, setScheduledDateTime] = useState(bookingData.scheduledDateTime || "");
   const [passengers, setPassengers] = useState(bookingData.passengers || 2);
-  const [hours, setHours] = useState(bookingData.packageSelection || "");
+  const [selectedPackage, setSelectedPackage] = useState<string>("");
+  const [packageDetails, setPackageDetails] = useState<any>(null);
   const [tripType, setTripType] = useState(bookingData.tripType || "oneway");
   const [selectedDate, setSelectedDate] = useState<Date>(() => {
     if (bookingData.scheduledDateTime) {
@@ -96,7 +97,11 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
   const [dropoffLocationError, setDropoffLocationError] = useState("");
   const [dateTimeError, setDateTimeError] = useState("");
 
-  // Airport terminal coordinates
+  // Get rental packages for car rental service
+  const { packages, isLoading: packagesLoading } = useRentalPackages({
+    vehicleType: vehicleType === "All" ? undefined : vehicleType
+  });
+
   const airportTerminals = {
     "terminal1": {
       name: "Terminal 1 – Kempegowda International Airport",
@@ -167,6 +172,7 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
     setPickupLocation(bookingData.pickupLocation);
     setDropoffLocation(bookingData.dropoffLocation || "");
     setPassengers(bookingData.passengers || 2);
+    setPackageDetails(bookingData.packageDetails || null);
     setHours(bookingData.packageSelection || "");
     setTripType(bookingData.tripType || "oneway");
     setIsRoundTrip(bookingData.isRoundTrip || false);
@@ -244,7 +250,7 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
 
   // Modal states
   const [showGuestModal, setShowGuestModal] = useState(false);
-  const [showHoursModal, setShowHoursModal] = useState(false);
+  const [showPackageModal, setShowPackageModal] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
 
   const serviceTypes = [
@@ -380,7 +386,7 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
   const isFormValid = useCallback(() => {
     // Remove excessive logging that was causing performance issues
     const hasPickup = pickupLocation.trim() !== "";
-    const hasDestination = serviceType === "car_rental" ? hours !== "" : dropoffLocation.trim() !== "";
+    const hasDestination = serviceType === "car_rental" ? selectedPackage !== "" : dropoffLocation.trim() !== "";
     const hasDateTime = selectedDate && selectedTime;
     const hasValidReturn = !isRoundTrip || serviceType !== "outstation" || (returnDate && returnTime);
     
@@ -435,7 +441,8 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
         scheduledDateTime: dateTime,
         returnDateTime,
         passengers,
-        packageSelection: serviceType === "car_rental" ? hours : undefined,
+        packageSelection: serviceType === "car_rental" ? selectedPackage : undefined,
+        packageDetails: serviceType === "car_rental" ? packageDetails : undefined,
         isRoundTrip,
         tripType,
         specialInstructions,
@@ -483,7 +490,8 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
       dropoffLocation: serviceType === "car_rental" ? undefined : dropoffLocation,
       scheduledDateTime: dateTime,
       passengers,
-      packageSelection: serviceType === "car_rental" ? hours : undefined,
+      packageSelection: serviceType === "car_rental" ? selectedPackage : undefined,
+      packageDetails: serviceType === "car_rental" ? packageDetails : undefined,
       carType: vehicleType,
       selectedFare: {
         type: vehicleType,
@@ -725,9 +733,9 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                 <Button
                   variant="outline"
                   className="w-full h-12 justify-start pl-10 glass-hover"
-                  onClick={() => setShowHoursModal(true)}
+                  onClick={() => setShowPackageModal(true)}
                 >
-                  {hours ? `${hours} hours` : "Select hours"}
+                  {packageDetails ? `${packageDetails.name}` : "Select Package"}
                 </Button>
               </div>
             ) : (
@@ -1223,31 +1231,56 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showHoursModal} onOpenChange={setShowHoursModal}>
+      <Dialog open={showPackageModal} onOpenChange={setShowPackageModal}>
         <DialogContent className="glass rounded-2xl border-glass-border">
           <DialogHeader>
-            <DialogTitle className="text-foreground">Select Hours</DialogTitle>
+            <DialogTitle className="text-foreground">Select Package</DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-2 gap-3 py-4">
-            {["2", "4", "6", "8", "10", "12"].map((hour) => (
-              <Button
-                key={hour}
-                variant={hours === hour ? "default" : "outline"}
-                className={cn(
-                  "h-12",
-                  hours === hour ? "bg-gradient-primary" : "glass"
-                )}
-                onClick={() => {
-                  setHours(hour);
-                  setShowHoursModal(false);
-                }}
-              >
-                {hour} Hours
-              </Button>
-            ))}
+          <div className="space-y-3 py-4 max-h-96 overflow-y-auto">
+            {packagesLoading ? (
+              <div className="flex justify-center py-4">
+                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              </div>
+            ) : packages.length > 0 ? (
+              packages.map((pkg) => (
+                <Card
+                  key={pkg.id}
+                  className={cn(
+                    "p-4 cursor-pointer transition-all duration-200 glass-hover",
+                    selectedPackage === pkg.id ? "border-primary bg-primary/5" : "border-glass-border"
+                  )}
+                  onClick={() => {
+                    setSelectedPackage(pkg.id);
+                    setPackageDetails(pkg);
+                    setShowPackageModal(false);
+                  }}
+                >
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-semibold text-foreground">{pkg.name}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {pkg.duration_hours} hours • {pkg.included_kilometers}km included
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Extra: ₹{pkg.extra_hour_rate}/hr • ₹{pkg.extra_km_rate}/km
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-lg font-bold text-primary">₹{pkg.base_price}</div>
+                      <div className="text-xs text-muted-foreground">{pkg.vehicle_type}</div>
+                    </div>
+                  </div>
+                </Card>
+              ))
+            ) : (
+              <div className="text-center py-4 text-muted-foreground">
+                No packages available for {vehicleType === "All" ? "selected vehicle type" : vehicleType}
+              </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
     </>
   );
+};
 };

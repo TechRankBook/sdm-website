@@ -8,6 +8,12 @@ interface FareCalculation {
   totalFare: number;
   estimatedTime: string;
   distance: string;
+  packageDetails?: {
+    name: string;
+    duration_hours: number;
+    included_kilometers: number;
+    base_price: number;
+  };
 }
 
 interface UseFareCalculationProps {
@@ -15,6 +21,7 @@ interface UseFareCalculationProps {
   vehicleType: string;
   distanceKm?: number;
   durationMinutes?: number;
+  packageId?: string; // For car rentals
   pickupLat?: number;
   pickupLng?: number;
   dropoffLat?: number;
@@ -26,6 +33,7 @@ export const useFareCalculation = ({
   vehicleType,
   distanceKm = 0,
   durationMinutes = 0,
+  packageId,
 }: UseFareCalculationProps) => {
   const [fareData, setFareData] = useState<FareCalculation | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -38,31 +46,37 @@ export const useFareCalculation = ({
     setError(null);
 
     try {
-      // Fallback to hardcoded pricing if database tables don't exist
-      const pricingFallback = {
-        city_ride: {
-          Sedan: { baseFare: 50, perKmRate: 12, perMinuteRate: 2, minimumFare: 80 },
-          SUV: { baseFare: 70, perKmRate: 15, perMinuteRate: 2.5, minimumFare: 100 },
-          Premium: { baseFare: 100, perKmRate: 20, perMinuteRate: 3, minimumFare: 150 }
-        },
-        airport: {
-          Sedan: { baseFare: 100, perKmRate: 15, perMinuteRate: 2, minimumFare: 200 },
-          SUV: { baseFare: 150, perKmRate: 18, perMinuteRate: 2.5, minimumFare: 250 },
-          Premium: { baseFare: 200, perKmRate: 25, perMinuteRate: 3, minimumFare: 350 }
-        },
-        outstation: {
-          Sedan: { baseFare: 150, perKmRate: 10, perMinuteRate: 1.5, minimumFare: 500 },
-          SUV: { baseFare: 200, perKmRate: 12, perMinuteRate: 2, minimumFare: 600 },
-          Premium: { baseFare: 300, perKmRate: 15, perMinuteRate: 2.5, minimumFare: 800 }
-        },
-        car_rental: {
-          Sedan: { baseFare: 100, perKmRate: 8, perMinuteRate: 200, minimumFare: 400 }, // 200 per hour
-          SUV: { baseFare: 150, perKmRate: 10, perMinuteRate: 250, minimumFare: 500 }, // 250 per hour
-          Premium: { baseFare: 200, perKmRate: 12, perMinuteRate: 350, minimumFare: 700 } // 350 per hour
-        }
-      };
+      // Special handling for car rentals with packages
+      if (serviceType.toLowerCase() === 'car_rental' && packageId) {
+        const { data: rentalPackage, error: packageError } = await supabase
+          .from('rental_packages')
+          .select('*')
+          .eq('id', packageId)
+          .eq('is_active', true)
+          .single();
 
-      // Try to get pricing from database first
+        if (!packageError && rentalPackage) {
+          const totalFare = Math.round(Number(rentalPackage.base_price));
+          
+          setFareData({
+            baseFare: totalFare,
+            distanceFare: 0,
+            timeFare: 0,
+            totalFare,
+            estimatedTime: `${rentalPackage.duration_hours}h package`,
+            distance: `${rentalPackage.included_kilometers}km included`,
+            packageDetails: {
+              name: rentalPackage.name,
+              duration_hours: rentalPackage.duration_hours,
+              included_kilometers: rentalPackage.included_kilometers,
+              base_price: rentalPackage.base_price
+            }
+          });
+          return;
+        }
+      }
+
+      // Standard fare calculation for non-rental services or when no package selected
       let baseFare = 0, perKmRate = 0, perMinuteRate = 0, minimumFare = 0;
 
       try {
@@ -74,7 +88,7 @@ export const useFareCalculation = ({
           .single();
 
         if (!serviceError && serviceTypes) {
-          // Get vehicle type ID
+          // Get vehicle type ID  
           const { data: vehicleTypes, error: vehicleTypeError } = await supabase
             .from('vehicle_types')
             .select('id')
@@ -105,8 +119,26 @@ export const useFareCalculation = ({
         console.log('Database pricing not available, using fallback pricing');
       }
 
-      // Use fallback if database pricing not found
+      // Fallback pricing if database doesn't have the data
       if (!baseFare && !perKmRate && !perMinuteRate && !minimumFare) {
+        const pricingFallback = {
+          city_ride: {
+            Sedan: { baseFare: 50, perKmRate: 12, perMinuteRate: 2, minimumFare: 80 },
+            SUV: { baseFare: 70, perKmRate: 15, perMinuteRate: 2.5, minimumFare: 100 },
+            Premium: { baseFare: 100, perKmRate: 20, perMinuteRate: 3, minimumFare: 150 }
+          },
+          airport: {
+            Sedan: { baseFare: 100, perKmRate: 15, perMinuteRate: 2, minimumFare: 200 },
+            SUV: { baseFare: 150, perKmRate: 18, perMinuteRate: 2.5, minimumFare: 250 },
+            Premium: { baseFare: 200, perKmRate: 25, perMinuteRate: 3, minimumFare: 350 }
+          },
+          outstation: {
+            Sedan: { baseFare: 150, perKmRate: 10, perMinuteRate: 1.5, minimumFare: 500 },
+            SUV: { baseFare: 200, perKmRate: 12, perMinuteRate: 2, minimumFare: 600 },
+            Premium: { baseFare: 300, perKmRate: 15, perMinuteRate: 2.5, minimumFare: 800 }
+          }
+        };
+
         const serviceKey = serviceType.toLowerCase().replace(' ', '_') as keyof typeof pricingFallback;
         const vehicleKey = vehicleType as keyof typeof pricingFallback[keyof typeof pricingFallback];
         
@@ -126,18 +158,8 @@ export const useFareCalculation = ({
       }
 
       const surgeMultiplier = 1; // Default surge multiplier
-
-      let distanceFare = 0;
-      let timeFare = 0;
-
-      if (serviceType.toLowerCase() === 'car_rental') {
-        // For hourly rentals, use per_minute_rate as hourly rate
-        timeFare = (durationMinutes / 60) * perMinuteRate;
-        distanceFare = distanceKm * perKmRate;
-      } else {
-        distanceFare = distanceKm * perKmRate;
-        timeFare = durationMinutes * perMinuteRate;
-      }
+      const distanceFare = distanceKm * perKmRate;
+      const timeFare = durationMinutes * perMinuteRate;
 
       const subtotal = baseFare + distanceFare + timeFare;
       const totalBeforeSurge = Math.max(subtotal, minimumFare);
@@ -171,7 +193,7 @@ export const useFareCalculation = ({
     if (serviceType && vehicleType) {
       calculateFare();
     }
-  }, [serviceType, vehicleType, distanceKm, durationMinutes]);
+  }, [serviceType, vehicleType, distanceKm, durationMinutes, packageId]);
 
   return { fareData, isLoading, error, refetch: calculateFare };
 };
