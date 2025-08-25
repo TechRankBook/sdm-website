@@ -53,9 +53,10 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
   const [pickupLocation, setPickupLocation] = useState(bookingData.pickupLocation);
   const [dropoffLocation, setDropoffLocation] = useState(bookingData.dropoffLocation || "");
   const [scheduledDateTime, setScheduledDateTime] = useState(bookingData.scheduledDateTime || "");
-  const [passengers, setPassengers] = useState(bookingData.passengers || 2);
+  const [vehicleType, setVehicleType] = useState(bookingData.vehicleType || "All");
   const [selectedPackage, setSelectedPackage] = useState<string>("");
   const [packageDetails, setPackageDetails] = useState<any>(null);
+  const [hours, setHours] = useState(bookingData.packageSelection || ""); // Keep for backward compatibility
   const [tripType, setTripType] = useState(bookingData.tripType || "oneway");
   const [selectedDate, setSelectedDate] = useState<Date>(() => {
     if (bookingData.scheduledDateTime) {
@@ -1280,7 +1281,6 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
           </div>
         </DialogContent>
       </Dialog>
-    </>
-  );
-};
-};
+     </>
+   );
+ };
