@@ -82,7 +82,7 @@ const Profile = () => {
         .from('users')
         .update({
           full_name: profileData.full_name,
-          email: profileData.email,
+          phone_no: profileData.phone_no,
         })
         .eq('id', user.id);
 
@@ -156,8 +156,8 @@ const Profile = () => {
                     id="email"
                     type="email"
                     value={profileData.email}
-                    onChange={(e) => setProfileData(prev => ({ ...prev, email: e.target.value }))}
-                    className="bg-muted"
+                    disabled
+                    placeholder="Enter your Email"
                   />
                 </div>
               </div>
@@ -168,8 +168,8 @@ const Profile = () => {
                   <Input
                     id="phone_no"
                     value={profileData.phone_no}
-                    disabled
-                    placeholder="Enter your phone number"
+                    onChange={(e) => setProfileData(prev => ({ ...prev, phone_no: e.target.value }))}
+                    className="bg-muted"
                   />
                 </div>
                 <div className="space-y-2">
