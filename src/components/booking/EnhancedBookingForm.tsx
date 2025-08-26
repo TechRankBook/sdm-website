@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { GooglePlacesInput } from "./GooglePlacesInput";
 import { GoogleMaps } from "./GoogleMaps";
@@ -681,25 +680,30 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
             {serviceType === "airport" && tripType === "pickup" ? (
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Select Pickup Terminal</Label>
-                <Select
-                  value={pickupTerminal}
-                  onValueChange={(value) => handlePickupTerminalSelect(value)}
-                >
-                  <SelectTrigger className="h-12 glass-hover">
-                    <SelectValue placeholder="Choose terminal" />
-                  </SelectTrigger>
-                  <SelectContent className="glass border-glass-border">
-                    {Object.entries(airportTerminals).map(([key, terminal]) => (
-                      <SelectItem 
-                        key={key} 
-                        value={key}
-                        className="focus:bg-primary/10 focus:text-primary"
-                      >
-                        {terminal.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="space-y-2">
+                  {Object.entries(airportTerminals).map(([key, terminal]) => (
+                    <div
+                      key={key}
+                      className={cn(
+                        "p-3 border rounded-lg cursor-pointer transition-all",
+                        pickupTerminal === key
+                          ? "border-primary bg-primary/5"
+                          : "border-border hover:border-primary/50"
+                      )}
+                      onClick={() => handlePickupTerminalSelect(key)}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={cn(
+                          "w-4 h-4 border-2 rounded-full",
+                          pickupTerminal === key
+                            ? "border-primary bg-primary"
+                            : "border-border"
+                        )} />
+                        <span className="font-medium">{terminal.name}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
                 {pickupLocationError && (
                   <p className="text-xs text-destructive mt-1 px-1">
                     {pickupLocationError}
@@ -740,25 +744,32 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                 {serviceType === "airport" && tripType === "drop" ? (
                   <div className="space-y-2">
                     <Label className="text-sm font-medium">Select Drop Terminal</Label>
-                    <Select
-                      value={dropoffTerminal}
-                      onValueChange={(value) => handleDropoffTerminalSelect(value)}
-                    >
-                      <SelectTrigger className="h-12 glass-hover">
-                        <SelectValue placeholder="Choose terminal" />
-                      </SelectTrigger>
-                      <SelectContent className="glass border-glass-border">
-                        {Object.entries(airportTerminals).map(([key, terminal]) => (
-                          <SelectItem 
-                            key={key} 
-                            value={key}
-                            className="focus:bg-primary/10 focus:text-primary"
-                          >
-                            {terminal.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="space-y-2 flex gap-3">
+                      {Object.entries(airportTerminals).map(([key, terminal]) => (
+                        <div
+                          key={key}
+                          className={cn(
+                            "p-3 border rounded-lg cursor-pointer transition-all",
+                            dropoffTerminal === key
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/50"
+                          )}
+                          onClick={() => handleDropoffTerminalSelect(key)}
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={cn(
+                              "w-4 h-4 border-2 rounded-full",
+                              dropoffTerminal === key
+                                ? "border-primary bg-primary"
+                                : "border-border"
+                            )} />
+                            <span className="font-medium">
+                              {key === "terminal1" ? "Terminal 1" : "Terminal 2"}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                     {dropoffLocationError && (
                       <p className="text-xs text-destructive mt-1 px-1">
                         {dropoffLocationError}
@@ -1108,24 +1119,7 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                   </div>
                 )}
 
-                {/* Airport Terminal Selection for Pickup */}
-                {serviceType === "airport" && tripType === "pickup" && (
-                  <div className="mb-4">
-                    <Label className="text-sm mb-2 block">Select Terminal</Label>
-                    <select 
-                      className="w-full p-3 rounded-lg glass border border-glass-border text-foreground bg-background"
-                      value={selectedAirportTerminal}
-                      onChange={(e) => {
-                        setSelectedAirportTerminal(e.target.value);
-                        setTimeout(updateSpecialInstructions, 0);
-                      }}
-                    >
-                      <option value="">Select Terminal</option>
-                      <option value="Terminal 1">Kempegowda International Airport – Terminal 1</option>
-                      <option value="Terminal 2">Kempegowda International Airport – Terminal 2</option>
-                    </select>
-                  </div>
-                )}
+                
 
                 {/* Additional Instructions */}
                 <div className="mb-2">
