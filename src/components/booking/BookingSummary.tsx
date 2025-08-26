@@ -53,9 +53,9 @@ export const BookingSummary = ({ bookingData }: BookingSummaryProps) => {
           <div className="flex justify-between items-center">
             <span className="text-sm text-muted-foreground flex items-center gap-1">
               <Clock className="w-3 h-3" />
-              Duration
+              Selected Package
             </span>
-            <span className="text-foreground font-medium">{bookingData.packageSelection} hours</span>
+            <span className="text-foreground font-medium">{bookingData.packageDetails.name}</span>
           </div>
         )}
         <div className="space-y-2">
