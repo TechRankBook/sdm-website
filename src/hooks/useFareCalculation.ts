@@ -80,23 +80,46 @@ export const useFareCalculation = ({
       let baseFare = 0, perKmRate = 0, perMinuteRate = 0, minimumFare = 0;
 
       try {
-        // Get service type ID
+        // Get service type ID with mapping for backend integration
+        const serviceTypeMapping: Record<string, string> = {
+          'city_ride': 'city_ride',
+          'airport': 'airport_transfer', 
+          'outstation': 'outstation',
+          'car_rental': 'car_rental'
+        };
+        
+        const mappedServiceType = serviceTypeMapping[serviceType.toLowerCase().replace(' ', '_')] || serviceType.toLowerCase().replace(' ', '_');
+        
         const { data: serviceTypes, error: serviceError } = await supabase
           .from('service_types')
           .select('id')
-          .eq('name', serviceType.toLowerCase().replace(' ', '_'))
-          .single();
+          .eq('name', mappedServiceType)
+          .maybeSingle();
+        
+        if (serviceError) {
+          console.warn('Service type fetch error:', serviceError);
+        }
 
         if (!serviceError && serviceTypes) {
-          // Get vehicle type ID  
+          // Get vehicle type ID with mapping
+          const vehicleTypeMapping: Record<string, string> = {
+            'sedan': 'sedan',
+            'suv': 'suv', 
+            'premium': 'premium',
+            'mini': 'mini',
+            'luxury': 'luxury'
+          };
+          
+          const mappedVehicleType = vehicleTypeMapping[vehicleType.toLowerCase()] || vehicleType.toLowerCase();
+          
           const { data: vehicleTypes, error: vehicleTypeError } = await supabase
             .from('vehicle_types')
             .select('id')
-            .eq('name', vehicleType.toLowerCase())
-            .single();
+            .eq('name', mappedVehicleType)
+            .maybeSingle();
 
           if (!vehicleTypeError && vehicleTypes) {
-            // Get pricing rules
+            // Get pricing rules with better error handling
             const { data: pricingRules, error: pricingError } = await supabase
               .from('pricing_rules')
               .select('*')
@@ -105,7 +128,7 @@ export const useFareCalculation = ({
               .eq('is_active', true)
               .order('effective_from', { ascending: false })
               .limit(1)
-              .single();
+              .maybeSingle();
 
             if (!pricingError && pricingRules) {
               baseFare = Number(pricingRules.base_fare) || 0;

@@ -124,7 +124,12 @@ const Booking = () => {
               updateBookingData={updateBookingData}
               onNext={nextStep}
               onBack={prevStep}
-              routeData={null}
+              routeData={{
+                distance: (bookingData.distanceKm || 0).toString(),
+                duration: (bookingData.durationMinutes || 0).toString(),
+                distanceKm: bookingData.distanceKm || 0,
+                durationMinutes: bookingData.durationMinutes || 0
+              }}
             />
           </div>
         );

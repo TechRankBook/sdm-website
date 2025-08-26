@@ -125,12 +125,25 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
         throw new Error('Please login to continue booking');
       }
 
-      // Get service type ID
-      const { data: serviceType } = await supabase
+      // Get service type ID with mapping
+      const serviceTypeMapping: Record<string, string> = {
+        'city_ride': 'city_ride',
+        'airport': 'airport_transfer', 
+        'outstation': 'outstation',
+        'car_rental': 'car_rental'
+      };
+      
+      const mappedServiceType = serviceTypeMapping[bookingData.serviceType] || bookingData.serviceType;
+      
+      const { data: serviceType, error: serviceTypeError } = await supabase
         .from('service_types')
         .select('id')
-        .eq('name', bookingData.serviceType)
-        .single();
+        .eq('name', mappedServiceType)
+        .maybeSingle();
+        
+      if (serviceTypeError) {
+        console.warn('Service type fetch error:', serviceTypeError);
+      }
 
       // Create booking in database first
       const { data: booking, error: bookingError } = await supabase
