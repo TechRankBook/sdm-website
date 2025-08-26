@@ -453,7 +453,8 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
         dropoffLatitude: dropoffCoords?.lat,
         dropoffLongitude: dropoffCoords?.lng,
         distanceKm: routeData?.distanceKm || 0,
-        durationMinutes: routeData?.durationMinutes || 0
+        durationMinutes: routeData?.durationMinutes || 0,
+        packageDetails:{id: packageDetails?.id, name: packageDetails?.name, duration_hours: packageDetails?.duration_hours, included_kilometers: packageDetails?.included_kilometers, vehicle_type: packageDetails?.vehicle_type, base_fare: packageDetails?.base_fare}
       };
 
       console.log("📦 Updating booking data:", bookingDataToUpdate);
@@ -501,7 +502,8 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
       isRoundTrip,
       returnDateTime,
       tripType,
-      specialInstructions
+      specialInstructions,
+      packageDetails:{id: packageDetails?.id, name: packageDetails?.name, duration_hours: packageDetails?.duration_hours, included_kilometers: packageDetails?.included_kilometers, vehicle_type: packageDetails?.vehicle_type, base_fare: packageDetails?.base_fare},
     });
     onNext();
   };
@@ -1119,24 +1121,6 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                   </div>
                 )}
 
-                {/* Airport Terminal Selection for Pickup */}
-                {serviceType === "airport" && tripType === "pickup" && (
-                  <div className="mb-4">
-                    <Label className="text-sm mb-2 block">Select Terminal</Label>
-                    <select 
-                      className="w-full p-3 rounded-lg glass border border-glass-border text-foreground bg-background"
-                      value={selectedAirportTerminal}
-                      onChange={(e) => {
-                        setSelectedAirportTerminal(e.target.value);
-                        setTimeout(updateSpecialInstructions, 0);
-                      }}
-                    >
-                      <option value="">Select Terminal</option>
-                      <option value="Terminal 1">Kempegowda International Airport – Terminal 1</option>
-                      <option value="Terminal 2">Kempegowda International Airport – Terminal 2</option>
-                    </select>
-                  </div>
-                )}
 
                 {/* Additional Instructions */}
                 <div className="mb-2">

@@ -18,34 +18,6 @@ interface VehicleSelectionProps {
   } | null;
 }
 
-const vehicleTypes = [
-  { 
-    type: "Sedan", 
-    capacity: "4 passengers", 
-    estimatedTime: "5 min",
-    icon: Car,
-    description: "Comfortable and economical",
-    disabled: false
-  },
-  { 
-    type: "SUV", 
-    capacity: "6 passengers", 
-    estimatedTime: "7 min",
-    icon: Users,
-    description: "Spacious for groups",
-    disabled: false
-  },
-  { 
-    type: "Premium", 
-    capacity: "4 passengers", 
-    estimatedTime: "10 min",
-    icon: Car,
-    description: "Luxury experience",
-    disabled: true,
-    comingSoon: true
-  }
-];
-
 export const VehicleSelection = ({ 
   bookingData, 
   updateBookingData, 
@@ -55,6 +27,9 @@ export const VehicleSelection = ({
 }: VehicleSelectionProps) => {
   // Calculate distance and duration multiplier for round trips
   const multiplier = bookingData.isRoundTrip ? 2 : 1;
+  
+  console.log("🚗 VehicleSelection - bookingData:", bookingData);
+  console.log("🗺️ Route Data:", routeData);
   
   // Get fare calculation for all vehicle types
   const sedanFare = useFareCalculation({
@@ -81,6 +56,38 @@ export const VehicleSelection = ({
     packageId: bookingData.serviceType === "car_rental" ? bookingData.packageSelection : undefined,
   });
 
+const vehicleTypes = [
+  { 
+    type: "Sedan", 
+    capacity: "4 passengers", 
+    estimatedDuration: bookingData.serviceType == "car_rental" ? (routeData?.duration || "N/A") : bookingData.durationMinutes.toFixed(1) +"min",
+    estimatedDistance: bookingData.serviceType == "car_rental" ? (routeData?.distance || "N/A") : bookingData.distanceKm.toFixed(1) + " km",
+    icon: Car,
+    description: "Comfortable and economical",
+    disabled: bookingData.packageDetails?.vehicle_type === "SUV" || bookingData.packageDetails?.vehicle_type === "Premium",
+    comingSoon: false
+  },
+  { 
+    type: "SUV", 
+    capacity: "6 passengers", 
+    estimatedDuration: bookingData.serviceType == "car_rental" ? (routeData?.duration || "N/A") : bookingData.durationMinutes.toFixed(1) +"Min",
+    estimatedDistance: bookingData.serviceType == "car_rental" ? (routeData?.distance || "N/A") : bookingData.distanceKm.toFixed(1) + " km",
+    icon: Users,
+    description: "Spacious for groups",
+    disabled: bookingData.packageDetails?.vehicle_type === "Sedan" || bookingData.packageDetails?.vehicle_type === "Premium",
+    comingSoon: false
+  },
+  { 
+    type: "Premium", 
+    capacity: "4 passengers", 
+    estimatedDuration: bookingData.serviceType == "car_rental" ? (routeData?.duration || "N/A") : bookingData.durationMinutes.toFixed(1) +"Min",
+    estimatedDistance: bookingData.serviceType == "car_rental" ? (routeData?.distance || "N/A") : bookingData.distanceKm.toFixed(1) + " km",
+    icon: Car,
+    description: "Luxury experience",
+    disabled: true,
+    comingSoon: true
+  }
+];
   const handleVehicleSelection = (vehicleType: string, fareData: any) => {
     updateBookingData({
       carType: vehicleType,
@@ -108,6 +115,7 @@ export const VehicleSelection = ({
 
       <div className="space-y-4 mb-6">
         {vehicleTypes.map((vehicle) => {
+          
           const fareCalculation = vehicle.type === "Sedan" ? sedanFare : 
                                  vehicle.type === "SUV" ? suvFare : premiumFare;
           
@@ -143,7 +151,7 @@ export const VehicleSelection = ({
                       </div>
                       <div className="flex items-center gap-1">
                         <Clock className="w-3 h-3" />
-                        <span>{vehicle.estimatedTime} arrival</span>
+                        <span>{vehicle.estimatedDistance} • {vehicle.estimatedDuration}</span>
                       </div>
                     </div>
                     {bookingData.isRoundTrip && (

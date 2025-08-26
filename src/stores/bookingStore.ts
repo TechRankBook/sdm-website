@@ -8,6 +8,14 @@ export interface BookingData {
   scheduledDateTime?: string;
   passengers?: number;
   packageSelection?: string;
+  packageDetails?: {
+    id: string;
+    name: string;
+    duration_hours: number;
+    included_kilometers: number;
+    vehicle_type: string;
+    base_fare: number;
+  };
   carType?: string;
   selectedFare?: {
     type: string;
@@ -24,6 +32,7 @@ export interface BookingData {
   vehicleType?: string;
   distanceKm?: number;
   durationMinutes?: number;
+  
 }
 
 interface BookingStore {
@@ -63,6 +72,7 @@ const initialBookingData: BookingData = {
   vehicleType: "",
   distanceKm: 0,
   durationMinutes: 0,
+  packageDetails: undefined,
 };
 
 export const useBookingStore = create<BookingStore>()(

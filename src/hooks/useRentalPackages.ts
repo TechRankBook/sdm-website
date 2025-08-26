@@ -39,7 +39,7 @@ export const useRentalPackages = ({ vehicleType }: UseRentalPackagesProps = {}) 
         .eq('is_active', true)
         .order('duration_hours', { ascending: true });
 
-      if (vehicleType) {
+      if (false) {
         query = query.eq('vehicle_type', vehicleType);
       }
 
