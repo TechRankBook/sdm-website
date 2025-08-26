@@ -680,7 +680,7 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
             {serviceType === "airport" && tripType === "pickup" ? (
               <div className="space-y-2">
                 <Label className="text-sm font-medium">Select Pickup Terminal</Label>
-                <div className="space-y-2">
+                <div className="flex gap-3 w-full">
                   {Object.entries(airportTerminals).map(([key, terminal]) => (
                     <div
                       key={key}
@@ -699,7 +699,7 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                             ? "border-primary bg-primary"
                             : "border-border"
                         )} />
-                        <span className="font-medium">{terminal.name}</span>
+                        <span className="font-medium">{key === "terminal1" ? "Terminal 1 (KIA)" : "Terminal 2 (KIA)"}</span>
                       </div>
                     </div>
                   ))}
@@ -744,7 +744,7 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                 {serviceType === "airport" && tripType === "drop" ? (
                   <div className="space-y-2">
                     <Label className="text-sm font-medium">Select Drop Terminal</Label>
-                    <div className="space-y-2 flex gap-3">
+                    <div className="flex gap-3 w-full">
                       {Object.entries(airportTerminals).map(([key, terminal]) => (
                         <div
                           key={key}
@@ -764,7 +764,7 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                                 : "border-border"
                             )} />
                             <span className="font-medium">
-                              {key === "terminal1" ? "Terminal 1" : "Terminal 2"}
+                              {key === "terminal1" ? "Terminal 1 (KIA)" : "Terminal 2 (KIA)"}
                             </span>
                           </div>
                         </div>
@@ -1119,7 +1119,24 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                   </div>
                 )}
 
-                
+                {/* Airport Terminal Selection for Pickup */}
+                {serviceType === "airport" && tripType === "pickup" && (
+                  <div className="mb-4">
+                    <Label className="text-sm mb-2 block">Select Terminal</Label>
+                    <select 
+                      className="w-full p-3 rounded-lg glass border border-glass-border text-foreground bg-background"
+                      value={selectedAirportTerminal}
+                      onChange={(e) => {
+                        setSelectedAirportTerminal(e.target.value);
+                        setTimeout(updateSpecialInstructions, 0);
+                      }}
+                    >
+                      <option value="">Select Terminal</option>
+                      <option value="Terminal 1">Kempegowda International Airport – Terminal 1</option>
+                      <option value="Terminal 2">Kempegowda International Airport – Terminal 2</option>
+                    </select>
+                  </div>
+                )}
 
                 {/* Additional Instructions */}
                 <div className="mb-2">
