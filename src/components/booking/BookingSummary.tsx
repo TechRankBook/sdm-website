@@ -49,7 +49,15 @@ export const BookingSummary = ({ bookingData }: BookingSummaryProps) => {
           <span className="text-sm text-muted-foreground">Vehicle</span>
           <span className="text-foreground font-medium">{bookingData.selectedFare?.type || "Not selected"}</span>
         </div>
-        
+        {bookingData.packageSelection && (
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-muted-foreground flex items-center gap-1">
+              <Clock className="w-3 h-3" />
+              Duration
+            </span>
+            <span className="text-foreground font-medium">{bookingData.packageSelection} hours</span>
+          </div>
+        )}
         <div className="space-y-2">
           <div className="flex justify-between items-start">
             <span className="text-sm text-muted-foreground">Pickup</span>
@@ -100,15 +108,7 @@ export const BookingSummary = ({ bookingData }: BookingSummaryProps) => {
           <span className="text-foreground font-medium">{bookingData.passengers}</span>
         </div>
 
-        {bookingData.packageSelection && (
-          <div className="flex justify-between items-center">
-            <span className="text-sm text-muted-foreground flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              Selected Package
-            </span>
-            <span className="text-foreground font-medium">{bookingData.packageDetails.name}</span>
-          </div>
-        )}
+        
 
         {bookingData.specialInstructions && (
           <div className="pt-2 border-t border-glass-border">
