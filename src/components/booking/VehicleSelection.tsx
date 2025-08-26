@@ -177,10 +177,6 @@ const vehicleTypes = [
                             <div className="text-xs text-muted-foreground">
                               {fareCalculation.fareData.packageDetails.name}
                             </div>
-                          ) : routeData ? (
-                            <div className="text-xs text-muted-foreground">
-                              {routeData.distance} • {routeData.duration}
-                            </div>
                           ) : null}
                         </>
                       ) : fareCalculation.error ? (
