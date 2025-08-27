@@ -148,6 +148,49 @@ const Contact = () => {
             ))}
           </div> */}
 
+          {/* Office Location Map */}
+          <Card className="glass p-8 mb-16">
+            <h2 className="text-3xl font-bold mb-6 flex items-center gap-2">
+              <MapPin className="w-8 h-8 text-primary" />
+              Our Location
+            </h2>
+            <div className="grid lg:grid-cols-2 gap-6">
+              <div>
+                <h3 className="text-xl font-semibold mb-4">Visit Our Office</h3>
+                <p className="text-muted-foreground mb-4">
+                  No 1, 1st Floor, Dhanyan Manor, Udayaravi Road, Kuvempu Nagar<br />
+                  Mysore, Karnataka-570023
+                </p>
+                <div className="space-y-2">
+                  <p className="flex items-center gap-2">
+                    <Clock className="w-4 h-4 text-primary" />
+                    <span>Mon-Sat: 9 AM - 6 PM</span>
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <Phone className="w-4 h-4 text-primary" />
+                    <span>+91 82773 09746</span>
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <Mail className="w-4 h-4 text-primary" />
+                    <span>support@sdm-mobility.com</span>
+                  </p>
+                </div>
+              </div>
+              <div className="rounded-lg overflow-hidden">
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3898.5647!2d76.6394!3d12.2958!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3baf70481b3cf5e9%3A0x9c1f8c7e7f1e8b7f!2sKuvempu%20Nagar%2C%20Mysuru%2C%20Karnataka!5e0!3m2!1sen!2sin!4v1699999999999!5m2!1sen!2sin"
+                  width="100%"
+                  height="300"
+                  style={{ border: 0 }}
+                  allowFullScreen
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                  className="rounded-lg"
+                />
+              </div>
+            </div>
+          </Card>
+
           {/* Contact Information */}
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
             {contactInfo.map((info) => (

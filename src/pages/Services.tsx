@@ -35,12 +35,12 @@ const Services = () => {
   const services = [
     {
       id: "city",
-      name: "City Ride",
+      name: "Ride Later",
       icon: Car,
       image: "/img/city_ride.jpg", // Ensure these paths are correct
       price: "₹8/km",
       time: "3 min",
-      description: "Quick rides within the city for daily commutes and short trips.",
+      description: "Schedule rides in advance for daily commutes and planned trips.",
       features: ["100% Electric", "Real-time tracking", "Instant booking", "24/7 available"],
       benefits: ["Zero emissions", "Quiet ride", "Air conditioning", "Safety features"],
     },
@@ -96,7 +96,7 @@ const Services = () => {
         description: "Choose from our range of electric mobility services based on your needs",
         icon: Plus, // Use Plus icon for the first step
         details: [
-          "City Ride - Quick urban transport",
+          "Ride Later - Schedule advance rides",
           "Airport Taxi - Direct transfers",
           "Car Rental - Hourly bookings",
           "Outstation - Long distance travel",

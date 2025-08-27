@@ -33,7 +33,7 @@ const Terms = () => {
 using the services offered by SDM E-Mobility Services Private Limited 
 ("SDM", "we", "us", or "our"). These Terms govern your use of our 
 electric vehicle (EV) rental services, including cab rentals, airport 
-transfers, outstation trips, city rides, and taxi services.` 
+transfers, outstation trips, ride later service, and taxi services.` 
       ] 
     }, 
     { 
@@ -59,7 +59,7 @@ within the city.`,
 for your airport arrival or departure.`, 
         `**Outstation Trips:** Travel to destinations outside the city 
 limits in a spacious and efficient EV.`, 
-        `**City Rides:** Get around town conveniently with our 
+        `**Ride Later Service:** Schedule rides in advance with our 
 on-demand EV taxi service.` 
       ] 
     }, 

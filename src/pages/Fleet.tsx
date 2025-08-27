@@ -28,7 +28,7 @@ const Fleet = () => {
     {
       id: "hatchback",
       name: "Electric Hatchback",
-      category: "City Ride",
+      category: "Ride Later",
       seating: 4,
       price: "₹8/km",
       image: "🚗",

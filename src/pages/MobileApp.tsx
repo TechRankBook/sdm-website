@@ -63,7 +63,7 @@ const MobileApp = () => {
     {
       step: "1",
       title: "Select Service",
-      description: "Choose from City Ride, Airport Taxi, Outstation, Car Rental, or Ride Sharing",
+      description: "Choose from Ride Later, Airport Taxi, Outstation, Car Rental, or Ride Sharing",
       icon: MapPin
     },
     {

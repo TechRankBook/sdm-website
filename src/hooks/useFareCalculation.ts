@@ -82,7 +82,7 @@ export const useFareCalculation = ({
       try {
         // Get service type ID with mapping for backend integration
         const serviceTypeMapping: Record<string, string> = {
-          'city_ride': 'city_ride',
+          'ride_later': 'ride_later',
           'airport': 'airport_transfer', 
           'outstation': 'outstation',
           'car_rental': 'car_rental'
@@ -145,7 +145,7 @@ export const useFareCalculation = ({
       // Fallback pricing if database doesn't have the data
       if (!baseFare && !perKmRate && !perMinuteRate && !minimumFare) {
         const pricingFallback = {
-          city_ride: {
+          ride_later: {
             Sedan: { baseFare: 50, perKmRate: 12, perMinuteRate: 2, minimumFare: 80 },
             SUV: { baseFare: 70, perKmRate: 15, perMinuteRate: 2.5, minimumFare: 100 },
             Premium: { baseFare: 100, perKmRate: 20, perMinuteRate: 3, minimumFare: 150 }

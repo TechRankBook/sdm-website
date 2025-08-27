@@ -11,7 +11,7 @@ interface BookingSummaryProps {
 export const BookingSummary = ({ bookingData }: BookingSummaryProps) => {
   const formatServiceName = (service: string) => {
     switch (service) {
-      case "city_ride": return "City Ride";
+      case "ride_later": return "Ride Later";
       case "airport": return "Airport Taxi";
       case "outstation": return "Outstation";
       case "car_rental": return "Hourly Rental";

@@ -80,7 +80,7 @@ const Booking = () => {
       setBookingData({
         pickupLocation: pickup || "",
         dropoffLocation: destination || "",
-        serviceType: service === "city" ? "city_ride" : 
+        serviceType: service === "city" ? "ride_later" : 
                    service === "airport" ? "airport" :
                    service === "rental" ? "car_rental" :
                    service === "outstation" ? "outstation" : bookingData.serviceType

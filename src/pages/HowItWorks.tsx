@@ -33,10 +33,10 @@ const HowItWorks = () => {
       title: "Select a Service",
       description: "Choose from our range of electric mobility services based on your needs",
       icon: Plus, // Use Plus icon for the first step
-      details: [
-        "City Ride - Quick urban transport",
-        "Airport Taxi - Direct transfers",
-        "Car Rental - Hourly bookings",
+        details: [
+          "Ride Later - Schedule advance rides",
+          "Airport Taxi - Direct transfers",
+          "Car Rental - Hourly bookings",
         "Outstation - Long distance travel",
         "Ride Sharing - Budget-friendly option"
       ],

@@ -25,7 +25,7 @@ export const BookingWidget = () => {
   const serviceTypes = [
     {
       id: "city",
-      name: "City Ride",
+      name: "Ride Later",
       icon: Car,
       price: "₹8/km",
       time: "3 min",

@@ -53,7 +53,7 @@ interface BookingStore {
 }
 
 const initialBookingData: BookingData = {
-  serviceType: "city_ride",
+  serviceType: "ride_later",
   pickupLocation: "",
   dropoffLocation: "",
   scheduledDateTime: "",

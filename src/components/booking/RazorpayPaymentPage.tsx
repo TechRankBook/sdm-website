@@ -127,7 +127,7 @@ export const RazorpayPaymentPage = ({ bookingData, onNext, onBack }: RazorpayPay
 
       // Get service type ID with mapping
       const serviceTypeMapping: Record<string, string> = {
-        'city_ride': 'city_ride',
+        'ride_later': 'ride_later',
         'airport': 'airport_transfer', 
         'outstation': 'outstation',
         'car_rental': 'car_rental'

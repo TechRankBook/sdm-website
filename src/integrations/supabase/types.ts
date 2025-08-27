@@ -428,7 +428,7 @@ export type Database = {
           created_at: string | null
           distance_km: number | null
           driver_id: string | null
-          dropoff_address: string
+          dropoff_address: string | null
           dropoff_latitude: number | null
           dropoff_location_id: string | null
           dropoff_longitude: number | null
@@ -481,7 +481,7 @@ export type Database = {
           created_at?: string | null
           distance_km?: number | null
           driver_id?: string | null
-          dropoff_address: string
+          dropoff_address?: string | null
           dropoff_latitude?: number | null
           dropoff_location_id?: string | null
           dropoff_longitude?: number | null
@@ -534,7 +534,7 @@ export type Database = {
           created_at?: string | null
           distance_km?: number | null
           driver_id?: string | null
-          dropoff_address?: string
+          dropoff_address?: string | null
           dropoff_latitude?: number | null
           dropoff_location_id?: string | null
           dropoff_longitude?: number | null
@@ -602,20 +602,6 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "vehicles_with_driver_details"
             referencedColumns: ["driver_id"]
-          },
-          {
-            foreignKeyName: "bookings_dropoff_location_id_fkey"
-            columns: ["dropoff_location_id"]
-            isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "bookings_pickup_location_id_fkey"
-            columns: ["pickup_location_id"]
-            isOneToOne: false
-            referencedRelation: "locations"
-            referencedColumns: ["id"]
           },
           {
             foreignKeyName: "bookings_rental_package_id_fkey"
@@ -1862,6 +1848,7 @@ export type Database = {
           no_show_fee: number | null
           updated_at: string
           vehicle_type: string
+          vehicle_type_id: string | null
           waiting_limit_minutes: number | null
         }
         Insert: {
@@ -1878,6 +1865,7 @@ export type Database = {
           no_show_fee?: number | null
           updated_at?: string
           vehicle_type: string
+          vehicle_type_id?: string | null
           waiting_limit_minutes?: number | null
         }
         Update: {
@@ -1894,9 +1882,18 @@ export type Database = {
           no_show_fee?: number | null
           updated_at?: string
           vehicle_type?: string
+          vehicle_type_id?: string | null
           waiting_limit_minutes?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "rental_packages_vehicle_type_id_fkey"
+            columns: ["vehicle_type_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_types"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       reviews: {
         Row: {

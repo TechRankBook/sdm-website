@@ -257,7 +257,7 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
   const [showScheduleModal, setShowScheduleModal] = useState(false);
 
   const serviceTypes = [
-    { id: "city_ride", name: "Requested Ride", icon: Car },
+    { id: "ride_later", name: "Ride Later", icon: Car },
     { id: "airport", name: "Airport Taxi", icon: Plane },
     { id: "outstation", name: "Outstation", icon: Route },
     { id: "car_rental", name: "Hourly Rentals", icon: TimerReset }
