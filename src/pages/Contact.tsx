@@ -148,6 +148,27 @@ const Contact = () => {
             ))}
           </div> */}
 
+          
+
+          {/* Contact Information */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
+            {contactInfo.map((info) => (
+              <Card key={info.title} className="glass p-6 text-center">
+                <div className="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center mx-auto mb-4">
+                  <info.icon className="w-6 h-6 text-white" />
+                </div>
+                <h3 className="text-xl font-bold mb-3">{info.title}</h3>
+                {info.details.map((detail, index) => (
+                  <p key={index} className="text-muted-foreground mb-1">
+                    {detail}
+                  </p>
+                ))}
+                <Badge variant="secondary" className="mt-2">
+                  {info.description}
+                </Badge>
+              </Card>
+            ))}
+          </div>
           {/* Office Location Map */}
           <Card className="glass p-8 mb-16">
             <h2 className="text-3xl font-bold mb-6 flex items-center gap-2">
@@ -190,26 +211,6 @@ const Contact = () => {
               </div>
             </div>
           </Card>
-
-          {/* Contact Information */}
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-            {contactInfo.map((info) => (
-              <Card key={info.title} className="glass p-6 text-center">
-                <div className="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center mx-auto mb-4">
-                  <info.icon className="w-6 h-6 text-white" />
-                </div>
-                <h3 className="text-xl font-bold mb-3">{info.title}</h3>
-                {info.details.map((detail, index) => (
-                  <p key={index} className="text-muted-foreground mb-1">
-                    {detail}
-                  </p>
-                ))}
-                <Badge variant="secondary" className="mt-2">
-                  {info.description}
-                </Badge>
-              </Card>
-            ))}
-          </div>
 
           {/* Contact Form and FAQ */}
           <div className="grid lg:grid-cols-2 gap-8 mb-16">
