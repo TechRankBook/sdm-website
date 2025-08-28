@@ -3,12 +3,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
-import { 
-  MapPin, 
-  Navigation, 
-  Clock, 
+import {
+  MapPin,
+  Navigation,
+  Clock,
   Car,
   Users,
   Calendar,
@@ -21,7 +26,7 @@ import {
   Menu,
   Minus,
   Luggage,
-  Zap
+  Zap,
 } from "lucide-react";
 import { BookingData } from "@/stores/bookingStore";
 
@@ -31,11 +36,21 @@ interface BookingFormProps {
   onNext: () => void;
 }
 
-export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingFormProps) => {
+export const BookingForm = ({
+  bookingData,
+  updateBookingData,
+  onNext,
+}: BookingFormProps) => {
   const [serviceType, setServiceType] = useState(bookingData.serviceType);
-  const [pickupLocation, setPickupLocation] = useState(bookingData.pickupLocation);
-  const [dropoffLocation, setDropoffLocation] = useState(bookingData.dropoffLocation || "");
-  const [scheduledDateTime, setScheduledDateTime] = useState(bookingData.scheduledDateTime || "");
+  const [pickupLocation, setPickupLocation] = useState(
+    bookingData.pickupLocation
+  );
+  const [dropoffLocation, setDropoffLocation] = useState(
+    bookingData.dropoffLocation || ""
+  );
+  const [scheduledDateTime, setScheduledDateTime] = useState(
+    bookingData.scheduledDateTime || ""
+  );
   const [returnDateTime, setReturnDateTime] = useState("");
   const [passengers, setPassengers] = useState(bookingData.passengers || 2);
   const [suitcases, setSuitcases] = useState(2);
@@ -53,13 +68,13 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
 
   // Schedule modal states
   const [selectedDate, setSelectedDate] = useState("today");
-  const [selectedTime, setSelectedTime] = useState({hour: 11, minute: 40});
+  const [selectedTime, setSelectedTime] = useState({ hour: 11, minute: 40 });
 
   const serviceTypes = [
     { id: "city", name: "CityRide", icon: Car },
     { id: "airport", name: "Airport Taxi", icon: Plane },
     { id: "outstation", name: "Outstation", icon: Route },
-    { id: "hourly", name: "Hourly Rentals", icon: RotateCcw }
+    { id: "hourly", name: "Hourly Rentals", icon: RotateCcw },
   ];
 
   const canAddStops = serviceType !== "hourly";
@@ -108,7 +123,7 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
       dropoffLocation: serviceType === "hourly" ? undefined : dropoffLocation,
       scheduledDateTime,
       passengers,
-      packageSelection: serviceType === "hourly" ? hours : undefined
+      packageSelection: serviceType === "hourly" ? hours : undefined,
     });
 
     onNext();
@@ -119,7 +134,9 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
       <Card className="glass rounded-2xl p-6">
         {/* Service Type Selection */}
         <div className="mb-6">
-          <h2 className="text-lg font-semibold text-foreground mb-4">Book Your Ride</h2>
+          <h2 className="text-lg font-semibold text-foreground mb-4">
+            Book Your Ride
+          </h2>
           <div className="flex gap-2 p-1 glass rounded-lg overflow-x-auto scrollbar-hide">
             {serviceTypes.map((service) => (
               <Button
@@ -127,8 +144,8 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
                 variant={serviceType === service.id ? "default" : "ghost"}
                 className={cn(
                   "h-auto py-3 px-2 flex flex-col gap-2 text-xs transition-all duration-200 flex-shrink-0 min-w-[80px]",
-                  serviceType === service.id 
-                    ? "bg-gradient-primary text-white shadow-glow" 
+                  serviceType === service.id
+                    ? "bg-gradient-primary text-white shadow-glow"
                     : "text-muted-foreground hover:text-foreground hover:bg-accent/20"
                 )}
                 onClick={() => {
@@ -145,7 +162,9 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
                 }}
               >
                 <service.icon className="w-4 h-4 sm:w-5 sm:h-5" />
-                <span className="text-center leading-tight text-[10px] sm:text-xs whitespace-nowrap">{service.name}</span>
+                <span className="text-center leading-tight text-[10px] sm:text-xs whitespace-nowrap">
+                  {service.name}
+                </span>
               </Button>
             ))}
           </div>
@@ -161,8 +180,8 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
                     variant={tripType === "oneway" ? "default" : "ghost"}
                     className={cn(
                       "flex-1 text-sm",
-                      tripType === "oneway" 
-                        ? "bg-gradient-primary text-white" 
+                      tripType === "oneway"
+                        ? "bg-gradient-primary text-white"
                         : "text-muted-foreground"
                     )}
                     onClick={() => setTripType("oneway")}
@@ -173,8 +192,8 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
                     variant={tripType === "roundtrip" ? "default" : "ghost"}
                     className={cn(
                       "flex-1 text-sm",
-                      tripType === "roundtrip" 
-                        ? "bg-gradient-primary text-white" 
+                      tripType === "roundtrip"
+                        ? "bg-gradient-primary text-white"
                         : "text-muted-foreground"
                     )}
                     onClick={() => setTripType("roundtrip")}
@@ -188,8 +207,8 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
                     variant={tripType === "pickup" ? "default" : "ghost"}
                     className={cn(
                       "flex-1 text-xs sm:text-sm",
-                      tripType === "pickup" 
-                        ? "bg-gradient-primary text-white" 
+                      tripType === "pickup"
+                        ? "bg-gradient-primary text-white"
                         : "text-muted-foreground"
                     )}
                     onClick={() => setTripType("pickup")}
@@ -200,8 +219,8 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
                     variant={tripType === "drop" ? "default" : "ghost"}
                     className={cn(
                       "flex-1 text-xs sm:text-sm",
-                      tripType === "drop" 
-                        ? "bg-gradient-primary text-white" 
+                      tripType === "drop"
+                        ? "bg-gradient-primary text-white"
                         : "text-muted-foreground"
                     )}
                     onClick={() => setTripType("drop")}
@@ -252,7 +271,9 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
                   <Input
                     placeholder="Add stop"
                     value={stop}
-                    onChange={(e) => updateAdditionalStop(index, e.target.value)}
+                    onChange={(e) =>
+                      updateAdditionalStop(index, e.target.value)
+                    }
                     className="pl-10 pr-10 h-12 glass-hover text-base"
                   />
                   <Button
@@ -265,7 +286,7 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
                   </Button>
                 </div>
               ))}
-              
+
               <Button
                 variant="outline"
                 className="w-full h-12 border-dashed border-2 glass-hover"
@@ -294,8 +315,8 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
               <Navigation className="absolute left-3 top-3 w-5 h-5 text-accent z-10" />
               <Input
                 placeholder={
-                  serviceType === "airport" && tripType === "drop" 
-                    ? "KIA (BLR)" 
+                  serviceType === "airport" && tripType === "drop"
+                    ? "KIA (BLR)"
                     : "Drop-off location"
                 }
                 value={dropoffLocation}
@@ -328,7 +349,9 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
         {serviceType === "airport" && tripType === "drop" && (
           <div className="mb-6 space-y-4">
             <div>
-              <Label className="text-sm font-medium text-foreground mb-2 block">Terminal</Label>
+              <Label className="text-sm font-medium text-foreground mb-2 block">
+                Terminal
+              </Label>
               <div className="flex gap-2">
                 <Button
                   variant={terminal === "T1" ? "default" : "outline"}
@@ -352,7 +375,7 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
                 </Button>
               </div>
             </div>
-            
+
             <div className="relative">
               <Plane className="absolute left-3 top-3 w-5 h-5 text-primary z-10" />
               <Input
@@ -382,7 +405,9 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
         {/* Return Time for Round Trip */}
         {serviceType === "outstation" && tripType === "roundtrip" && (
           <div className="mb-6">
-            <Label className="text-sm font-medium text-foreground mb-2 block">Drop off time</Label>
+            <Label className="text-sm font-medium text-foreground mb-2 block">
+              Drop off time
+            </Label>
             <div className="relative">
               <Calendar className="absolute left-3 top-3 w-5 h-5 text-accent z-10" />
               <Input
@@ -405,7 +430,9 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
           >
             <div className="flex items-center gap-2">
               <Users className="w-5 h-5 text-primary" />
-              <span>{passengers} Guest{passengers !== 1 ? 's' : ''}</span>
+              <span>
+                {passengers} Guest{passengers !== 1 ? "s" : ""}
+              </span>
             </div>
             <ChevronRight className="w-4 h-4" />
           </Button>
@@ -427,12 +454,16 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
           <DialogHeader>
             <DialogTitle className="text-foreground flex items-center justify-between">
               Guest Info
-              <Button variant="ghost" size="sm" onClick={() => setShowGuestModal(false)}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowGuestModal(false)}
+              >
                 <X className="w-4 h-4" />
               </Button>
             </DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
@@ -448,7 +479,9 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
                 >
                   <Minus className="w-3 h-3" />
                 </Button>
-                <span className="w-8 text-center text-foreground">{passengers}</span>
+                <span className="w-8 text-center text-foreground">
+                  {passengers}
+                </span>
                 <Button
                   variant="outline"
                   size="sm"
@@ -474,7 +507,9 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
                 >
                   <Minus className="w-3 h-3" />
                 </Button>
-                <span className="w-8 text-center text-foreground">{suitcases}</span>
+                <span className="w-8 text-center text-foreground">
+                  {suitcases}
+                </span>
                 <Button
                   variant="outline"
                   size="sm"
@@ -487,10 +522,11 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
             </div>
 
             <p className="text-sm text-muted-foreground">
-              Our EVs seat 4 passengers. Fits around 4 large suitcases. Sharing this helps us send the right car.
+              Our EVs seat 4 passengers. Fits around 4 large suitcases. Sharing
+              this helps us send the right car.
             </p>
 
-            <Button 
+            <Button
               className="w-full bg-gradient-primary"
               onClick={() => setShowGuestModal(false)}
             >
@@ -506,12 +542,16 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
           <DialogHeader>
             <DialogTitle className="text-foreground flex items-center justify-between">
               Select Hours
-              <Button variant="ghost" size="sm" onClick={() => setShowHoursModal(false)}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowHoursModal(false)}
+              >
                 <X className="w-4 h-4" />
               </Button>
             </DialogTitle>
           </DialogHeader>
-          
+
           <div className="flex justify-center py-8">
             <div className="text-center">
               <div className="grid grid-cols-2 gap-4 mb-4">
@@ -521,7 +561,9 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
                     variant={hours === hour.toString() ? "default" : "outline"}
                     className={cn(
                       "w-16 h-12",
-                      hours === hour.toString() ? "bg-gradient-primary" : "glass"
+                      hours === hour.toString()
+                        ? "bg-gradient-primary"
+                        : "glass"
                     )}
                     onClick={() => setHours(hour.toString())}
                   >
@@ -532,8 +574,8 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
               <p className="text-lg font-semibold text-foreground">Hours</p>
             </div>
           </div>
-          
-          <Button 
+
+          <Button
             className="w-full bg-gradient-primary"
             onClick={() => setShowHoursModal(false)}
             disabled={!hours}
@@ -549,12 +591,16 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
           <DialogHeader>
             <DialogTitle className="text-foreground flex items-center justify-between">
               Schedule Ride
-              <Button variant="ghost" size="sm" onClick={() => setShowScheduleModal(false)}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowScheduleModal(false)}
+              >
                 <X className="w-4 h-4" />
               </Button>
             </DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-6">
             <div>
               <h4 className="text-foreground mb-4">Select date</h4>
@@ -573,7 +619,9 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
                   variant={selectedDate === "tomorrow" ? "default" : "outline"}
                   className={cn(
                     "flex-1",
-                    selectedDate === "tomorrow" ? "bg-gradient-primary" : "glass"
+                    selectedDate === "tomorrow"
+                      ? "bg-gradient-primary"
+                      : "glass"
                   )}
                   onClick={() => setSelectedDate("tomorrow")}
                 >
@@ -600,14 +648,20 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
                     {[9, 10, 11, 12, 13, 14, 15, 16].map((hour) => (
                       <Button
                         key={hour}
-                        variant={selectedTime.hour === hour ? "default" : "ghost"}
+                        variant={
+                          selectedTime.hour === hour ? "default" : "ghost"
+                        }
                         className={cn(
                           "w-12 h-8 text-sm",
-                          selectedTime.hour === hour ? "bg-gradient-primary" : "text-muted-foreground"
+                          selectedTime.hour === hour
+                            ? "bg-gradient-primary"
+                            : "text-muted-foreground"
                         )}
-                        onClick={() => setSelectedTime({...selectedTime, hour})}
+                        onClick={() =>
+                          setSelectedTime({ ...selectedTime, hour })
+                        }
                       >
-                        {hour.toString().padStart(2, '0')}
+                        {hour.toString().padStart(2, "0")}
                       </Button>
                     ))}
                   </div>
@@ -618,14 +672,20 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
                     {[0, 15, 30, 45].map((minute) => (
                       <Button
                         key={minute}
-                        variant={selectedTime.minute === minute ? "default" : "ghost"}
+                        variant={
+                          selectedTime.minute === minute ? "default" : "ghost"
+                        }
                         className={cn(
                           "w-12 h-8 text-sm",
-                          selectedTime.minute === minute ? "bg-gradient-primary" : "text-muted-foreground"
+                          selectedTime.minute === minute
+                            ? "bg-gradient-primary"
+                            : "text-muted-foreground"
                         )}
-                        onClick={() => setSelectedTime({...selectedTime, minute})}
+                        onClick={() =>
+                          setSelectedTime({ ...selectedTime, minute })
+                        }
                       >
-                        {minute.toString().padStart(2, '0')}
+                        {minute.toString().padStart(2, "0")}
                       </Button>
                     ))}
                   </div>
@@ -634,10 +694,14 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
               </div>
             </div>
 
-            <Button 
+            <Button
               className="w-full bg-gradient-primary"
               onClick={() => {
-                const timeString = `${selectedTime.hour.toString().padStart(2, '0')}:${selectedTime.minute.toString().padStart(2, '0')}`;
+                const timeString = `${selectedTime.hour
+                  .toString()
+                  .padStart(2, "0")}:${selectedTime.minute
+                  .toString()
+                  .padStart(2, "0")}`;
                 setScheduledDateTime(timeString);
                 setShowScheduleModal(false);
               }}
@@ -646,7 +710,8 @@ export const BookingForm = ({ bookingData, updateBookingData, onNext }: BookingF
             </Button>
 
             <p className="text-sm text-muted-foreground text-center">
-              We recommend booking at least 12 hrs in advance.<br />
+              We recommend booking at least 12 hrs in advance.
+              <br />
               Last-minute bookings are subject to availability.
             </p>
           </div>

@@ -16,6 +16,18 @@ import {
   Car,
   MapPin,
   Star,
+  Icon,
+  CarFront,
+  HandCoinsIcon,
+  Building2,
+  Map,
+  UserCog2,
+  GlobeLockIcon,
+  LecternIcon,
+  Satellite,
+  LeafyGreenIcon,
+  HeartHandshake,
+  LeafIcon,
 } from "lucide-react";
 
 const About = () => {
@@ -27,9 +39,9 @@ const About = () => {
   };
 
   const stats = [
-    { label: "Cities Served", value: "25+", icon: MapPin },
-    { label: "Happy Customers", value: "2.5M+", icon: Users },
-    { label: "Electric Vehicles", value: "500+", icon: Car },
+    { label: "Cities Served", value: "2+", icon: MapPin },
+    { label: "Happy Customers", value: "2.1K+", icon: Users },
+    { label: "Electric Vehicles", value: "5+", icon: Car },
     { label: "Zero Emissions", value: "100%", icon: Leaf },
     { label: "Customer Rating", value: "4.8★", icon: Star },
     { label: "CO₂ Saved", value: "10K+ tons", icon: Globe },
@@ -37,7 +49,7 @@ const About = () => {
 
   const values = [
     {
-      icon: Leaf,
+      icon: LeafIcon,
       title: "Sustainability",
       description:
         "Committed to zero-emission transportation and environmental protection through 100% electric fleet.",
@@ -76,40 +88,52 @@ const About = () => {
 
   const timeline = [
     {
-      year: "2020",
-      title: "Company Founded",
+      // year: "2020",
+      icon: <CarFront />,
+      title: "100% Electric Fleet",
       description:
-        "SDM E-Mobility was established with a vision to revolutionize urban transportation through sustainable electric mobility.",
+        "Unlike traditional operators, we are fully committed to electric vehicles, ensuring zero emissions and a greener Mysuru.",
     },
     {
-      year: "2021",
-      title: "First Fleet Launch",
+      // year: "2021",
+      icon: <HandCoinsIcon />,
+      title: "Affordability & Transparency",
       description:
-        "Launched our first fleet of 50 electric vehicles in Bangalore, beginning our journey towards zero-emission transport.",
+        "Competitive flat fares with no hidden costs, enabled by lower EV operating expenses.",
     },
     {
-      year: "2022",
-      title: "Multi-City Expansion",
+      // year: "2022",
+      icon: <Building2 />,
+      title: "Corporate-Centric Model",
       description:
-        "Expanded operations to 10 major Indian cities, establishing ourselves as a leading electric mobility platform.",
+        "We focus not only on public riders but also on long-term corporate contracts, ensuring recurring and predictable revenues.",
     },
     {
-      year: "2023",
-      title: "Technology Innovation",
+      // year: "2023",
+      icon: <Map />,
+      title: "Local Expertise",
       description:
-        "Introduced advanced AI-powered route optimization and real-time tracking features for enhanced user experience.",
+        "As a Mysuru-born company, we deeply understand the mobility needs of residents, tourists, and businesses in the city.",
     },
     {
-      year: "2024",
-      title: "Sustainable Milestone",
+      // year: "2024",
+      icon: <UserCog2 />,
+      title: "Driver Empowerment",
       description:
-        "Achieved 1 million zero-emission rides and saved over 5,000 tons of CO₂ emissions.",
+        "We treat our drivers as partners by providing fair payouts, training, and incentives, ensuring better service quality.",
     },
     {
-      year: "2025",
-      title: "Future Vision",
+      // year: "2025",
+      icon: <GlobeLockIcon />,
+      title: "Technology Integration",
       description:
-        "Expanding to 50+ cities with 2,000 electric vehicles, leading India's sustainable transportation revolution.",
+        "Real-time booking, tracking, WhatsApp-based support, and CRM-enabled lead management.",
+    },
+    {
+      icon: <LeafIcon />,
+      title: "Sustainability Impact",
+      description:
+        "Each ride directly contributes to reducing carbon emissions, and corporates partnering with us can showcase measurable ESG impact.",
     },
   ];
 
@@ -162,10 +186,27 @@ const About = () => {
             <h1 className="text-5xl md:text-6xl font-bold mb-6 gradient-text">
               About SDM E-Mobility
             </h1>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Pioneering the future of sustainable urban transportation with
-              100% electric mobility solutions. We're not just moving people,
-              we're moving towards a cleaner, greener tomorrow.
+            <p className="text-xl text-muted-foreground text-center max-w-6xl mx-auto">
+              SDM E-Mobility Services Private Limited is a Mysuru-based company
+              dedicated to transforming urban and corporate transportation
+              through sustainable, technology-driven cab services. Founded with
+              a vision to make mobility cleaner, smarter, and more reliable, we
+              operate an all-electric cab fleet that caters to both the general
+              public and businesses. <br />
+              <br />
+              Our mission is to deliver affordable, comfortable, and
+              eco-friendly rides while reducing the city's carbon footprint. By
+              integrating electric vehicles into our operations, we not only
+              lower emissions but also reduce operational costs—savings that are
+              passed on to our customers. For corporates, we provide tailored
+              mobility solutions that ensure employee safety, punctuality, and
+              convenience. <br />
+              <br />
+              At SDM E-Mobility, we believe mobility is more than just
+              transport. It is an experience built on sustainability,
+              reliability, and innovation. We are committed to redefining urban
+              commuting in Mysuru and setting a benchmark for green mobility in
+              tier-2 cities across India.
             </p>
           </div>
 
@@ -228,19 +269,19 @@ const About = () => {
           {/* Timeline */}
           <div className="mb-16">
             <h2 className="text-3xl font-bold text-center mb-12">
-              Our Journey
+              What Makes Us Stand Out
             </h2>
             <div className="space-y-8">
               {timeline.map((milestone, index) => (
                 <Card
-                  key={milestone.year}
+                  key={index}
                   className={`glass p-6 ${
                     index % 2 === 1 ? "md:ml-8" : "md:mr-8"
                   }`}
                 >
                   <div className="flex items-center gap-4 mb-4">
                     <Badge variant="secondary" className="text-lg px-4 py-2">
-                      {milestone.year}
+                      {milestone?.icon}
                     </Badge>
                     <h3 className="text-2xl font-bold">{milestone.title}</h3>
                   </div>
@@ -301,23 +342,19 @@ const About = () => {
             <div className="grid md:grid-cols-3 gap-6 text-center">
               <div>
                 <Leaf className="w-16 h-16 mx-auto mb-4 text-primary" />
-                <div className="text-3xl font-bold text-primary mb-2">
-                  10,000+
-                </div>
+                <div className="text-3xl font-bold text-primary mb-2">10+</div>
                 <p className="text-muted-foreground">
                   Tons of CO₂ Emissions Saved
                 </p>
               </div>
               <div>
                 <Globe className="w-16 h-16 mx-auto mb-4 text-primary" />
-                <div className="text-3xl font-bold text-primary mb-2">
-                  50,000+
-                </div>
+                <div className="text-3xl font-bold text-primary mb-2">50+</div>
                 <p className="text-muted-foreground">Trees Equivalent Impact</p>
               </div>
               <div>
                 <Zap className="w-16 h-16 mx-auto mb-4 text-primary" />
-                <div className="text-3xl font-bold text-primary mb-2">5M+</div>
+                <div className="text-3xl font-bold text-primary mb-2">5K+</div>
                 <p className="text-muted-foreground">
                   Zero-Emission Kilometers
                 </p>

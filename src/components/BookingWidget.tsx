@@ -3,17 +3,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
-  MapPin, 
-  Navigation, 
-  Clock, 
-  Zap, 
+import {
+  MapPin,
+  Navigation,
+  Clock,
+  Zap,
   Car,
   Users,
   Calendar,
   Plane,
   RotateCcw,
-  Route
+  Route,
 } from "lucide-react";
 
 export const BookingWidget = () => {
@@ -30,7 +30,7 @@ export const BookingWidget = () => {
       price: "₹8/km",
       time: "3 min",
       description: "Quick rides within the city",
-      features: ["Electric", "Real-time tracking"]
+      features: ["Electric", "Real-time tracking"],
     },
     {
       id: "airport",
@@ -39,7 +39,7 @@ export const BookingWidget = () => {
       price: "₹12/km",
       time: "5 min",
       description: "Direct airport transfers",
-      features: ["Luggage space", "Flight tracking"]
+      features: ["Luggage space", "Flight tracking"],
     },
     {
       id: "rental",
@@ -48,7 +48,7 @@ export const BookingWidget = () => {
       price: "₹200/hr",
       time: "10 min",
       description: "Hourly car rentals",
-      features: ["Self-drive", "Flexible hours"]
+      features: ["Self-drive", "Flexible hours"],
     },
     {
       id: "outstation",
@@ -57,37 +57,28 @@ export const BookingWidget = () => {
       price: "₹15/km",
       time: "15 min",
       description: "Long distance travel",
-      features: ["Driver included", "Round trip"]
+      features: ["Driver included", "Round trip"],
     },
-    {
-      id: "share",
-      name: "Ride Sharing",
-      icon: Users,
-      price: "₹4/km",
-      time: "8 min",
-      description: "Share with other riders",
-      features: ["Budget-friendly", "Green travel"]
-    }
   ];
 
   return (
     <div className="glass rounded-2xl p-6 w-full max-w-md mx-auto space-y-6">
       {/* Ride Timing Options */}
       <div className="flex gap-2">
-        <Button 
-          variant={rideTime === 'now' ? 'default' : 'ghost'} 
-          size="sm" 
-          className={rideTime === 'now' ? 'bg-gradient-primary' : ''}
-          onClick={() => setRideTime('now')}
+        <Button
+          variant={rideTime === "now" ? "default" : "ghost"}
+          size="sm"
+          className={rideTime === "now" ? "bg-gradient-primary" : ""}
+          onClick={() => setRideTime("now")}
         >
           <Clock className="w-4 h-4 mr-2" />
           Ride Now
         </Button>
-        <Button 
-          variant={rideTime === 'later' ? 'default' : 'ghost'} 
+        <Button
+          variant={rideTime === "later" ? "default" : "ghost"}
           size="sm"
-          className={rideTime === 'later' ? 'bg-gradient-primary' : ''}
-          onClick={() => setRideTime('later')}
+          className={rideTime === "later" ? "bg-gradient-primary" : ""}
+          onClick={() => setRideTime("later")}
         >
           <Calendar className="w-4 h-4 mr-2" />
           Schedule for Later
@@ -105,7 +96,7 @@ export const BookingWidget = () => {
             className="pl-10 glass-hover h-12 text-base"
           />
         </div>
-        
+
         <div className="relative">
           <Navigation className="absolute left-3 top-3 w-5 h-5 text-accent" />
           <Input
@@ -126,8 +117,8 @@ export const BookingWidget = () => {
               key={service.id}
               className={`p-4 cursor-pointer transition-all duration-300 ${
                 selectedService === service.id
-                  ? 'ring-2 ring-primary bg-gradient-surface'
-                  : 'glass-hover'
+                  ? "ring-2 ring-primary bg-gradient-surface"
+                  : "glass-hover"
               }`}
               onClick={() => setSelectedService(service.id)}
             >
@@ -137,11 +128,19 @@ export const BookingWidget = () => {
                     <service.icon className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h4 className="font-medium text-foreground">{service.name}</h4>
-                    <p className="text-sm text-muted-foreground">{service.description}</p>
+                    <h4 className="font-medium text-foreground">
+                      {service.name}
+                    </h4>
+                    <p className="text-sm text-muted-foreground">
+                      {service.description}
+                    </p>
                     <div className="flex gap-1 mt-1">
                       {service.features.map((feature) => (
-                        <Badge key={feature} variant="secondary" className="text-xs">
+                        <Badge
+                          key={feature}
+                          variant="secondary"
+                          className="text-xs"
+                        >
                           {feature}
                         </Badge>
                       ))}
@@ -149,7 +148,9 @@ export const BookingWidget = () => {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="font-bold text-primary text-lg">{service.price}</p>
+                  <p className="font-bold text-primary text-lg">
+                    {service.price}
+                  </p>
                   <div className="flex items-center gap-1 text-muted-foreground text-sm">
                     <Clock className="w-3 h-3" />
                     {service.time}
@@ -162,7 +163,7 @@ export const BookingWidget = () => {
       </div>
 
       {/* Book Button */}
-      <Button 
+      <Button
         className="w-full h-12 bg-gradient-primary text-lg font-semibold micro-bounce"
         disabled={!pickup || !destination}
         onClick={() => {
@@ -171,7 +172,7 @@ export const BookingWidget = () => {
             pickup: pickup,
             destination: destination,
             service: selectedService,
-            time: rideTime
+            time: rideTime,
           });
           window.location.href = `/booking?${params.toString()}`;
         }}
@@ -184,10 +185,13 @@ export const BookingWidget = () => {
       <div className="p-3 glass rounded-lg">
         <div className="flex items-center gap-2 mb-2">
           <Zap className="w-4 h-4 text-primary" />
-          <span className="text-sm font-medium text-foreground">Payment Options</span>
+          <span className="text-sm font-medium text-foreground">
+            Payment Options
+          </span>
         </div>
         <p className="text-xs text-muted-foreground">
-          Minimum 20% upfront payment required. Multiple payment methods accepted.
+          Minimum 20% upfront payment required. Multiple payment methods
+          accepted.
         </p>
       </div>
 

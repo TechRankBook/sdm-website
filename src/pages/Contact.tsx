@@ -43,13 +43,13 @@ const Contact = () => {
     {
       icon: Phone,
       title: "Call Us",
-      details: ["+91 82773 09746", "+91 99005 50701"],
+      details: ["+91 9844663345"],
       description: "24/7 Support Available",
     },
     {
       icon: Mail,
       title: "Email Us",
-      details: ["support@sdm-mobility.com", "booking@sdm-mobility.com"],
+      details: ["info@sdmemobility.com"],
       description: "We respond within 2 hours",
     },
     {
@@ -64,7 +64,7 @@ const Contact = () => {
     {
       icon: MessageCircle,
       title: "WhatsApp",
-      details: ["+91 98765 43210"],
+      details: ["+91 9844663345"],
       description: "Quick support via WhatsApp",
     },
   ];
@@ -148,8 +148,6 @@ const Contact = () => {
             ))}
           </div> */}
 
-          
-
           {/* Contact Information */}
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
             {contactInfo.map((info) => (
@@ -179,7 +177,8 @@ const Contact = () => {
               <div>
                 <h3 className="text-xl font-semibold mb-4">Visit Our Office</h3>
                 <p className="text-muted-foreground mb-4">
-                  No 1, 1st Floor, Dhanyan Manor, Udayaravi Road, Kuvempu Nagar<br />
+                  No 1, 1st Floor, Dhanyan Manor, Udayaravi Road, Kuvempu Nagar
+                  <br />
                   Mysore, Karnataka-570023
                 </p>
                 <div className="space-y-2">
@@ -189,11 +188,11 @@ const Contact = () => {
                   </p>
                   <p className="flex items-center gap-2">
                     <Phone className="w-4 h-4 text-primary" />
-                    <span>+91 82773 09746</span>
+                    <span>+91 9844663345</span>
                   </p>
                   <p className="flex items-center gap-2">
                     <Mail className="w-4 h-4 text-primary" />
-                    <span>support@sdm-mobility.com</span>
+                    <span>info@sdmemobility.com</span>
                   </p>
                 </div>
               </div>

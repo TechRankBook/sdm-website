@@ -37,149 +37,198 @@ const Services = () => {
       id: "city",
       name: "Ride Later",
       icon: Car,
-      image: "/img/city_ride.jpg", // Ensure these paths are correct
+      image: "/img/cityRide.jpg", // Ensure these paths are correct
       price: "₹8/km",
       time: "3 min",
-      description: "Schedule rides in advance for daily commutes and planned trips.",
-      features: ["100% Electric", "Real-time tracking", "Instant booking", "24/7 available"],
-      benefits: ["Zero emissions", "Quiet ride", "Air conditioning", "Safety features"],
+      description:
+        "Schedule rides in advance for daily commutes and planned trips.",
+      features: [
+        "100% Electric",
+        "Real-time tracking",
+        "Instant booking",
+        "24/7 available",
+      ],
+      benefits: [
+        "Zero emissions",
+        "Quiet ride",
+        "Air conditioning",
+        "Safety features",
+      ],
     },
     {
       id: "airport",
       name: "Airport Taxi",
       icon: Plane,
-      image: "/img/city_ride.jpg",
+      image: "/img/airport.jpg",
       price: "₹12/km",
       time: "5 min",
-      description: "Direct airport transfers with flight tracking and luggage assistance.",
-      features: ["Flight tracking", "Meet & greet", "Luggage space", "Premium vehicles"],
-      benefits: ["No waiting", "Professional drivers", "Fixed pricing", "24/7 service"],
+      description:
+        "Direct airport transfers with flight tracking and luggage assistance.",
+      features: [
+        "Flight tracking",
+        "Meet & greet",
+        "Luggage space",
+        "Premium vehicles",
+      ],
+      benefits: [
+        "No waiting",
+        "Professional drivers",
+        "Fixed pricing",
+        "24/7 service",
+      ],
     },
     {
       id: "rental",
       name: "Car Rental",
       icon: TimerReset,
-      image: "/img/city_ride.jpg",
+      image: "/img/rental.jpg",
       price: "₹200/hr",
       time: "10 min",
-      description: "Hourly car rentals for meetings, shopping, or multiple stops.",
-      features: ["Self-drive option", "Flexible hours", "Multiple stops", "Driver included"],
-      benefits: ["Cost effective", "No parking hassle", "Fuel included", "Insurance covered"],
+      description:
+        "Hourly car rentals for meetings, shopping, or multiple stops.",
+      features: [
+        "Self-drive option",
+        "Flexible hours",
+        "Multiple stops",
+        "Driver included",
+      ],
+      benefits: [
+        "Cost effective",
+        "No parking hassle",
+        "Fuel included",
+        "Insurance covered",
+      ],
     },
     {
       id: "outstation",
       name: "Outstation",
       icon: Route,
-      image: "/img/city_ride.jpg",
+      image: "/img/outstation.jpg",
       price: "₹15/km",
       time: "15 min",
-      description: "Long distance travel for weekend getaways and business trips.",
-      features: ["Driver included", "Round trip", "Overnight stays", "Highway optimized"],
-      benefits: ["Comfortable journey", "Multiple destinations", "Rest stops", "Experienced drivers"],
+      description:
+        "Long distance travel for weekend getaways and business trips.",
+      features: [
+        "Driver included",
+        "Round trip",
+        "Overnight stays",
+        "Highway optimized",
+      ],
+      benefits: [
+        "Comfortable journey",
+        "Multiple destinations",
+        "Rest stops",
+        "Experienced drivers",
+      ],
+    },
+    // {
+    //   id: "share",
+    //   name: "Ride Sharing",
+    //   icon: Users,
+    //   image: "/img/city_ride.jpg",
+    //   price: "₹4/km",
+    //   time: "8 min",
+    //   description: "Share rides with other passengers for budget-friendly travel.",
+    //   features: ["Budget-friendly", "Route matching", "Safe co-passengers", "Environmental"],
+    //   benefits: ["50% cost savings", "Social travel", "Reduced traffic", "Carbon neutral"],
+    // },
+  ];
+  const mainSteps = [
+    {
+      step: "01",
+      title: "Select a Service",
+      description:
+        "Choose from our range of electric mobility services based on your needs",
+      icon: Plus, // Use Plus icon for the first step
+      details: [
+        "Ride Later - Schedule advance rides",
+        "Airport Taxi - Direct transfers",
+        "Car Rental - Hourly bookings",
+        "Outstation - Long distance travel",
+        "Ride Sharing - Budget-friendly option",
+      ],
+      tips: "Select 'Ride Now' for immediate pickup or 'Schedule for Later' for advance booking",
     },
     {
-      id: "share",
-      name: "Ride Sharing",
-      icon: Users,
-      image: "/img/city_ride.jpg",
-      price: "₹4/km",
-      time: "8 min",
-      description: "Share rides with other passengers for budget-friendly travel.",
-      features: ["Budget-friendly", "Route matching", "Safe co-passengers", "Environmental"],
-      benefits: ["50% cost savings", "Social travel", "Reduced traffic", "Carbon neutral"],
+      step: "02",
+      title: "Choose a Ride Type",
+      description:
+        "Pick your preferred electric vehicle and configure your ride preferences",
+      icon: Car,
+      details: [
+        "Select vehicle type (Hatchback, Sedan, SUV)",
+        "Choose seating capacity",
+        "Set pickup and drop-off locations",
+        "Add any special requirements",
+        "Confirm ride timing",
+      ],
+      tips: "All our vehicles are 100% electric with GPS tracking and safety features",
+    },
+    {
+      step: "03",
+      title: "Pay (Min 20% Upfront)",
+      description:
+        "Secure your booking with flexible payment options and transparent pricing",
+      icon: CreditCard,
+      details: [
+        "Pay minimum 20% to confirm booking",
+        "Choose from UPI, Cards, Wallets, Cash",
+        "Get instant booking confirmation",
+        "Receive driver and vehicle details",
+        "Track payment history in app",
+      ],
+      tips: "Remaining amount can be paid after the ride completion",
+    },
+    {
+      step: "04",
+      title: "Track and Ride",
+      description:
+        "Enjoy real-time tracking, safe journey, and comfortable electric ride experience",
+      icon: Eye,
+      details: [
+        "Real-time driver location tracking",
+        "Live ETA updates and notifications",
+        "Direct communication with driver",
+        "In-ride safety features and support",
+        "Rate and review after completion",
+      ],
+      tips: "Emergency contacts and live ride sharing available for added safety",
     },
   ];
-    const mainSteps = [
-      {
-        step: "01",
-        title: "Select a Service",
-        description: "Choose from our range of electric mobility services based on your needs",
-        icon: Plus, // Use Plus icon for the first step
-        details: [
-          "Ride Later - Schedule advance rides",
-          "Airport Taxi - Direct transfers",
-          "Car Rental - Hourly bookings",
-          "Outstation - Long distance travel",
-          "Ride Sharing - Budget-friendly option"
-        ],
-        tips: "Select 'Ride Now' for immediate pickup or 'Schedule for Later' for advance booking"
-      },
-      {
-        step: "02",
-        title: "Choose a Ride Type",
-        description: "Pick your preferred electric vehicle and configure your ride preferences",
-        icon: Car,
-        details: [
-          "Select vehicle type (Hatchback, Sedan, SUV)",
-          "Choose seating capacity",
-          "Set pickup and drop-off locations",
-          "Add any special requirements",
-          "Confirm ride timing"
-        ],
-        tips: "All our vehicles are 100% electric with GPS tracking and safety features"
-      },
-      {
-        step: "03",
-        title: "Pay (Min 20% Upfront)",
-        description: "Secure your booking with flexible payment options and transparent pricing",
-        icon: CreditCard,
-        details: [
-          "Pay minimum 20% to confirm booking",
-          "Choose from UPI, Cards, Wallets, Cash",
-          "Get instant booking confirmation",
-          "Receive driver and vehicle details",
-          "Track payment history in app"
-        ],
-        tips: "Remaining amount can be paid after the ride completion"
-      },
-      {
-        step: "04",
-        title: "Track and Ride",
-        description: "Enjoy real-time tracking, safe journey, and comfortable electric ride experience",
-        icon: Eye,
-        details: [
-          "Real-time driver location tracking",
-          "Live ETA updates and notifications",
-          "Direct communication with driver",
-          "In-ride safety features and support",
-          "Rate and review after completion"
-        ],
-        tips: "Emergency contacts and live ride sharing available for added safety"
-      }
-    ];
-  
-    const features = [
-      {
-        icon: Smartphone,
-        title: "Easy Mobile App",
-        description: "User-friendly interface for seamless booking experience"
-      },
-      {
-        icon: Clock,
-        title: "Quick Response",
-        description: "Average pickup time of 3-8 minutes depending on service"
-      },
-      {
-        icon: Shield,
-        title: "Safety First",
-        description: "Background-verified drivers and real-time safety monitoring"
-      },
-      {
-        icon: Zap,
-        title: "100% Electric",
-        description: "Zero emission rides with modern electric vehicles"
-      },
-      {
-        icon: Navigation,
-        title: "Smart Routing",
-        description: "AI-optimized routes for faster and efficient travel"
-      },
-      {
-        icon: Star,
-        title: "Quality Service",
-        description: "4.8-star average rating with professional drivers"
-      }
-    ];
+
+  const features = [
+    {
+      icon: Smartphone,
+      title: "Easy Mobile App",
+      description: "User-friendly interface for seamless booking experience",
+    },
+    {
+      icon: Clock,
+      title: "Quick Response",
+      description: "Average pickup time of 3-8 minutes depending on service",
+    },
+    {
+      icon: Shield,
+      title: "Safety First",
+      description:
+        "Background-verified drivers and real-time safety monitoring",
+    },
+    {
+      icon: Zap,
+      title: "100% Electric",
+      description: "Zero emission rides with modern electric vehicles",
+    },
+    {
+      icon: Navigation,
+      title: "Smart Routing",
+      description: "AI-optimized routes for faster and efficient travel",
+    },
+    {
+      icon: Star,
+      title: "Quality Service",
+      description: "4.8-star average rating with professional drivers",
+    },
+  ];
 
   useEffect(() => {
     setActiveService(services[0]);
@@ -193,10 +242,13 @@ const Services = () => {
         <div className="container mx-auto px-4 py-20">
           {/* Hero Section */}
           <div className="text-center mb-16">
-            <h1 className="text-5xl md:text-6xl font-bold mb-6 gradient-text">Our Services</h1>
+            <h1 className="text-5xl md:text-6xl font-bold mb-6 gradient-text">
+              Our Services
+            </h1>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Experience sustainable mobility with our comprehensive range of electric ride services.
-              From quick city rides to long-distance travel, we've got you covered.
+              Experience sustainable mobility with our comprehensive range of
+              electric ride services. From quick city rides to long-distance
+              travel, we've got you covered.
             </p>
           </div>
 
@@ -210,15 +262,24 @@ const Services = () => {
                   <li
                     key={service.id}
                     className={`p-4 rounded-lg cursor-pointer transition-all duration-300
-                      ${activeService && activeService.id === service.id
-                        ? "bg-gradient-primary text-white shadow-lg"
-                        : "hover:bg-accent hover:text-primary"
+                      ${
+                        activeService && activeService.id === service.id
+                          ? "bg-gradient-primary text-white shadow-lg"
+                          : "hover:bg-accent hover:text-primary"
                       }`}
                     onMouseEnter={() => setActiveService(service)}
                   >
                     <div className="flex items-center gap-4">
-                      <service.icon className={`w-6 h-6 ${activeService && activeService.id === service.id ? "text-white" : "text-primary"}`} />
-                      <span className="text-xl font-semibold">{service.name}</span>
+                      <service.icon
+                        className={`w-6 h-6 ${
+                          activeService && activeService.id === service.id
+                            ? "text-white"
+                            : "text-primary"
+                        }`}
+                      />
+                      <span className="text-xl font-semibold">
+                        {service.name}
+                      </span>
                     </div>
                   </li>
                 ))}
@@ -255,9 +316,13 @@ const Services = () => {
                             <activeService.icon className="w-8 h-8 text-white" />
                           </div>
                           <div>
-                            <h3 className="text-3xl font-bold">{activeService.name}</h3>
+                            <h3 className="text-3xl font-bold">
+                              {activeService.name}
+                            </h3>
                             <div className="flex items-center gap-4 text-muted-foreground">
-                              <span className="text-2xl font-bold text-primary">{activeService.price}</span>
+                              <span className="text-2xl font-bold text-primary">
+                                {activeService.price}
+                              </span>
                               <div className="flex items-center gap-1">
                                 <Clock className="w-4 h-4" />
                                 {activeService.time} ETA
@@ -265,7 +330,9 @@ const Services = () => {
                             </div>
                           </div>
                         </div>
-                        <p className="text-lg text-muted-foreground">{activeService.description}</p>
+                        <p className="text-lg text-muted-foreground">
+                          {activeService.description}
+                        </p>
                         <div className="space-y-4 mb-6 mt-3">
                           <div>
                             <h4 className="font-semibold mb-2 flex items-center gap-2">
@@ -296,9 +363,9 @@ const Services = () => {
                           </div>
                         </div>
                         <Button className="w-full md:w-auto mt-3 bg-gradient-primary">
-                      <MapPin className="w-4 h-4 mr-2" />
-                      Book {activeService.name}
-                    </Button>
+                          <MapPin className="w-4 h-4 mr-2" />
+                          Book {activeService.name}
+                        </Button>
                       </div>
                     </div>
                   </motion.div>
@@ -312,8 +379,8 @@ const Services = () => {
               How It Works
             </h2>
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-              Experience sustainable mobility in 4 simple steps. From booking to destination,
-              we've made electric rides effortless and efficient.
+              Experience sustainable mobility in 4 simple steps. From booking to
+              destination, we've made electric rides effortless and efficient.
             </p>
           </div>
 
@@ -332,14 +399,18 @@ const Services = () => {
                   )}
                 </div>
                 <h3 className="text-xl font-bold mb-2">{step.title}</h3>
-                <p className="text-sm text-muted-foreground">{step.description}</p>
+                <p className="text-sm text-muted-foreground">
+                  {step.description}
+                </p>
               </div>
             ))}
           </div>
 
           {/* Features Grid */}
           <div className="mb-16">
-            <h2 className="text-3xl font-bold text-center mb-12">Why Choose SDM E-Mobility?</h2>
+            <h2 className="text-3xl font-bold text-center mb-12">
+              Why Choose SDM E-Mobility?
+            </h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {features.map((feature) => (
                 <Card key={feature.title} className="glass p-6 text-center">
@@ -351,13 +422,15 @@ const Services = () => {
             </div>
           </div>
 
-           {/* Payment Info */}
+          {/* Payment Info */}
           <Card className="glass p-8 mt-16 text-center">
             <CreditCard className="w-12 h-12 mx-auto mb-4 text-primary" />
-            <h3 className="text-2xl font-bold mb-4">Flexible Payment Options</h3>
+            <h3 className="text-2xl font-bold mb-4">
+              Flexible Payment Options
+            </h3>
             <p className="text-muted-foreground mb-6">
-              Pay minimum 20% upfront to confirm your booking. Multiple payment methods accepted
-              including UPI, cards, wallets, and cash.
+              Pay minimum 20% upfront to confirm your booking. Multiple payment
+              methods accepted including UPI, cards, wallets, and cash.
             </p>
             <div className="flex justify-center gap-2 flex-wrap">
               <Badge variant="secondary">UPI</Badge>
@@ -370,10 +443,12 @@ const Services = () => {
           {/* Get Started CTA */}
           <Card className="glass p-8 text-center">
             <Zap className="w-16 h-16 mx-auto mb-6 text-primary" />
-            <h3 className="text-3xl font-bold mb-4">Ready to Experience Electric Mobility?</h3>
+            <h3 className="text-3xl font-bold mb-4">
+              Ready to Experience Electric Mobility?
+            </h3>
             <p className="text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Join thousands of satisfied riders who have made the switch to sustainable transportation.
-              Book your first electric ride today!
+              Join thousands of satisfied riders who have made the switch to
+              sustainable transportation. Book your first electric ride today!
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" className="bg-gradient-primary h-14 px-8">
@@ -386,8 +461,6 @@ const Services = () => {
               </Button>
             </div>
           </Card>
-
-         
         </div>
       </div>
     </div>
