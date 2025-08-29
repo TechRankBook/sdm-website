@@ -21,6 +21,10 @@ import {
   Star,
   Smartphone,
   ArrowRight,
+  BadgeIndianRupee,
+  HandCoins,
+  Banknote,
+  CircleDollarSign,
 } from "lucide-react";
 
 const Services = () => {
@@ -39,7 +43,7 @@ const Services = () => {
       icon: Car,
       image: "/img/cityRide.jpg", // Ensure these paths are correct
       price: "₹8/km",
-      time: "3 min",
+      time: "₹109/km(SUV), ₹99/km(Sedan)",
       description:
         "Schedule rides in advance for daily commutes and planned trips.",
       features: [
@@ -61,7 +65,7 @@ const Services = () => {
       icon: Plane,
       image: "/img/airport.jpg",
       price: "₹12/km",
-      time: "5 min",
+      time: "₹109/km(SUV), ₹99/km(Sedan)",
       description:
         "Direct airport transfers with flight tracking and luggage assistance.",
       features: [
@@ -83,7 +87,7 @@ const Services = () => {
       icon: TimerReset,
       image: "/img/rental.jpg",
       price: "₹200/hr",
-      time: "10 min",
+      time: "₹109/km(SUV), ₹99/km(Sedan)",
       description:
         "Hourly car rentals for meetings, shopping, or multiple stops.",
       features: [
@@ -104,8 +108,8 @@ const Services = () => {
       name: "Outstation",
       icon: Route,
       image: "/img/outstation.jpg",
-      price: "₹15/km",
-      time: "15 min",
+      price: "SUV: ₹15/km SEDAN: ₹18/km",
+      time: "₹109/km(SUV), ₹99/km(Sedan)",
       description:
         "Long distance travel for weekend getaways and business trips.",
       features: [
@@ -320,12 +324,12 @@ const Services = () => {
                               {activeService.name}
                             </h3>
                             <div className="flex items-center gap-4 text-muted-foreground">
-                              <span className="text-2xl font-bold text-primary">
+                              {/* <span className="text-2xl font-bold text-primary">
                                 {activeService.price}
-                              </span>
+                              </span> */}
                               <div className="flex items-center gap-1">
-                                <Clock className="w-4 h-4" />
-                                {activeService.time} ETA
+                                <BadgeIndianRupee className="w-4 h-4" />
+                                {activeService.time}
                               </div>
                             </div>
                           </div>
