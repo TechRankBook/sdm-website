@@ -143,11 +143,27 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
   const mapsLoader = useGoogleMapsLoader();
 
   const handlePickupChangeFromMap = (loc: LocationData) => {
+    const isWithinRadius = validateLocationRadius(loc.lat, loc.lng);
+    if (!isWithinRadius) {
+      setPickupLocationError("❌ We're currently unavailable in this location. Please select a location near Mysore or Bangalore.");
+      setPickupCoords(null);
+      if (loc.address) setPickupLocation(loc.address);
+      return;
+    }
+    setPickupLocationError("");
     setPickupCoords(loc);
     if (loc.address) setPickupLocation(loc.address);
   };
 
   const handleDropoffChangeFromMap = (loc: LocationData) => {
+    const isWithinRadius = validateLocationRadius(loc.lat, loc.lng);
+    if (!isWithinRadius) {
+      setDropoffLocationError("❌ We're currently unavailable in this location. Please select a location near Mysore or Bangalore.");
+      setDropoffCoords(null);
+      if (loc.address) setDropoffLocation(loc.address);
+      return;
+    }
+    setDropoffLocationError("");
     setDropoffCoords(loc);
     if (loc.address) setDropoffLocation(loc.address);
   };
@@ -168,6 +184,72 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
     }
     return null;
   });
+
+  // Generate time slots from 00:00 to 24:00 with 30-minute intervals (include 24:00 only)
+  const generateTimeSlots = () => {
+    const slots: string[] = [];
+    for (let h = 0; h < 24; h++) {
+      const hh = String(h).padStart(2, '0');
+      slots.push(`${hh}:00`);
+      slots.push(`${hh}:30`);
+    }
+    slots.push('24:00');
+    return slots;
+  };
+
+  // Build an ISO-like local datetime string, handling 24:00 as next-day 00:00
+  const buildDateTimeString = (baseDate: Date, time: string) => {
+    const [rawH, rawM] = time.split(':').map(Number);
+    const dt = new Date(baseDate);
+    let h = rawH;
+    const m = rawM || 0;
+    if (h === 24) {
+      dt.setDate(dt.getDate() + 1);
+      h = 0;
+    }
+    const yyyy = dt.getFullYear();
+    const mm = String(dt.getMonth() + 1).padStart(2, '0');
+    const dd = String(dt.getDate()).padStart(2, '0');
+    const HH = String(h).padStart(2, '0');
+    const MM = String(m).padStart(2, '0');
+    return `${yyyy}-${mm}-${dd}T${HH}:${MM}:00`;
+  };
+
+  // Round up a Date to the next 30-minute boundary
+  const roundUpToNext30 = (dt: Date) => {
+    const res = new Date(dt);
+    const minutes = res.getMinutes();
+    const add = minutes === 0 ? 0 : (minutes <= 30 ? 30 - minutes : 60 - minutes);
+    res.setMinutes(minutes + add, 0, 0);
+    return res;
+  };
+
+  // Compute earliest allowed booking datetime based on service type
+  const getEarliestAllowedDateTime = () => {
+    const now = new Date();
+    const offsetHours = serviceType === 'ride_later' ? 4 : 1;
+    now.setHours(now.getHours() + offsetHours);
+    return roundUpToNext30(now);
+  };
+
+  // Check if a given time slot is disabled for a specific date
+  const isSlotDisabledFor = (date: Date | undefined, time: string) => {
+    if (!date) return false;
+    const today = new Date();
+    const isSameDay = date.toDateString() === today.toDateString();
+    if (!isSameDay) return false; // future days: all slots available
+
+    const earliest = getEarliestAllowedDateTime();
+    const [h, m] = time.split(':').map(Number);
+    const slot = new Date(date);
+    if (h === 24) {
+      slot.setDate(slot.getDate() + 1);
+      slot.setHours(0, 0, 0, 0);
+    } else {
+      slot.setHours(h, m || 0, 0, 0);
+    }
+    return slot.getTime() < earliest.getTime();
+  };
 
   // Sync local state with booking data whenever it changes
   useEffect(() => {
@@ -257,10 +339,10 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
   const [showScheduleModal, setShowScheduleModal] = useState(false);
 
   const serviceTypes = [
-    { id: "ride_later", name: "Ride Later", icon: Car },
     { id: "airport", name: "Airport Taxi", icon: Plane },
     { id: "outstation", name: "Outstation", icon: Route },
-    { id: "car_rental", name: "Hourly Rentals", icon: TimerReset }
+    { id: "car_rental", name: "Hourly Rentals", icon: TimerReset },
+    { id: "ride_later", name: "Ride Later", icon: Car }
   ];
 
   const vehicleTypes = [
@@ -387,14 +469,15 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
   };
 
   const isFormValid = useCallback(() => {
-    // Remove excessive logging that was causing performance issues
-    const hasPickup = pickupLocation.trim() !== "";
-    const hasDestination = serviceType === "car_rental" ? selectedPackage !== "" : dropoffLocation.trim() !== "";
-    const hasDateTime = selectedDate && selectedTime;
+    // Enforce valid, in-service selections: require coordinates set by selection and no location errors
+    const hasPickup = !!pickupCoords;
+    const hasDestination = serviceType === "car_rental" ? selectedPackage !== "" : !!dropoffCoords;
+    const hasDateTime = !!(selectedDate && selectedTime);
     const hasValidReturn = !isRoundTrip || serviceType !== "outstation" || (returnDate && returnTime);
+    const noLocationErrors = !pickupLocationError && !dropoffLocationError;
     
-    return hasPickup && hasDestination && hasDateTime && hasValidReturn;
-  }, [pickupLocation, serviceType, hours, dropoffLocation, selectedDate, selectedTime, isRoundTrip, returnDate, returnTime]);
+    return hasPickup && hasDestination && hasDateTime && hasValidReturn && noLocationErrors;
+  }, [pickupCoords, dropoffCoords, serviceType, selectedPackage, selectedDate, selectedTime, isRoundTrip, returnDate, returnTime, pickupLocationError, dropoffLocationError]);
 
   const handleSearchCars = useCallback(() => {
     console.log("🚗 Search Cars clicked! Starting submission...");
@@ -405,18 +488,29 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
         return;
       }
 
-      // Validate 6-hour advance booking rule
+      // Validate advance booking rule based on service type
       if (selectedDate && selectedTime) {
         const now = new Date();
         const selectedDateTime = new Date(selectedDate);
-        const [hours, minutes] = selectedTime.split(':').map(Number);
-        selectedDateTime.setHours(hours, minutes, 0, 0);
-        
-        const timeDiff = selectedDateTime.getTime() - now.getTime();
-        const hoursDiff = timeDiff / (1000 * 60 * 60);
-        
-        if (hoursDiff < 6) {
-          setDateTimeError("❌ You must book at least 6 hours in advance.");
+        const [rawH, rawM] = selectedTime.split(':').map(Number);
+        // Handle 24:00 as next-day 00:00
+        if (rawH === 24) {
+          selectedDateTime.setDate(selectedDateTime.getDate() + 1);
+          selectedDateTime.setHours(0, 0, 0, 0);
+        } else {
+          selectedDateTime.setHours(rawH, rawM || 0, 0, 0);
+        }
+
+        // Determine required advance hours
+        const requiredHours = serviceType === 'ride_later' ? 4 : 1;
+        const earliest = new Date(now);
+        earliest.setHours(earliest.getHours() + requiredHours);
+
+        if (selectedDateTime.getTime() < roundUpToNext30(earliest).getTime()) {
+          const msg = serviceType === 'ride_later'
+            ? '❌ You must book at least 4 hours in advance.'
+            : '❌ You must book at least 1 hour in advance.';
+          setDateTimeError(msg);
           return;
         } else {
           setDateTimeError("");
@@ -427,11 +521,11 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
 
       // Create datetime in local timezone to prevent date shifting
       const dateTime = selectedDate && selectedTime 
-        ? `${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, '0')}-${String(selectedDate.getDate()).padStart(2, '0')}T${selectedTime}:00`
+        ? buildDateTimeString(selectedDate, selectedTime)
         : "";
       
       const returnDateTime = isRoundTrip && returnDate && returnTime
-        ? `${returnDate.getFullYear()}-${String(returnDate.getMonth() + 1).padStart(2, '0')}-${String(returnDate.getDate()).padStart(2, '0')}T${returnTime}:00`
+        ? buildDateTimeString(returnDate, returnTime)
         : "";
 
       // Make sure special instructions are up to date
@@ -717,7 +811,10 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                 <GooglePlacesInput
                   placeholder="Pick-up location"
                   value={pickupLocation}
-                  onChange={(value) => setPickupLocation(value)}
+                  onChange={(value) => { 
+                    setPickupLocation(value); 
+                    setPickupCoords(null); // typing clears selection so it can't be submitted
+                  }}
                   onPlaceSelect={handlePickupSelect}
                   icon="pickup"
                   showCurrentLocation={true}
@@ -787,7 +884,10 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                           : "Drop-off location"
                       }
                       value={dropoffLocation}
-                      onChange={(value) => setDropoffLocation(value)}
+                      onChange={(value) => {
+                        setDropoffLocation(value);
+                        setDropoffCoords(null); // typing clears selection so it can't be submitted
+                      }}
                       onPlaceSelect={handleDropoffSelect}
                       icon="dropoff"
                     />
@@ -801,10 +901,7 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
               </div>
             )}
             
-            {/* Pickup Location Error */}
-            {pickupLocationError && (
-              <p className="text-destructive text-sm mt-1">{pickupLocationError}</p>
-            )}
+
 
             {/* Date & Time Selection */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -849,51 +946,25 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                 </PopoverTrigger>
                 <PopoverContent className="w-64 p-0" align="start">
                   <div className="grid grid-cols-3 gap-1 p-4 max-h-60 overflow-y-auto">
-                    {[
-                      "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
-                      "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
-                      "15:00", "15:30", "16:00", "16:30", "17:00", "17:30",
-                      "18:00", "18:30", "19:00", "19:30", "20:00", "20:30"
-                      ].map((time) => {
-                        // Check if time slot is within 6 hours for today
-                        const isDisabled = selectedDate && selectedTime !== time ? (() => {
-                          const now = new Date();
-                          const selectedDateTime = new Date(selectedDate);
-                          const isToday = selectedDateTime.toDateString() === now.toDateString();
-                          
-                          if (isToday) {
-                            const [hours, minutes] = time.split(':').map(Number);
-                            const timeSlot = new Date(selectedDateTime);
-                            timeSlot.setHours(hours, minutes, 0, 0);
-                            
-                            const timeDiff = timeSlot.getTime() - now.getTime();
-                            const hoursDiff = timeDiff / (1000 * 60 * 60);
-                            
-                            return hoursDiff < 6;
-                          }
-                          return false;
-                        })() : false;
-
-                        return (
-                          <Button
-                            key={time}
-                            variant={selectedTime === time ? "default" : "ghost"}
-                            size="sm"
-                            className={cn(
-                              "text-sm",
-                              selectedTime === time ? "bg-gradient-primary" : "",
-                              isDisabled ? "opacity-50 cursor-not-allowed" : ""
-                            )}
-                            disabled={isDisabled}
-                            onClick={() => {
-                              setSelectedTime(time);
-                              setDateTimeError(""); // Clear error when time changes
-                            }}
-                          >
-                            {time}
-                          </Button>
-                        );
-                      })}
+                    {generateTimeSlots()
+                      .filter((time) => !isSlotDisabledFor(selectedDate, time))
+                      .map((time) => (
+                        <Button
+                          key={time}
+                          variant={selectedTime === time ? "default" : "ghost"}
+                          size="sm"
+                          className={cn(
+                            "text-sm",
+                            selectedTime === time ? "bg-gradient-primary" : ""
+                          )}
+                          onClick={() => {
+                            setSelectedTime(time);
+                            setDateTimeError(""); // Clear error when time changes
+                          }}
+                        >
+                          {time}
+                        </Button>
+                      ))}
                   </div>
                 </PopoverContent>
               </Popover>
@@ -936,25 +1007,22 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                   </PopoverTrigger>
                   <PopoverContent className="w-64 p-0" align="start">
                     <div className="grid grid-cols-3 gap-1 p-4 max-h-60 overflow-y-auto">
-                      {[
-                        "09:00", "09:30", "10:00", "10:30", "11:00", "11:30",
-                        "12:00", "12:30", "13:00", "13:30", "14:00", "14:30",
-                        "15:00", "15:30", "16:00", "16:30", "17:00", "17:30",
-                        "18:00", "18:30", "19:00", "19:30", "20:00", "20:30"
-                      ].map((time) => (
-                        <Button
-                          key={time}
-                          variant={returnTime === time ? "default" : "ghost"}
-                          size="sm"
-                          className={cn(
-                            "text-sm",
-                            returnTime === time ? "bg-gradient-primary" : ""
-                          )}
-                          onClick={() => setReturnTime(time)}
-                        >
-                          {time}
-                        </Button>
-                      ))}
+                      {generateTimeSlots()
+                        .filter((time) => !isSlotDisabledFor(returnDate, time))
+                        .map((time) => (
+                          <Button
+                            key={time}
+                            variant={returnTime === time ? "default" : "ghost"}
+                            size="sm"
+                            className={cn(
+                              "text-sm",
+                              returnTime === time ? "bg-gradient-primary" : ""
+                            )}
+                            onClick={() => setReturnTime(time)}
+                          >
+                            {time}
+                          </Button>
+                        ))}
                     </div>
                   </PopoverContent>
                 </Popover>

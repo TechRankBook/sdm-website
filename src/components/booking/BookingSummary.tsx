@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, Calendar, Users, Clock, RotateCcw } from "lucide-react";
+import { MapPin, Calendar, Users, Clock, RotateCcw, Info } from "lucide-react";
 import { BookingData } from "@/stores/bookingStore";
 import { format } from "date-fns";
 
@@ -122,6 +122,10 @@ export const BookingSummary = ({ bookingData }: BookingSummaryProps) => {
             <div className="flex justify-between items-center">
               <span className="text-foreground font-semibold">Total Fare</span>
               <span className="text-primary font-bold text-lg">₹{bookingData.selectedFare.price}</span>
+            </div>
+            <div className="mt-2 flex items-start gap-2 text-xs text-muted-foreground bg-muted/30 border border-glass-border rounded-lg p-2">
+              <Info className="w-3.5 h-3.5 mt-[2px] text-primary" />
+              <span>(includes driver allowance, toll fee, and other applicable charges)</span>
             </div>
           </div>
         )}

@@ -60,8 +60,8 @@ const vehicleTypes = [
   { 
     type: "Sedan", 
     capacity: "4 passengers", 
-    estimatedDuration: bookingData.serviceType == "car_rental" ? (routeData?.duration || "N/A") : bookingData.durationMinutes.toFixed(1) +"min",
-    estimatedDistance: bookingData.serviceType == "car_rental" ? (routeData?.distance || "N/A") : bookingData.distanceKm.toFixed(1) + " km",
+    estimatedDuration: bookingData.serviceType == "car_rental" ? (routeData?.duration || "N/A") : bookingData.durationMinutes.toFixed(2) + " min",
+    estimatedDistance: bookingData.serviceType == "car_rental" ? (routeData?.distance || "N/A") : bookingData.distanceKm.toFixed(2) + " km",
     icon: Car,
     description: "Comfortable and economical",
     disabled: bookingData.packageDetails?.vehicle_type === "SUV" || bookingData.packageDetails?.vehicle_type === "Premium",
@@ -70,8 +70,8 @@ const vehicleTypes = [
   { 
     type: "SUV", 
     capacity: "6 passengers", 
-    estimatedDuration: bookingData.serviceType == "car_rental" ? (routeData?.duration || "N/A") : bookingData.durationMinutes.toFixed(1) +"Min",
-    estimatedDistance: bookingData.serviceType == "car_rental" ? (routeData?.distance || "N/A") : bookingData.distanceKm.toFixed(1) + " km",
+    estimatedDuration: bookingData.serviceType == "car_rental" ? (routeData?.duration || "N/A") : bookingData.durationMinutes.toFixed(2) + " min",
+    estimatedDistance: bookingData.serviceType == "car_rental" ? (routeData?.distance || "N/A") : bookingData.distanceKm.toFixed(2) + " km",
     icon: Users,
     description: "Spacious for groups",
     disabled: bookingData.packageDetails?.vehicle_type === "Sedan" || bookingData.packageDetails?.vehicle_type === "Premium",
@@ -80,8 +80,8 @@ const vehicleTypes = [
   { 
     type: "Premium", 
     capacity: "4 passengers", 
-    estimatedDuration: bookingData.serviceType == "car_rental" ? (routeData?.duration || "N/A") : bookingData.durationMinutes.toFixed(1) +"Min",
-    estimatedDistance: bookingData.serviceType == "car_rental" ? (routeData?.distance || "N/A") : bookingData.distanceKm.toFixed(1) + " km",
+    estimatedDuration: bookingData.serviceType == "car_rental" ? (routeData?.duration || "N/A") : bookingData.durationMinutes.toFixed(2) + " min",
+    estimatedDistance: bookingData.serviceType == "car_rental" ? (routeData?.distance || "N/A") : bookingData.distanceKm.toFixed(2) + " km",
     icon: Car,
     description: "Luxury experience",
     disabled: true,
