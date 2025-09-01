@@ -653,16 +653,64 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
   return (
     <>
       {/* Booking Form */}
-      <Card className="glass rounded-2xl p-6">
-          <div className="mb-6">
-            <h2 className="text-lg font-semibold text-foreground mb-4">Book Your Ride</h2>
+      <Card className="glass charging-animation rounded-2xl p-6 card-hover-lift relative overflow-hidden">
+          {/* Background decoration */}
+          <div className="absolute inset-0 ev-particles opacity-30 pointer-events-none" />
+          
+          <div className="mb-6 relative z-10">
+            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Zap className="w-5 h-5 text-primary electric-glow" />
+              Book Your Ride
+            </h2>
             <div className="flex gap-2 p-1 glass rounded-lg overflow-x-auto scrollbar-hide">
               {serviceTypes.map((service) => (
                 <Button
                   key={service.id}
                   variant={serviceType === service.id ? "default" : "ghost"}
                   className={cn(
-                    "h-auto py-3 px-2 flex flex-col gap-2 text-xs transition-all duration-200 flex-shrink-0 min-w-[80px]",
+                    "h-auto py-3 px-2 flex flex-col gap-2 text-xs transition-all duration-200 flex-shrink-0 min-w-[80px] btn-electric",
+                    serviceType === service.id 
+                      ? "bg-gradient-primary text-white shadow-glow" 
+                      : "text-muted-foreground hover:text-foreground hover:bg-accent/20"
+                  )}
+                  onClick={() => {
+                    setServiceType(service.id);
+                    if (service.id === "car_rental") {
+                      setDropoffLocation("");
+                      setDropoffCoords(null);
+                    } else {
+                      setHours("");
+                    }
+                  }}
+                >
+                  <service.icon className="w-4 h-4 sm:w-5 sm:h-5" />
+                  <span className="text-center leading-tight text-[10px] sm:text-xs whitespace-nowrap">{service.name}</span>
+                </Button>
+              ))}
+            </div>
+                <Button
+                  key={service.id}
+                  variant={serviceType === service.id ? "default" : "ghost"}
+                  className={cn(
+                    "h-auto py-3 px-2 flex flex-col gap-2 text-xs transition-all duration-200 flex-shrink-0 min-w-[80px] btn-electric",
+                  className={cn(
+                    "h-auto py-3 px-2 flex flex-col gap-2 text-xs transition-all duration-200 flex-shrink-0 min-w-[80px] btn-electric",
+                    serviceType === service.id ? 
+                      "bg-gradient-primary text-primary-foreground electric-glow" : 
+                      "hover:bg-primary/5"
+                  )}
+                  onClick={() => {
+                    setServiceType(service.id);
+                    setSelectedPackage("");
+                    setPackageDetails(null);
+                  }}
+                >
+                  <service.icon className="w-4 h-4 mx-auto" />
+                  <span className="font-medium leading-tight">{service.name}</span>
+                </Button>
+              ))}
+            </div>
+          </div>
                     serviceType === service.id 
                       ? "bg-gradient-primary text-white shadow-glow" 
                       : "text-muted-foreground hover:text-foreground hover:bg-accent/20"

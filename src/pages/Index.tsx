@@ -18,6 +18,7 @@ import {
   Play
 } from "lucide-react";
 import heroImage from "@/assets/hero-image.jpg";
+import evChargingHero from "@/assets/ev-charging-hero.jpg";
 import { ThankYouPage } from "@/components/booking/ThankYouPage";
 // Removed PaymentPage import as it's been replaced with RazorpayPaymentPage
 import { FareCalculation } from "@/components/booking/FareCalculation";
@@ -101,11 +102,11 @@ const Index = () => {
       <Header isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
       
       {/* Hero Section */}
-      <section className="relative pt-24 pb-16 overflow-hidden">
+      <section className="relative pt-24 pb-16 overflow-hidden morphing-bg ev-particles">
         <div className="absolute inset-0 bg-gradient-hero" />
         <div 
-          className="absolute inset-0 opacity-20 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${heroImage})` }}
+          className="absolute inset-0 opacity-15 bg-cover bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${evChargingHero})` }}
         />
         
         <div className="relative container mx-auto px-4">
@@ -131,11 +132,11 @@ const Index = () => {
               </div>
 
               <div className="flex flex-wrap gap-4">
-                <Button size="lg" className="bg-gradient-primary micro-bounce" onClick={() => navigate('/booking')}>
+                <Button size="lg" className="bg-gradient-primary micro-bounce btn-electric energy-flow" onClick={() => navigate('/booking')}>
                   <Play className="w-5 h-5 mr-2" />
                   Book Your Ride
                 </Button>
-                <Button size="lg" variant="ghost" className="micro-bounce">
+                <Button size="lg" variant="ghost" className="micro-bounce btn-electric hover:bg-primary/5">
                   <Phone className="w-5 h-5 mr-2" />
                   Learn More
                 </Button>
@@ -176,10 +177,10 @@ const Index = () => {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
-              <Card key={index} className="glass glass-hover p-6 text-center group">
-                <div className={`p-4 rounded-full bg-gradient-primary w-16 h-16 mx-auto mb-4 group-hover:animate-pulse-glow transition-all duration-300`}>
+              <Card key={index} className="glass glass-hover p-6 text-center group card-hover-lift charging-animation">
+                <div className={`p-4 rounded-full bg-gradient-primary w-16 h-16 mx-auto mb-4 group-hover:animate-pulse-glow transition-all duration-300 electric-glow`}>
                   <feature.icon className="w-8 h-8 text-white mx-auto" />
                 </div>
                 <h3 className="text-xl font-semibold text-foreground mb-2">{feature.title}</h3>
@@ -202,7 +203,7 @@ const Index = () => {
               Join millions of riders who've already made the switch to sustainable mobility
             </p>
             <div className="flex justify-center">
-              <Button size="lg" className="bg-gradient-primary micro-bounce" onClick={() => navigate('/booking')}>
+              <Button size="lg" className="bg-gradient-primary micro-bounce btn-electric energy-flow" onClick={() => navigate('/booking')}>
                 <Zap className="w-5 h-5 mr-2" />
                 Start Riding Today
                 <ArrowRight className="w-5 h-5 ml-2" />

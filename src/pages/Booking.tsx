@@ -107,7 +107,7 @@ const Booking = () => {
       case 1:
         console.log("📝 Rendering EnhancedBookingForm (step 1)");
         return (
-          <div className="w-full max-w-lg mx-auto">
+          <div className="w-full max-w-lg mx-auto glass charging-animation">
             <EnhancedBookingForm
               bookingData={bookingData}
               updateBookingData={updateBookingData}
@@ -118,7 +118,7 @@ const Booking = () => {
       case 2:
         console.log("🚗 Rendering VehicleSelection (step 2)");
         return (
-          <div className="w-full max-w-lg mx-auto">
+          <div className="w-full max-w-lg mx-auto glass charging-animation">
             <VehicleSelection
               bookingData={bookingData}
               updateBookingData={updateBookingData}
@@ -136,11 +136,13 @@ const Booking = () => {
       case 3:
         console.log("💳 Rendering RazorpayPaymentPage (step 3)");
         return (
-          <RazorpayPaymentPage
-            bookingData={bookingData}
-            onNext={nextStep}
-            onBack={prevStep}
-          />
+          <div className="glass charging-animation">
+            <RazorpayPaymentPage
+              bookingData={bookingData}
+              onNext={nextStep}
+              onBack={prevStep}
+            />
+          </div>
         );
       case 4:
         console.log("🎉 Rendering ImprovedThankYouPage (step 4)");
@@ -152,12 +154,12 @@ const Booking = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen morphing-bg ev-particles">
       <Header isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
       <div className="container mx-auto px-4 pt-24 pb-8">
         {/* Header with Step Indication */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-foreground mb-2">
+        <div className="text-center mb-8 fade-in">
+          <h1 className="text-3xl font-bold text-foreground mb-2 bg-gradient-primary bg-clip-text text-transparent">
             {currentStep === 1 ? "Book Your Ride" : 
              currentStep === 2 ? "Choose Your Vehicle" : 
              currentStep === 3 ? "Secure Payment" : 
@@ -173,7 +175,9 @@ const Booking = () => {
 
         {/* Step Content */}
         <div className="flex justify-center">
-          {renderStep()}
+          <div className="card-hover-lift">
+            {renderStep()}
+          </div>
         </div>
       </div>
     </div>

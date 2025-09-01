@@ -127,6 +127,28 @@ export default {
 						opacity: '1', 
 						transform: 'translateY(0)' 
 					}
+				},
+				'ev-particles-float': {
+					'0%': { transform: 'translateY(0px)' },
+					'50%': { transform: 'translateY(-20px)' },
+					'100%': { transform: 'translateY(0px)' }
+				},
+				'charging-pulse': {
+					'0%, 100%': { opacity: '0.5', transform: 'scale(1)' },
+					'50%': { opacity: '1', transform: 'scale(1.05)' }
+				},
+				'energy-flow': {
+					'0%': { backgroundPosition: '-200% 0' },
+					'100%': { backgroundPosition: '200% 0' }
+				},
+				'electric-glow': {
+					'0%': { opacity: '0.5', filter: 'blur(2px)' },
+					'100%': { opacity: '1', filter: 'blur(4px)' }
+				},
+				'morphing-gradient': {
+					'0%': { backgroundPosition: '0% 50%' },
+					'50%': { backgroundPosition: '100% 50%' },
+					'100%': { backgroundPosition: '0% 50%' }
 				}
 			},
 			animation: {
@@ -134,7 +156,12 @@ export default {
 				'accordion-up': 'accordion-up 0.2s ease-out',
 				'floating': 'floating 3s ease-in-out infinite',
 				'pulse-glow': 'pulse-glow 2s ease-in-out infinite',
-				'slide-up': 'slide-up 0.6s ease-out forwards'
+				'slide-up': 'slide-up 0.6s ease-out forwards',
+				'ev-particles': 'ev-particles-float 20s linear infinite',
+				'charging-pulse': 'charging-pulse 2s ease-in-out infinite',
+				'energy-flow': 'energy-flow 3s linear infinite',
+				'electric-glow': 'electric-glow 2s ease-in-out infinite alternate',
+				'morphing-bg': 'morphing-gradient 15s ease infinite'
 			}
 		}
 	},
