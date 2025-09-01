@@ -688,48 +688,6 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
                 </Button>
               ))}
             </div>
-                <Button
-                  key={service.id}
-                  variant={serviceType === service.id ? "default" : "ghost"}
-                  className={cn(
-                    "h-auto py-3 px-2 flex flex-col gap-2 text-xs transition-all duration-200 flex-shrink-0 min-w-[80px] btn-electric",
-                  className={cn(
-                    "h-auto py-3 px-2 flex flex-col gap-2 text-xs transition-all duration-200 flex-shrink-0 min-w-[80px] btn-electric",
-                    serviceType === service.id ? 
-                      "bg-gradient-primary text-primary-foreground electric-glow" : 
-                      "hover:bg-primary/5"
-                  )}
-                  onClick={() => {
-                    setServiceType(service.id);
-                    setSelectedPackage("");
-                    setPackageDetails(null);
-                  }}
-                >
-                  <service.icon className="w-4 h-4 mx-auto" />
-                  <span className="font-medium leading-tight">{service.name}</span>
-                </Button>
-              ))}
-            </div>
-          </div>
-                    serviceType === service.id 
-                      ? "bg-gradient-primary text-white shadow-glow" 
-                      : "text-muted-foreground hover:text-foreground hover:bg-accent/20"
-                  )}
-                  onClick={() => {
-                    setServiceType(service.id);
-                    if (service.id === "car_rental") {
-                      setDropoffLocation("");
-                      setDropoffCoords(null);
-                    } else {
-                      setHours("");
-                    }
-                  }}
-                >
-                  <service.icon className="w-4 h-4 sm:w-5 sm:h-5" />
-                  <span className="text-center leading-tight text-[10px] sm:text-xs whitespace-nowrap">{service.name}</span>
-                </Button>
-              ))}
-            </div>
           </div>
 
           {/* Trip Type for Outstation and Airport */}
