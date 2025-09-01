@@ -105,7 +105,7 @@ const Index = () => {
       <section className="relative pt-24 pb-16 overflow-hidden morphing-bg ev-particles">
         <div className="absolute inset-0 bg-gradient-hero" />
         <div 
-          className="absolute inset-0 opacity-15 bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 opacity-50 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${evChargingHero})` }}
         />
         
