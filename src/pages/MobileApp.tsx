@@ -95,7 +95,7 @@ const MobileApp = () => {
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'dark' : ''}`}>
-      <div className="min-h-screen bg-gradient-main text-foreground">
+      <div className="min-h-screen bg-gradient-main text-foreground morphing-bg ev-particles">
         <Header isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
         
         <div className="container mx-auto px-4 py-20">
@@ -111,11 +111,11 @@ const MobileApp = () => {
             
             {/* Download Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-gradient-primary h-14 px-8">
+              <Button size="lg" className="bg-gradient-primary h-14 px-8 btn-electric energy-flow">
                 <Download className="w-5 h-5 mr-2" />
                 Download for iOS
               </Button>
-              <Button size="lg" variant="outline" className="h-14 px-8">
+              <Button size="lg" variant="outline" className="h-14 px-8 btn-electric hover:bg-primary/5">
                 <Download className="w-5 h-5 mr-2" />
                 Download for Android
               </Button>
@@ -124,9 +124,11 @@ const MobileApp = () => {
 
           {/* App Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
-            {stats.map((stat) => (
-              <Card key={stat.label} className="glass p-6 text-center">
-                <stat.icon className="w-8 h-8 mx-auto mb-2 text-primary" />
+            {stats.map((stat, index) => (
+              <Card key={stat.label} className="glass glass-hover p-6 text-center charging-animation" style={{ animationDelay: `${index * 0.1}s` }}>
+                <div className="p-3 rounded-full bg-gradient-primary w-12 h-12 mx-auto mb-4 electric-glow">
+                  <stat.icon className="w-6 h-6 text-white mx-auto" />
+                </div>
                 <div className="text-2xl font-bold text-primary mb-1">{stat.value}</div>
                 <div className="text-sm text-muted-foreground">{stat.label}</div>
               </Card>

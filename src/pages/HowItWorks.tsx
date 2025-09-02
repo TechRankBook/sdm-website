@@ -128,7 +128,7 @@ const HowItWorks = () => {
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'dark' : ''}`}>
-      <div className="min-h-screen bg-gradient-main text-foreground">
+      <div className="min-h-screen bg-gradient-main text-foreground morphing-bg ev-particles">
         <Header isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
 
         <div className="container mx-auto px-4 py-20">
@@ -148,7 +148,7 @@ const HowItWorks = () => {
             {mainSteps.map((step, index) => (
               <div key={step.step} className="flex-1 max-w-xs text-center">
                 <div className="relative flex justify-center mb-6">
-                  <div className="w-24 h-24 bg-gradient-surface rounded-2xl flex items-center justify-center border border-accent relative z-10 shadow-lg">
+                  <div className="w-24 h-24 bg-gradient-surface rounded-2xl flex items-center justify-center border border-accent relative z-10 shadow-lg electric-glow charging-animation">
                     <step.icon className="w-12 h-12 text-primary" />
                   </div>
                   {index < mainSteps.length - 1 && (
@@ -167,9 +167,11 @@ const HowItWorks = () => {
           <div className="mb-16">
             <h2 className="text-3xl font-bold text-center mb-12">Why Choose SDM E-Mobility?</h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {features.map((feature) => (
-                <Card key={feature.title} className="glass p-6 text-center">
-                  <feature.icon className="w-12 h-12 mx-auto mb-4 text-primary" />
+              {features.map((feature, index) => (
+                <Card key={feature.title} className="glass glass-hover p-6 text-center card-hover-lift charging-animation" style={{ animationDelay: `${index * 0.1}s` }}>
+                  <div className="p-4 rounded-full bg-gradient-primary w-16 h-16 mx-auto mb-4 electric-glow">
+                    <feature.icon className="w-8 h-8 text-white mx-auto" />
+                  </div>
                   <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
                   <p className="text-muted-foreground">{feature.description}</p>
                 </Card>
@@ -207,11 +209,11 @@ const HowItWorks = () => {
               Book your first electric ride today!
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="bg-gradient-primary h-14 px-8">
+              <Button size="lg" className="bg-gradient-primary h-14 px-8 btn-electric energy-flow">
                 <MapPin className="w-5 h-5 mr-2" />
                 Book Your First Ride
               </Button>
-              <Button size="lg" variant="outline" className="h-14 px-8">
+              <Button size="lg" variant="outline" className="h-14 px-8 btn-electric hover:bg-primary/5">
                 <Smartphone className="w-5 h-5 mr-2" />
                 Download Mobile App
               </Button>

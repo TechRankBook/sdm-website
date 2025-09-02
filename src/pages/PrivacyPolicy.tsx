@@ -165,7 +165,7 @@ flex-shrink-0"
 
   return (
     <div className={`min-h-screen ${isDarkMode ? "dark" : ""}`}>
-      <div className="min-h-screen bg-gradient-main text-foreground">
+      <div className="min-h-screen bg-gradient-main text-foreground morphing-bg ev-particles">
         <Header isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
 
         <div className="container mx-auto px-4 py-20">
@@ -192,11 +192,11 @@ mx-auto"
           {/* Policy Sections */}
           <div className="space-y-8 mb-16">
             {sections.map((section, index) => (
-              <Card key={section.title} className="glass p-8">
+              <Card key={section.title} className="glass glass-hover p-8 card-hover-lift charging-animation" style={{ animationDelay: `${index * 0.1}s` }}>
                 <div className="flex items-center gap-4 mb-6">
                   <div
                     className="w-12 h-12 bg-gradient-primary 
-rounded-xl flex items-center justify-center"
+rounded-xl flex items-center justify-center electric-glow"
                   >
                     <section.icon className="w-6 h-6 text-white" />
                   </div>

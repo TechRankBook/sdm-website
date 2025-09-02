@@ -225,7 +225,7 @@ const RideTracking = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-main text-foreground morphing-bg ev-particles">
       <Header isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
       
       <div className="container mx-auto px-4 pt-24 pb-16">
@@ -240,7 +240,7 @@ const RideTracking = () => {
               <Navigation className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
               <h3 className="text-xl font-semibold text-foreground mb-2">No active rides</h3>
               <p className="text-muted-foreground mb-4">You don't have any active rides to track</p>
-              <Button className="bg-gradient-primary">Book a Ride</Button>
+              <Button className="bg-gradient-primary btn-electric energy-flow">Book a Ride</Button>
             </Card>
           ) : (
             <div className="space-y-6">

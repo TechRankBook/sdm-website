@@ -116,7 +116,7 @@ const Fleet = () => {
 
   return (
     <div className={`min-h-screen ${isDarkMode ? 'dark' : ''}`}>
-      <div className="min-h-screen bg-gradient-main text-foreground">
+      <div className="min-h-screen bg-gradient-main text-foreground morphing-bg ev-particles">
         <Header isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
         
         <div className="container mx-auto px-4 py-20">
@@ -133,9 +133,11 @@ const Fleet = () => {
 
           {/* Fleet Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-16">
-            {fleetStats.map((stat) => (
-              <Card key={stat.label} className="glass p-6 text-center">
-                <stat.icon className="w-8 h-8 mx-auto mb-2 text-primary" />
+            {fleetStats.map((stat, index) => (
+              <Card key={stat.label} className="glass glass-hover p-6 text-center charging-animation" style={{ animationDelay: `${index * 0.1}s` }}>
+                <div className="p-3 rounded-full bg-gradient-primary w-12 h-12 mx-auto mb-4 electric-glow">
+                  <stat.icon className="w-6 h-6 text-white mx-auto" />
+                </div>
                 <div className="text-2xl font-bold text-primary mb-1">{stat.value}</div>
                 <div className="text-sm text-muted-foreground">{stat.label}</div>
               </Card>
@@ -209,7 +211,7 @@ const Fleet = () => {
                     </div>
                   </div>
 
-                  <Button className="w-full md:w-auto mt-6 bg-gradient-primary">
+                  <Button className="w-full md:w-auto mt-6 bg-gradient-primary btn-electric energy-flow">
                     <Car className="w-4 h-4 mr-2" />
                     Book This Vehicle
                   </Button>

@@ -113,7 +113,7 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-main text-foreground morphing-bg ev-particles">
       <Header isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
       
       <div className="container mx-auto px-4 pt-24 pb-16">
@@ -123,13 +123,15 @@ const Profile = () => {
             <p className="text-muted-foreground">Manage your personal information and preferences</p>
           </div>
 
-          <Card className="glass">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Personal Information
-              </CardTitle>
-            </CardHeader>
+            <Card className="glass glass-hover card-hover-lift">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <div className="p-2 rounded-full bg-gradient-primary electric-glow">
+                    <User className="w-4 h-4 text-white" />
+                  </div>
+                  Personal Information
+                </CardTitle>
+              </CardHeader>
             <CardContent className="space-y-6">
               {/* Profile Image Upload */}
               <div className="flex justify-center">
@@ -202,7 +204,7 @@ const Profile = () => {
               <Button 
                 onClick={handleSaveProfile} 
                 disabled={loading}
-                className="w-full bg-gradient-primary"
+                className="w-full bg-gradient-primary btn-electric energy-flow"
               >
                 {loading ? "Saving..." : "Save Profile"}
               </Button>

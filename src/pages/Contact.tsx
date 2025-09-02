@@ -113,7 +113,7 @@ const Contact = () => {
 
   return (
     <div className={`min-h-screen ${isDarkMode ? "dark" : ""}`}>
-      <div className="min-h-screen bg-gradient-main text-foreground">
+      <div className="min-h-screen bg-gradient-main text-foreground morphing-bg ev-particles">
         <Header isDarkMode={isDarkMode} toggleDarkMode={toggleDarkMode} />
 
         <div className="container mx-auto px-4 py-20">
@@ -150,9 +150,9 @@ const Contact = () => {
 
           {/* Contact Information */}
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-            {contactInfo.map((info) => (
-              <Card key={info.title} className="glass p-6 text-center">
-                <div className="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center mx-auto mb-4">
+            {contactInfo.map((info, index) => (
+              <Card key={info.title} className="glass glass-hover p-6 text-center card-hover-lift charging-animation" style={{ animationDelay: `${index * 0.1}s` }}>
+                <div className="w-12 h-12 bg-gradient-primary rounded-xl flex items-center justify-center mx-auto mb-4 electric-glow">
                   <info.icon className="w-6 h-6 text-white" />
                 </div>
                 <h3 className="text-xl font-bold mb-3">{info.title}</h3>
@@ -300,7 +300,7 @@ const Contact = () => {
 
                 <Button
                   type="submit"
-                  className="w-full bg-gradient-primary h-12"
+                  className="w-full bg-gradient-primary h-12 btn-electric energy-flow"
                 >
                   <Send className="w-5 h-5 mr-2" />
                   Send Message
