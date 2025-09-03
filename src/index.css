@@ -144,7 +144,7 @@
 
   /* Glassmorphism Components */
   .glass {
-    background: hsl(var(--glass-bg));
+    /* background: hsl(var(--glass-bg)); */
     backdrop-filter: blur(16px) saturate(180%);
     border: 1px solid hsl(var(--glass-border));
     box-shadow: var(--shadow-glass);

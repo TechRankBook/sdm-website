@@ -18,6 +18,7 @@ import {
   Play
 } from "lucide-react";
 import heroImage from "@/assets/hero-image.jpg";
+import evCharging from "@/assets/ev-abstract-bg.jpg";
 import evChargingHero from "@/assets/ev-charging-hero.jpg";
 import { ThankYouPage } from "@/components/booking/ThankYouPage";
 // Removed PaymentPage import as it's been replaced with RazorpayPaymentPage
@@ -105,8 +106,8 @@ const Index = () => {
       <section className="relative pt-24 pb-16 overflow-hidden morphing-bg ev-particles">
         <div className="absolute inset-0 bg-gradient-hero" />
         <div 
-          className="absolute inset-0 opacity-50 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${evChargingHero})` }}
+          className="absolute inset-0 opacity-10 dark:opacity-60 bg-fixed bg-center bg-no-repeat"
+          style={{ backgroundImage: `url(${heroImage})` }}
         />
         
         <div className="relative container mx-auto px-4">

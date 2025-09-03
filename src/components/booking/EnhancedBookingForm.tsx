@@ -341,7 +341,7 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
   const serviceTypes = [
     { id: "airport", name: "Airport Taxi", icon: Plane },
     { id: "outstation", name: "Outstation", icon: Route },
-    { id: "car_rental", name: "Hourly Rentals", icon: TimerReset },
+    // { id: "car_rental", name: "Hourly Rentals", icon: TimerReset },
     { id: "ride_later", name: "Ride Later", icon: Car }
   ];
 
@@ -662,7 +662,7 @@ export const EnhancedBookingForm = ({ bookingData, updateBookingData, onNext }: 
               <Zap className="w-5 h-5 text-primary electric-glow" />
               Book Your Ride
             </h2>
-            <div className="flex gap-2 p-1 glass rounded-lg overflow-x-auto scrollbar-hide">
+            <div className="flex gap-2 p-1 w-fit glass rounded-lg overflow-x-auto scrollbar-hide">
               {serviceTypes.map((service) => (
                 <Button
                   key={service.id}

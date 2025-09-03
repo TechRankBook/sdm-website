@@ -58,7 +58,7 @@ export const Header = ({ isDarkMode, toggleDarkMode }: HeaderProps) => {
   };
 
   return (
-    <header className="glass fixed top-0 w-full z-50 border-b border-glass-border">
+    <header className="glass bg-transparent fixed top-0 w-full z-50 ">
       <div className="container mx-auto px-4 py-4">
         <div className="flex items-center justify-between">
           {/* Logo */}
