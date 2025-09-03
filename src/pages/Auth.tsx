@@ -226,14 +226,14 @@ console.log('what is this?', data);
       <div className="min-h-screen flex items-center justify-center morphing-bg ev-particles p-4 relative overflow-hidden">
         {/* Background Image */}
         <div 
-          className="absolute inset-0 opacity-10 bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 opacity-40 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${evAbstractBg})` }}
         />
         
         <Card className="w-full max-w-md glass charging-animation card-hover-lift relative z-10">
           <CardHeader className="text-center">
-            <div className="mx-auto w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center mb-4 electric-glow">
-              <Zap className="w-8 h-8 text-white" />
+            <div className="mx-auto h-12 w-auto  rounded-2xl flex items-center justify-center my-4 ">
+              <img src="/logo.png" alt="SDM E-Mobility" className="h-full object-contain" />
             </div>
             <CardTitle className="text-2xl bg-gradient-primary bg-clip-text text-transparent">
               Welcome to SDM E-Mobility
@@ -293,7 +293,7 @@ console.log('what is this?', data);
       <div className="min-h-screen flex items-center justify-center morphing-bg ev-particles p-4 relative overflow-hidden">
         {/* Background Image */}
         <div 
-          className="absolute inset-0 opacity-10 bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 opacity-40 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${evAbstractBg})` }}
         />
         
@@ -351,7 +351,7 @@ console.log('what is this?', data);
       <div className="min-h-screen flex items-center justify-center morphing-bg ev-particles p-4 relative overflow-hidden">
         {/* Background Image */}
         <div 
-          className="absolute inset-0 opacity-10 bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 opacity-40 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${evAbstractBg})` }}
         />
         
@@ -399,7 +399,7 @@ console.log('what is this?', data);
       <div className="min-h-screen flex items-center justify-center morphing-bg ev-particles p-4 relative overflow-hidden">
         {/* Background Image */}
         <div 
-          className="absolute inset-0 opacity-10 bg-cover bg-center bg-no-repeat"
+          className="absolute inset-0 opacity-40 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: `url(${evAbstractBg})` }}
         />
         

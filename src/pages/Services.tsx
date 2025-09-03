@@ -25,6 +25,9 @@ import {
   HandCoins,
   Banknote,
   CircleDollarSign,
+  CarTaxiFront,
+  CreditCardIcon,
+  Coins,
 } from "lucide-react";
 
 const Services = () => {
@@ -58,6 +61,7 @@ const Services = () => {
         "Air conditioning",
         "Safety features",
       ],
+      commingSoon: false,
     },
     {
       id: "airport",
@@ -80,6 +84,30 @@ const Services = () => {
         "Fixed pricing",
         "24/7 service",
       ],
+      commingSoon: false,
+    },
+       {
+      id: "outstation",
+      name: "Outstation",
+      icon: Route,
+      image: "/img/outstation.jpg",
+      price: "SUV: ₹15/km SEDAN: ₹18/km",
+      time: "₹109/km(SUV), ₹99/km(Sedan)",
+      description:
+        "Long distance travel for weekend getaways and business trips.",
+      features: [
+        "Driver included",
+        "Round trip",
+        "Overnight stays",
+        "Highway optimized",
+      ],
+      benefits: [
+        "Comfortable journey",
+        "Multiple destinations",
+        "Rest stops",
+        "Experienced drivers",
+      ],
+      commingSoon: false,
     },
     {
       id: "rental",
@@ -102,29 +130,9 @@ const Services = () => {
         "Fuel included",
         "Insurance covered",
       ],
+      commingSoon: true,
     },
-    {
-      id: "outstation",
-      name: "Outstation",
-      icon: Route,
-      image: "/img/outstation.jpg",
-      price: "SUV: ₹15/km SEDAN: ₹18/km",
-      time: "₹109/km(SUV), ₹99/km(Sedan)",
-      description:
-        "Long distance travel for weekend getaways and business trips.",
-      features: [
-        "Driver included",
-        "Round trip",
-        "Overnight stays",
-        "Highway optimized",
-      ],
-      benefits: [
-        "Comfortable journey",
-        "Multiple destinations",
-        "Rest stops",
-        "Experienced drivers",
-      ],
-    },
+ 
     // {
     //   id: "share",
     //   name: "Ride Sharing",
@@ -324,13 +332,13 @@ const Services = () => {
                               {activeService.name}
                             </h3>
                             <div className="flex items-center gap-4 text-muted-foreground">
-                              {/* <span className="text-2xl font-bold text-primary">
-                                {activeService.price}
-                              </span> */}
-                              <div className="flex items-center gap-1">
-                                <BadgeIndianRupee className="w-4 h-4" />
+                              {activeService.commingSoon && <span className="text-2xl font-bold text-primary">
+                                Coming Soon
+                              </span> } 
+                              {activeService.commingSoon?<></>:<div className="flex items-center gap-1">
+                                {/* <HandCoins className="w-4 h-4" /> */}
                                 {activeService.time}
-                              </div>
+                              </div>}
                             </div>
                           </div>
                         </div>
@@ -367,8 +375,8 @@ const Services = () => {
                           </div>
                         </div>
                         <Button className="w-full md:w-auto mt-3 bg-gradient-primary">
-                          <MapPin className="w-4 h-4 mr-2" />
-                          Book {activeService.name}
+                          <CarTaxiFront className="w-4 h-4 mr-2" />
+                          {activeService.commingSoon ? "Coming Soon" : "Book Now"}
                         </Button>
                       </div>
                     </div>
